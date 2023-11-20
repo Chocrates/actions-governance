@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@octokit/plugin-throttling": "^8.1.2",
+    "@octokit/rest": "^20.0.2",
+    "yargs": "^17.7.2"
+  }
+}
