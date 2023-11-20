@@ -69,8 +69,9 @@ async function main() {
         shell.exec(`GIT_CURL_VERBOSE=1 git clone https://${argv.token}@github.com/${argv.org}/${argv.repo}.git`)
 
         if (shell.exec(`grep -qiR "${GHAS_SEARCH_STRING}" ${argv.repo}`).code !== 0) {
-            shell.echo('GHAS Not Found');
-            shell.exit(1);
+            console.error('GHAS Not Found')
+        } else {
+            console.log('GHAS Found')
         }
 
 
