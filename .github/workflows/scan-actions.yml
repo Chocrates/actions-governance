@@ -1,8 +1,6 @@
 name: Scan Actions Repositories
 
 on:
-  schedule:
-    - cron: '13 17 * * *'
   workflow_dispatch:
 
 jobs:
