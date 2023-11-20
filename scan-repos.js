@@ -26,7 +26,7 @@ async function main() {
             demandOption: true
         }).argv;
     try {
-        const GHAS_SEARCH_STRING = "uses: github/codeql-action/analyze@""
+        const GHAS_SEARCH_STRING = "uses: github/codeql-action/analyze@"
         const client = new MyOctokit({
             auth: `token ${argv.token}`,
             previews: ["luke-cage"],
