@@ -9,4 +9,7 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Hello world"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm install
+      - run: node scan-repos.js -t ${{ secrets.ORG_TOKEN }} -o chocrates-test-org -r garbage
