@@ -1,30 +1,32 @@
 const { throttling } = require("@octokit/plugin-throttling");
 const { Octokit } = require("@octokit/rest");
+const shell = require('shelljs')
 
 const MyOctokit = Octokit.plugin(throttling);
 
 async function main() {
-    try {
-        const argv = require("yargs")
-            .option("token", {
-                alias: "t",
-                description: "personal access token with which to authenticate",
-                global: true,
-                demandOption: true,
-            })
-            .option("org", {
-                alias: "o",
-                description: "org",
-                global: true,
-                demandOption: true
-            })
-            .option("repo", {
-                alias: "r",
-                description: "repo",
-                global: true,
-                demandOption: true
-            }).argv;
 
+    const argv = require("yargs")
+        .option("token", {
+            alias: "t",
+            description: "personal access token with which to authenticate",
+            global: true,
+            demandOption: true,
+        })
+        .option("org", {
+            alias: "o",
+            description: "org",
+            global: true,
+            demandOption: true
+        })
+        .option("repo", {
+            alias: "r",
+            description: "repo",
+            global: true,
+            demandOption: true
+        }).argv;
+    try {
+        const GHAS_SEARCH_STRING = "uses: github/codeql-action/analyze@""
         const client = new MyOctokit({
             auth: `token ${argv.token}`,
             previews: ["luke-cage"],
@@ -49,27 +51,41 @@ async function main() {
             },
         });
 
+        //
+        // let out = await client.request(`GET /orgs/${argv.org}/repos`, {
+        //     org: argv.org,
+        //     headers: {
+        //         'X-GitHub-Api-Version': '2022-11-28'
+        //     }
+        // })
+        //
+        // // Print repos in org
+        // for (let i = 0; i < out.data.length; i++) {
+        //     console.log(out.data[i].name);
+        // }
+        //
 
-        let out = await client.request('GET /orgs/${argv.org}/repos', {
-            org: argv.org,
-            headers: {
-                'X-GitHub-Api-Version': '2022-11-28'
-            }
-        })
+        // checkout passed in repo
+        shell.exec(`GIT_CURL_VERBOSE=1 git clone https://${argv.token}@github.com/${argv.org}/${argv.repo}.git`)
 
-        // Print repos in org
-        for (let i = 0; i < out.data.length; i++) {
-            console.log(out.data[i].name);
+        if (shell.exec(`grep -qiR "${GHAS_SEARCH_STRING}" ${argv.repo}`).code !== 0) {
+            shell.echo('GHAS Not Found');
+            shell.exit(1);
         }
 
-        } catch (error) {
-            console.log(error);
-        }
+
+
+    } catch (error) {
+        console.log(error);
     }
+    finally {
+        shell.exec(`rm -rf ${argv.repo}`)
+    }
+}
 
 
 if (require.main == module) {
-        main();
-    }
+    main();
+}
 
-    module.exports = main;
+module.exports = main;
