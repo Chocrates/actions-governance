@@ -1,12 +1,14 @@
 const { throttling } = require("@octokit/plugin-throttling");
 const { Octokit } = require("@octokit/rest");
 const shell = require('shelljs')
+const yargs = require('yargs')
+const util = require('util')
 
 const MyOctokit = Octokit.plugin(throttling);
 
 async function main() {
 
-    const argv = require("yargs")
+    const argv = yargs
         .option("token", {
             alias: "t",
             description: "personal access token with which to authenticate",
@@ -19,6 +21,7 @@ async function main() {
             global: true,
             demandOption: true
         })
+        .count("verbose")
         .option("verbose", {
             alias: "v",
             description: "set verbose logging",
@@ -29,10 +32,13 @@ async function main() {
         })
         .argv;
 
+    const VERBOSITY_LEVEL = argv.verbose
+
     const logger = {
         error: (message) => { console.error(message) },
-        warn: (message) => { if (argv.verbose) { console.warn(message) } },
-        debug: (message) => { logger.warn(message) },
+        warn: (message) => { if (VERBOSITY_LEVEL >= 0) { console.warn(message) } },
+        info: (message) => { if (VERBOSITY_LEVEL >= 1) { console.info(message) } },
+        debug: (message) => { if (VERBOSITY_LEVEL >= 2) { console.debug(message) } },
         log: (message) => { logger.warn(message) }
     }
 
@@ -65,7 +71,7 @@ async function main() {
         });
 
         // search for code in org
-        let out = await client.request(`GET /search/code`, {
+        let search_results = await client.request(`GET /search/code`, {
             q: `org:${argv.org} ${ACTION_SEARCH_STRING}`,
             headers: {
                 'X-GitHub-Api-Version': '2022-11-28'
@@ -73,11 +79,14 @@ async function main() {
 
         })
 
-        logger.debug(out)
+        logger.debug(search_results)
+        // print search results
+        logger.info(`Search Results: ${util.inspect(search_results.data.items, {depth: null})}`)
+
 
         let actions_repositories = [];
-        for (let i = 0; i < out.data.items.length; i++) {
-            let item = out.data.items[i]
+        for (let i = 0; i < search_results.data.items.length; i++) {
+            let item = search_results.data.items[i]
             actions_repositories.push({
                 name: item.repository.name,
                 url: item.repository.html_url,
@@ -90,7 +99,7 @@ async function main() {
         for (let i = 0; i < actions_repositories.length; i++) {
             const repository_name = actions_repositories[i].name
 
-            let response = await client.request(`GET /repos/{owner}/{repo}/code-scanning/default-setup`, {
+            let code_scanning_enabled = await client.request(`GET /repos/{owner}/{repo}/code-scanning/default-setup`, {
                 owner: argv.org,
                 repo: repository_name,
                 headers: {
@@ -98,11 +107,13 @@ async function main() {
                 }
             })
 
-            // if scanning is enabled
-            if (response.data.state === 'configured') {
-                console.log('Code Scanning is configured')
+            logger.debug(code_scanning_enabled)
 
-                let response = await client.request(`GET /repos/{owner}/{repo}/code-scanning/alerts`, {
+            // if scanning is enabled
+            if (code_scanning_enabled.data.state === 'configured') {
+                logger.info('Code Scanning is configured')
+
+                let code_scanning_alerts = await client.request(`GET /repos/{owner}/{repo}/code-scanning/alerts`, {
                     owner: argv.org,
                     repo: repository_name,
                     headers: {
@@ -110,25 +121,27 @@ async function main() {
                     }
                 })
 
+                logger.debug(code_scanning_alerts)
+
                 // if there are no alerts, print a message
-                if (response.data.length == 0) {
-                    console.log("No alerts found")
+                if (code_scanning_alerts.data.length == 0) {
+                    logger.info("No alerts found")
                 } else {
 
                     // print code scanning alerts
-                    for (let i = 0; i < response.data.length; i++) {
-                        console.log(response.data[i].rule.name);
+                    for (let i = 0; i < code_scanning_alerts.data.length; i++) {
+                        logger.info(code_scanning_alerts.data[i].rule.name);
                     }
                 }
 
             } else {
-                console.log(`Code Scanning is not enabled for ${repository_name}`)
+                logger.error(`Code Scanning is not enabled for ${repository_name}`)
             }
 
         }
 
     } catch (error) {
-        console.log(error);
+        logger.error(error);
     }
     finally {
         shell.exec(`rm -rf ${argv.repo}`)
