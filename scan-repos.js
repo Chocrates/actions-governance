@@ -19,12 +19,24 @@ async function main() {
             global: true,
             demandOption: true
         })
-        .option("repo", {
-            alias: "r",
-            description: "repo",
+        .option("verbose", {
+            alias: "v",
+            description: "set verbose logging",
             global: true,
-            demandOption: true
-        }).argv;
+            demandOption: false,
+            type: "boolean",
+            dfeault: false
+        })
+        .argv;
+
+    const logger = {
+        error: (message) => { console.error(message) },
+        warn: (message) => { if (argv.verbose) { console.warn(message) } },
+        debug: (message) => { logger.warn(message) },
+        log: (message) => { logger.warn(message) }
+    }
+
+
     try {
         // const ACTION_SEARCH_STRING = "/^action.yml$/"  // Code search api doesn't support regexes via the API yet
         const ACTION_SEARCH_STRING = "filename:action.yml path:/"
@@ -61,59 +73,56 @@ async function main() {
 
         })
 
-        let results = [];
+        logger.debug(out)
+
+        let actions_repositories = [];
         for (let i = 0; i < out.data.items.length; i++) {
             let item = out.data.items[i]
-            results.push({
-                repository: item.repository.name,
+            actions_repositories.push({
+                name: item.repository.name,
                 url: item.repository.html_url,
 
             });
 
         }
 
-
-        //
-        // let out = await client.request(`GET /orgs/${argv.org}/repos`, {
-        //     org: argv.org,
-        //     headers: {
-        //         'X-GitHub-Api-Version': '2022-11-28'
-        //     }
-        // })
-        //
-        // // Print repos in org
-        // for (let i = 0; i < out.data.length; i++) {
-        //     console.log(out.data[i].name);
-        // }
-        //
-
-        // checkout passed in repo
-        // shell.exec(`GIT_CURL_VERBOSE=1 git clone https://${argv.token}@github.com/${argv.org}/${argv.repo}.git`)
-        //
-        // if (shell.exec(`grep -qiR "${GHAS_SEARCH_STRING}" ${argv.repo}`).code !== 0) {
-        //     console.error('GHAS Not Found')
-        // } else {
-        //     console.log('GHAS Found')
-        // }
-        //
-        //
         // loop through results
-        for (let i = 0; i < results.length; i++) {
-            const repo = results[i].repository
+        for (let i = 0; i < actions_repositories.length; i++) {
+            const repository_name = actions_repositories[i].name
 
-            let response = await client.request(`GET /repos/{owner}/{repo}/code-scanning/alerts`, {
+            let response = await client.request(`GET /repos/{owner}/{repo}/code-scanning/default-setup`, {
                 owner: argv.org,
-                repo: repo,
+                repo: repository_name,
                 headers: {
                     'X-GitHub-Api-Version': '2022-11-28'
                 }
             })
-            
-            console.log(`Code Scanning Alerts for ${repo}`)
 
-            // print code scanning alerts
-            for (let i = 0; i < response.data.length; i++) {
-                console.log(response.data[i].rule.name);
+            // if scanning is enabled
+            if (response.data.state === 'configured') {
+                console.log('Code Scanning is configured')
+
+                let response = await client.request(`GET /repos/{owner}/{repo}/code-scanning/alerts`, {
+                    owner: argv.org,
+                    repo: repository_name,
+                    headers: {
+                        'X-GitHub-Api-Version': '2022-11-28'
+                    }
+                })
+
+                // if there are no alerts, print a message
+                if (response.data.length == 0) {
+                    console.log("No alerts found")
+                } else {
+
+                    // print code scanning alerts
+                    for (let i = 0; i < response.data.length; i++) {
+                        console.log(response.data[i].rule.name);
+                    }
+                }
+
+            } else {
+                console.log(`Code Scanning is not enabled for ${repository_name}`)
             }
 
         }
