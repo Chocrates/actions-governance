@@ -46,6 +46,7 @@ async function main() {
     try {
         // const ACTION_SEARCH_STRING = "/^action.yml$/"  // Code search api doesn't support regexes via the API yet
         const ACTION_SEARCH_STRING = "filename:action.yml path:/"
+        const SECURITY_SCANNING_SEARCH_STRING = "github/codeql-action/analyze@v2 in:file"
         const client = new MyOctokit({
             auth: `token ${argv.token}`,
             previews: ["luke-cage"],
@@ -81,7 +82,7 @@ async function main() {
 
         logger.debug(search_results)
         // print search results
-        logger.info(`Search Results: ${util.inspect(search_results.data.items, {depth: null})}`)
+        logger.debug(`Search Results: ${util.inspect(search_results.data.items, { depth: null })}`)
 
 
         let actions_repositories = [];
@@ -90,55 +91,84 @@ async function main() {
             actions_repositories.push({
                 name: item.repository.name,
                 url: item.repository.html_url,
-
+                scanning_enabled: false,
+                scanning_workflow: false,
+                remediated_alerts:false
             });
 
         }
 
         // loop through results
         for (let i = 0; i < actions_repositories.length; i++) {
-            const repository_name = actions_repositories[i].name
+            const repository = actions_repositories[i]
 
-            let code_scanning_enabled = await client.request(`GET /repos/{owner}/{repo}/code-scanning/default-setup`, {
+
+            let repository_configuration = await client.request(`GET /repos/{owner}/{repo}`, {
                 owner: argv.org,
-                repo: repository_name,
+                repo: repository.name,
                 headers: {
                     'X-GitHub-Api-Version': '2022-11-28'
                 }
             })
 
-            logger.debug(code_scanning_enabled)
+            logger.debug(`${util.inspect(repository_configuration, { depth: null })}`)
 
-            // if scanning is enabled
-            if (code_scanning_enabled.data.state === 'configured') {
-                logger.info('Code Scanning is configured')
+            repository['scanning_enabled'] = repository_configuration.data.security_and_analysis?.advanced_security?.status === 'enabled'
 
-                let code_scanning_alerts = await client.request(`GET /repos/{owner}/{repo}/code-scanning/alerts`, {
-                    owner: argv.org,
-                    repo: repository_name,
-                    headers: {
-                        'X-GitHub-Api-Version': '2022-11-28'
+            // search for code in org
+            let search_code_scanning_results = await client.request(`GET /search/code`, {
+                q: `repo:${argv.org}/${repository.name} ${SECURITY_SCANNING_SEARCH_STRING}`,
+                headers: {
+                    'X-GitHub-Api-Version': '2022-11-28'
+                }
+
+            })
+
+            logger.debug(`${util.inspect(search_code_scanning_results, { depth: null })}`)
+
+            repository['scanning_workflow'] = search_code_scanning_results.data?.total_count > 0
+
+            if (repository.scanning_enabled && repository.scanning_workflow) {
+
+                let code_scanning_alerts
+                try {
+                    code_scanning_alerts = await client.request(`GET /repos/{owner}/{repo}/code-scanning/alerts`, {
+                        owner: argv.org,
+                        repo: repository.name,
+                        headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    })
+                } catch (error) {
+                    // ignore 404 errors
+                    if (error.status !== 404) {
+                        throw error
+                    } else {
+                        logger.info(`No scanning results: ${error}`)
+                        break
                     }
-                })
+                }
+
 
                 logger.debug(code_scanning_alerts)
 
                 // if there are no alerts, print a message
                 if (code_scanning_alerts.data.length == 0) {
                     logger.info("No alerts found")
+                    repository['remediated_alerts'] = true
                 } else {
-
+                    repository['remediated_alerts'] = false
                     // print code scanning alerts
                     for (let i = 0; i < code_scanning_alerts.data.length; i++) {
                         logger.info(code_scanning_alerts.data[i].rule.name);
                     }
                 }
 
-            } else {
-                logger.error(`Code Scanning is not enabled for ${repository_name}`)
             }
-
         }
+
+        // print actions_repository
+        logger.warn(`${util.inspect(actions_repositories, { depth: null })}`)
 
     } catch (error) {
         logger.error(error);
