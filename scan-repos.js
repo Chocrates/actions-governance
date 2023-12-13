@@ -39,7 +39,7 @@ async function main() {
         warn: (message) => { if (VERBOSITY_LEVEL >= 0) { console.warn(message) } },
         info: (message) => { if (VERBOSITY_LEVEL >= 1) { console.info(message) } },
         debug: (message) => { if (VERBOSITY_LEVEL >= 2) { console.debug(message) } },
-        log: (message) => { logger.warn(message) }
+        log: (message) => { console.log(message) }
     }
 
 
@@ -168,7 +168,7 @@ async function main() {
         }
 
         // print actions_repository
-        logger.warn(`${util.inspect(actions_repositories, { depth: null })}`)
+        logger.log(`${util.inspect(actions_repositories, { depth: null })}`)
 
     } catch (error) {
         logger.error(error);
