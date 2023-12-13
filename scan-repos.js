@@ -168,7 +168,7 @@ async function main() {
         }
 
         // print actions_repository
-        logger.log(`${util.inspect(actions_repositories, { depth: null })}`)
+        logger.log(`${JSON.stringify(actions_repositories)}`)
 
     } catch (error) {
         logger.error(error);
