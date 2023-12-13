@@ -93,7 +93,7 @@ async function main() {
                 url: item.repository.html_url,
                 scanning_enabled: false,
                 scanning_workflow: false,
-                remediated_alerts:false
+                all_alerts_closed: false
             });
 
         }
@@ -101,7 +101,6 @@ async function main() {
         // loop through results
         for (let i = 0; i < actions_repositories.length; i++) {
             const repository = actions_repositories[i]
-
 
             let repository_configuration = await client.request(`GET /repos/{owner}/{repo}`, {
                 owner: argv.org,
@@ -151,13 +150,14 @@ async function main() {
 
 
                 logger.debug(code_scanning_alerts)
+                const open_alerts = code_scanning_alerts.data.filter(alert => alert.state === 'open')
 
                 // if there are no alerts, print a message
-                if (code_scanning_alerts.data.length == 0) {
+                if (open_alerts.length == 0) {
                     logger.info("No alerts found")
-                    repository['remediated_alerts'] = true
+                    repository['all_alerts_closed'] = true
                 } else {
-                    repository['remediated_alerts'] = false
+                    repository['all_alerts_closed'] = false
                     // print code scanning alerts
                     for (let i = 0; i < code_scanning_alerts.data.length; i++) {
                         logger.info(code_scanning_alerts.data[i].rule.name);
