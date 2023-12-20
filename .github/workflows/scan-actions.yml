@@ -14,6 +14,12 @@ jobs:
           node scan-repos.js -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} | 
             jq -c '.[]' | 
             while read i; do 
-              echo $i
+              eval $(echo $i | jq -r '. | to_entries | .[] | .key + "=" + (.value | @sh)')
+              env
+              if [[ $scanning_enabled != true || $scanning_workflow != true || $all_alerts_closed != true ]]; then
+                echo "nag"
+              else
+                echo "don't nag"
+              fi
             done
           
