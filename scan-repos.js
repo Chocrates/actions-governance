@@ -112,7 +112,7 @@ async function main() {
 
             logger.debug(`${util.inspect(repository_configuration, { depth: null })}`)
             
-            repository['description'] = repository_configuration.data.description
+            repository['description'] = repository_configuration.data.description ?? ''
             repository['default_branch'] = repository_configuration.data.default_branch
             repository['scanning_enabled'] = repository_configuration.data.security_and_analysis?.advanced_security?.status === 'enabled'
 
