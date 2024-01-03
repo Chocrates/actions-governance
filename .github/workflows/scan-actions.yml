@@ -24,8 +24,9 @@ jobs:
                   git clone https://${{ secrets.ORG_TOKEN }}@github.com/${{ github.repository_owner }}/$name.git
                   cd $name
                   curl https://raw.githubusercontent.com/repo-sync/github-sync/3832fe8e2be32372e1b3970bbae8e7079edeec88/github-sync.sh > github-sync.sh
-                  chmod +x github-sync.sh
-                  ./github-sync.sh $description "$default_branch:$default_branch-sync"
+                  pwd
+                  ls -al
+                  bash github-sync.sh $description "$default_branch:$default_branch-sync"
                   //node notify-non-compliance -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} -r $name
                 fi
               else
