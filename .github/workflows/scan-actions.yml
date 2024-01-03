@@ -21,7 +21,7 @@ jobs:
                 if [[ -z "$description" ]]; then
                   echo "Description is empty, can't sync upstream to $name"
                 else
-                  git checkout https://${{ secrets.ORG_TOKEN }}@github.com/${{ github.repoisitory_owner }}/$name.git
+                  git checkout https://${{ secrets.ORG_TOKEN }}@github.com/${{ github.repository_owner }}/$name.git
                   cd $name
                   curl https://raw.githubusercontent.com/repo-sync/github-sync/3832fe8e2be32372e1b3970bbae8e7079edeec88/github-sync.sh > github-sync.sh
                   chmod +x github-sync.sh
