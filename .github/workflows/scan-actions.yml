@@ -27,7 +27,7 @@ jobs:
                   pwd
                   ls -al
                   GITHUB_TOKEN="${{ secrets.ORG_TOKEN }}" GITHUB_REPOSITORY="${{ github.repository_owner }}/$name" bash github-sync.sh $description "$default_branch:$default_branch-sync"
-                  gh pr --repo "${{ github.repository_owner }}/$name" create --title "Merge Upstream" --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" --base $default_branch --head "$default_branch-sync"
+                  GH_TOKEN="${{ secrets.ORG_TOKEN }}" gh pr --repo "${{ github.repository_owner }}/$name" create --title "Merge Upstream" --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" --base $default_branch --head "$default_branch-sync"
                   # node notify-non-compliance -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} -r $name
                 fi
               else
