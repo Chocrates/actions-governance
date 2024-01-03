@@ -18,7 +18,16 @@ jobs:
               eval $(echo $i | jq -r '. | to_entries | .[] | .key + "=" + (.value | @sh)')
 
               if [[ $scanning_enabled != true || $scanning_workflow != true || $all_alerts_closed != true ]]; then
-                node notify-non-compliance -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} $name
+                if [[ -z "$description" ]]; then
+                  echo "Description is empty, can't sync upstream to $name"
+                else
+                  git checkout https://${{ secrets.ORG_TOKEN }}@github.com/${{ github.repoisitory_owner }}/$name.git
+                  cd $name
+                  curl https://raw.githubusercontent.com/repo-sync/github-sync/3832fe8e2be32372e1b3970bbae8e7079edeec88/github-sync.sh > github-sync.sh
+                  chmod +x github-sync.sh
+                  UPSTREAM_REPO=$description BRANCH_MAPPING="$default_branch:$default_branch-sync" ./github-sync.sh
+                  //node notify-non-compliance -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} -r $name
+                fi
               else
                 echo "don't nag"
               fi
