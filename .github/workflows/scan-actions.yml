@@ -35,9 +35,11 @@ jobs:
                   SYNC_HEAD=$(git show-ref remotes/origin/$default_branch-sync -s)
                   # Open a PR if there is stuff to merge
                   if [[ $COMMON_ANCESTOR != $SYNC_HEAD ]]; then
-                    GH_TOKEN="${{ secrets.ORG_TOKEN }}" gh pr --repo "${{ github.repository_owner }}/$name" create --title "Merge Upstream" --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" --base $default_branch --head "$default_branch-sync"
+                    GH_TOKEN="${{ secrets.ORG_TOKEN }}" gh pr --repo "${{ github.repository_owner }}/$name" create --title "Merge Upstream" \  
+                      --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" \  
+                      --base $default_branch --head "$default_branch-sync"
                   else
-                    echo "no PR"
+                    echo "Common ancestor matches upstream so nothing to merge"
                   fi
                   
                   # node notify-non-compliance -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} -r $name
