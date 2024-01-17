@@ -35,9 +35,27 @@ jobs:
                   SYNC_HEAD=$(git show-ref remotes/origin/$default_branch-sync -s)
                   # Open a PR if there is stuff to merge
                   if [[ $COMMON_ANCESTOR != $SYNC_HEAD ]]; then
+                    
+                    # Find Admin Team
+                    TEAMS_WITH_MEMBERS=()
+                    ADMIN_TEAMS=$(gh api /repos/chocrates-test-org/go-dependency-submission/teams | jq -c '.[] | select(.permission == "admin")');
+                    while IFS= read -r CURRENT_TEAM; do                                                                                                                                                                                                  
+                      CURRENT_TEAM_MEMBERS=$(GH_PAGER='' gh api $(echo $CURRENT_TEAM | jq '.members_url' | sed 's/"\(.*\){\/member}"/\1/'))
+                      if [[ $(echo $CURRENT_TEAM_MEMBERS | jq '. | length') -gt 0 ]]; then
+                        TEAMS_WITH_MEMBERS+=($CURRENT_TEAM)
+                      else
+                        echo "Team $(echo $CURRENT_TEAM | jq '.name') doesn't have members"
+                      fi
+                    done <<< "$ADMIN_TEAMS"
+                    
+                    echo "Teams with Members $TEAMS_WITH_MEMBERS"
+
                     GH_TOKEN="${{ secrets.ORG_TOKEN }}" gh pr --repo "${{ github.repository_owner }}/$name" create --title "Merge Upstream" \  
                       --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" \  
-                      --base $default_branch --head "$default_branch-sync"
+                      --base $default_branch --head "$default_branch-sync" \
+                      --reviewer @chocrates-test-org/one
+                      
+
                   else
                     echo "Common ancestor matches upstream so nothing to merge"
                   fi
