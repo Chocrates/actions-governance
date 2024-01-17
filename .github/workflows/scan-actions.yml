@@ -12,6 +12,8 @@ jobs:
       - run: npm install
       - name: Run Scans
         shell: bash -x {0}
+        env:
+          GH_TOKEN: ${{ secrets.ORG_TOKEN }}
         run: |
           node scan-repos.js -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} | 
             jq -c '.[]' | 
@@ -50,12 +52,11 @@ jobs:
                     
                     echo "Teams with Members $TEAMS_WITH_MEMBERS"
 
-                    GH_TOKEN="${{ secrets.ORG_TOKEN }}" gh pr --repo "${{ github.repository_owner }}/$name" create --title "Merge Upstream" \  
+                    gh pr --repo "${{ github.repository_owner }}/$name" create --title "Merge Upstream" \  
                       --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" \  
                       --base $default_branch --head "$default_branch-sync" \
                       --reviewer @chocrates-test-org/one
                       
-
                   else
                     echo "Common ancestor matches upstream so nothing to merge"
                   fi
