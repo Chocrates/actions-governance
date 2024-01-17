@@ -11,7 +11,7 @@ jobs:
       - uses: actions/setup-node@v4
       - run: npm install
       - name: Run Scans
-        shell: bash -x {0}
+        shell: bash +x {0}
         env:
           GH_TOKEN: ${{ secrets.ORG_TOKEN }}
         run: |
