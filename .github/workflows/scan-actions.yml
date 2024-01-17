@@ -42,7 +42,7 @@ jobs:
                     echo "Common ancestor matches upstream so nothing to merge"
                   fi
                   
-                  # node notify-non-compliance -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} -r $name
+                  node notify-non-compliance -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} -r $name
                   cd ..
                   rm -rf $name
                 fi
