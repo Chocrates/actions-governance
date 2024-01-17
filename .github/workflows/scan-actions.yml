@@ -41,7 +41,7 @@ jobs:
                     # Find Admin Team
                     TEAMS_WITH_MEMBERS=()
                     ADMIN_TEAMS=$(gh api /repos/chocrates-test-org/go-dependency-submission/teams | jq -c '.[] | select(.permission == "admin")');
-                    IFS='\n'
+                    IFS=$'\n'
                     for CURRENT_TEAM in $ADMIN_TEAMS; do                                                                                                                                                                                                  
                       CURRENT_TEAM_MEMBERS=$(GH_PAGER='' gh api $(echo $CURRENT_TEAM | jq '.members_url' | sed 's/"\(.*\){\/member}"/\1/'))
                       if [[ $(echo $CURRENT_TEAM_MEMBERS | jq '. | length') -gt 0 ]]; then
