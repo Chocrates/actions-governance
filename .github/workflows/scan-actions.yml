@@ -44,6 +44,7 @@ jobs:
                     while IFS= read -r CURRENT_TEAM; do                                                                                                                                                                                                  
                       CURRENT_TEAM_MEMBERS=$(GH_PAGER='' gh api $(echo $CURRENT_TEAM | jq '.members_url' | sed 's/"\(.*\){\/member}"/\1/'))
                       if [[ $(echo $CURRENT_TEAM_MEMBERS | jq '. | length') -gt 0 ]]; then
+                        echo "Current Team: $CURRENT_TEAM"
                         TEAMS_WITH_MEMBERS+=($CURRENT_TEAM)
                       else
                         echo "Team $(echo $CURRENT_TEAM | jq '.name') doesn't have members"
@@ -51,6 +52,8 @@ jobs:
                     done <<< "$ADMIN_TEAMS"
                     
                     echo "Teams with Members $TEAMS_WITH_MEMBERS"
+
+                    if 
 
                     gh pr --repo "${{ github.repository_owner }}/$name" create --title "Merge Upstream" \
                       --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" \
