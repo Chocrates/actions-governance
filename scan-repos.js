@@ -238,7 +238,7 @@ async function main() {
         for (const repo of actions_repositories) {
             logger.log(`Repo ${repo.name} scanning enabled: ${repo.scanning_enabled} scanning workflow: ${repo.scanning_workflow} all alerts closed: ${repo.all_alerts_closed}`)
             // if scanning is enabled, and there are alerts, and there are open alerts, nag
-            if (repo.scanning_enabled && repo.scanning_workflow && !repo.all_alerts_closed) {
+            if (!repo.scanning_enabled || !repo.scanning_workflow || !repo.all_alerts_closed) {
                 if (repo.description === '') {
                     logger.info(`Description is empty, can't sync upstream to ${repo.name}`)
                 } else {
