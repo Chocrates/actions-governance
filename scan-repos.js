@@ -111,7 +111,7 @@ async function main() {
             })
 
             logger.debug(`${util.inspect(repository_configuration, { depth: null })}`)
-            
+
             repository['description'] = repository_configuration.data.description ?? ''
             repository['default_branch'] = repository_configuration.data.default_branch
             repository['scanning_enabled'] = repository_configuration.data.security_and_analysis?.advanced_security?.status === 'enabled'
@@ -169,14 +169,152 @@ async function main() {
             }
         }
 
-        // print actions_repository
+        // print results
         logger.log(`${JSON.stringify(actions_repositories)}`)
 
+        /*
+        
+                  node scan-repos.js -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} | 
+                    jq -c '.[]' | 
+                    while read i; do 
+                      # Set json object as bash variables
+                      eval $(echo $i | jq -r '. | to_entries | .[] | .key + "=" + (.value | @sh)')
+        
+                      if [[ $scanning_enabled != true || $scanning_workflow != true || $all_alerts_closed != true ]]; then
+                        if [[ -z "$description" ]]; then
+                          echo "Description is empty, can't sync upstream to $name"
+                        else
+                          git clone https://${{ secrets.ORG_TOKEN }}@github.com/${{ github.repository_owner }}/$name.git
+                          cd $name
+                          curl https://raw.githubusercontent.com/repo-sync/github-sync/3832fe8e2be32372e1b3970bbae8e7079edeec88/github-sync.sh > github-sync.sh
+        
+                          GITHUB_TOKEN="${{ secrets.ORG_TOKEN }}" GITHUB_REPOSITORY="${{ github.repository_owner }}/$name" bash github-sync.sh $description "$default_branch:$default_branch-sync"
+                          
+                          # Get common ancestor
+                          COMMON_ANCESTOR=$(git merge-base remotes/origin/$default_branch-sync HEAD)
+                          # Get head of sync branch
+                          SYNC_HEAD=$(git show-ref remotes/origin/$default_branch-sync -s)
+                          # Open a PR if there is stuff to merge
+                          if [[ $COMMON_ANCESTOR != $SYNC_HEAD ]]; then
+                            
+                            # Find Admin Team
+                            TEAMS_WITH_MEMBERS=()
+                            ADMIN_TEAMS=$(gh api /repos/chocrates-test-org/go-dependency-submission/teams | jq -c '.[] | select(.permission == "admin")');
+                            IFS=$'\n'
+                            for CURRENT_TEAM in $ADMIN_TEAMS; do                                                                                                                                                                                                  
+                              CURRENT_TEAM_MEMBERS=$(GH_PAGER='' gh api $(echo $CURRENT_TEAM | jq '.members_url' | sed 's/"\(.*\){\/member}"/\1/'))
+                              if [[ $(echo $CURRENT_TEAM_MEMBERS | jq '. | length') -gt 0 ]]; then
+                                echo "Current Team: $CURRENT_TEAM"
+                                TEAMS_WITH_MEMBERS+=($CURRENT_TEAM)
+                              else
+                                echo "Team $(echo $CURRENT_TEAM | jq '.name') doesn't have members"
+                              fi
+                            done
+                            
+                            echo "Teams with Members $TEAMS_WITH_MEMBERS"
+        
+                            gh pr --repo "${{ github.repository_owner }}/$name" create --title "Merge Upstream" \
+                              --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" \
+                              --base $default_branch --head "$default_branch-sync" \
+                              --reviewer @chocrates-test-org/one
+                              
+                          else
+                            echo "Common ancestor matches upstream so nothing to merge"
+                          fi
+                          
+                          # node notify-non-compliance -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} -r $name
+                          cd ..
+                          rm -rf $name
+                        fi
+                      else
+                        echo "don't nag"
+                      fi
+                    done
+        */
+
+
+
+        // loop through repositories
+        for (const repo of actions_repositories) {
+            // if scanning is enabled, and there are alerts, and there are open alerts, nag
+            if (repo.scanning_enabled && repo.scanning_workflow && !repo.all_alerts_closed) {
+                if (repo.description === '') {
+                    logger.info(`Description is empty, can't sync upstream to ${repo.name}`)
+                } else {
+                    const verbosity = logger.VERBOSITY_LEVEL >= 2 == true ? 'GIT_CURL_VERBOSE=1 ' : ''
+                    if (shell.exec(`${verbosity}git clone https://${argv.token}@github.com/${argv.org}/${repo.name}.git`, { silent: logger.VERBOSITY_LEVEL < 2 }).code === 0) {
+                        shell.exec(`cd ${repo.name} && curl https://raw.githubusercontent.com/repo-sync/github-sync/3832fe8e2be32372e1b3970bbae8e7079edeec88/github-sync.sh > github-sync.sh`)
+                        shell.exec(`GITHUB_TOKEN="${argv.token}" GITHUB_REPOSITORY="${argv.org}/${repo.name}" bash github-sync.sh ${repo.description} "${repo.default_branch}:${repo.default_branch}-sync"`)
+                        // Get common ancestor
+                        const common_ancestor = shell.exec(`git merge-base remotes/origin/${repo.default_branch}-sync HEAD`, { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
+                        // Get head of sync branch
+                        const sync_head = shell.exec(`git show-ref remotes/origin/${repo.default_branch}-sync -s`, { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
+                        // Open a PR if there is stuff to merge
+                        if (common_ancestor != sync_head) {
+                            // Find Admin Team
+                            const teams_with_members = []
+                            const admin_teams = await client.request(`GET /repos/${argv.org}/${repo.name}/teams`, {
+                                headers: {
+                                    'X-GitHub-Api-Version': '2022-11-28'
+
+                                }
+                            }).data
+
+                            for (const team of admin_teams) {
+                                const current_team_members = await client.request(`GET ${team.members_url.replace(/{\/member}/, '')}`, {
+                                    headers: {
+                                        'X-GitHub-Api-Version': '2022-11-28'
+                                    }
+
+                                }).data
+
+                                if (current_team_members.length > 0) {
+                                    teams_with_members.push(team)
+                                }
+                            }
+
+                            logger.debug(`Teams with Members ${teams_with_members}`)
+
+                            let reviewers = ''
+                            // If teams with members empty, find org admins
+                            if (teams_with_members.length === 0) {
+                                const org_admins = await client.request(`GET /orgs/{org}/members`, {
+                                    org: argv.org,
+                                    role: "admin",
+                                    headers: {
+                                        'X-GitHub-Api-Version': '2022-11-28'
+                                    }
+                                })
+
+                                logger.log(org_admins)
+                                for (const member of org_admins) {
+                                    logger.log(member)
+                                    reviewers += ` --reviewer @${member}`
+                                }
+                            } else {
+                                for (const team of teams_with_members) {
+                                    logger.log(team)
+                                    reviewers += ` --reviewer @${argv.org}/${team}`
+                                }
+                            }
+
+                            logger.log(reviewers)
+                            shell.exec(`gh pr --repo ${argv.org}/${repo.name} create --title "Merge Upstream" --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" --base ${repo.default_branch} --head "${repo.default_branch}-sync" ${reviewers}`)
+
+                        } else {
+                            console.info('Common Ancestor matches upstream so nothing to merge')
+                        }
+                    } else {
+                        logger.warn(`Failed to clone ${repo.name}`)
+                    }
+                }
+            }
+        }
     } catch (error) {
         logger.error(error);
     }
     finally {
-        shell.exec(`rm -rf ${argv.repo}`)
+        shell.exec(`rm - rf ${argv.repo}`)
     }
 }
 
