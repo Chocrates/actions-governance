@@ -170,7 +170,7 @@ async function main() {
         }
 
         // print results
-        logger.log(`${JSON.stringify(actions_repositories)}`)
+        logger.debug(`${JSON.stringify(actions_repositories)}`)
 
         /*
         
@@ -236,86 +236,93 @@ async function main() {
 
         // loop through repositories
         for (const repo of actions_repositories) {
-            logger.log(`Repo ${repo.name} scanning enabled: ${repo.scanning_enabled} scanning workflow: ${repo.scanning_workflow} all alerts closed: ${repo.all_alerts_closed}`)
+            logger.debug(`Repo ${repo.name} scanning enabled: ${repo.scanning_enabled} scanning workflow: ${repo.scanning_workflow} all alerts closed: ${repo.all_alerts_closed}`)
             // if scanning is enabled, and there are alerts, and there are open alerts, nag
             if (!repo.scanning_enabled || !repo.scanning_workflow || !repo.all_alerts_closed) {
                 if (repo.description === '') {
                     logger.info(`Description is empty, can't sync upstream to ${repo.name}`)
                 } else {
-                    const verbosity = logger.VERBOSITY_LEVEL >= 2 == true ? 'GIT_CURL_VERBOSE=1 ' : ''
-                    if (shell.exec(`${verbosity}git clone https://${argv.token}@github.com/${argv.org}/${repo.name}.git`, { silent: logger.VERBOSITY_LEVEL < 2 }).code === 0) {
-                        shell.exec(`cd ${repo.name} && curl https://raw.githubusercontent.com/repo-sync/github-sync/3832fe8e2be32372e1b3970bbae8e7079edeec88/github-sync.sh > github-sync.sh`)
-                        shell.exec(`pwd && cd ${repo.name} && GITHUB_TOKEN="${argv.token}" GITHUB_REPOSITORY="${argv.org}/${repo.name}" bash github-sync.sh ${repo.description} "${repo.default_branch}:${repo.default_branch}-sync"`)
-                        // Get common ancestor
-                        const common_ancestor = shell.exec(`cd ${repo.name} && git merge-base remotes/origin/${repo.default_branch}-sync HEAD`, { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
-                        // Get head of sync branch
-                        const sync_head = shell.exec(`cd ${repo.name} && git show-ref remotes/origin/${repo.default_branch}-sync -s`, { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
-                        // Open a PR if there is stuff to merge
-                        if (common_ancestor != sync_head) {
-                            // Find Admin Team
-                            const teams_with_members = []
-                            const admin_teams = await client.request(`GET /repos/${argv.org}/${repo.name}/teams`, {
-                                headers: {
-                                    'X-GitHub-Api-Version': '2022-11-28'
-
-                                }
-                            }).data
-
-                            for (const team of admin_teams) {
-                                const current_team_members = await client.request(`GET ${team.members_url.replace(/{\/member}/, '')}`, {
+                    try {
+                        const verbosity = logger.VERBOSITY_LEVEL >= 2 == true ? 'GIT_CURL_VERBOSE=1 ' : ''
+                        if (shell.exec(`${verbosity}git clone https://${argv.token}@github.com/${argv.org}/${repo.name}.git`, { silent: logger.VERBOSITY_LEVEL < 2 }).code === 0) {
+                            shell.exec(`cd ${repo.name} && curl https://raw.githubusercontent.com/repo-sync/github-sync/3832fe8e2be32372e1b3970bbae8e7079edeec88/github-sync.sh > github-sync.sh`)
+                            shell.exec(`pwd && cd ${repo.name} && GITHUB_TOKEN="${argv.token}" GITHUB_REPOSITORY="${argv.org}/${repo.name}" bash github-sync.sh ${repo.description} "${repo.default_branch}:${repo.default_branch}-sync"`)
+                            // Get common ancestor
+                            const common_ancestor = shell.exec(`cd ${repo.name} && git merge-base remotes/origin/${repo.default_branch}-sync HEAD`, { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
+                            // Get head of sync branch
+                            const sync_head = shell.exec(`cd ${repo.name} && git show-ref remotes/origin/${repo.default_branch}-sync -s`, { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
+                            // Open a PR if there is stuff to merge
+                            if (common_ancestor != sync_head) {
+                                // Find Admin Team
+                                const teams_with_members = []
+                                const admin_teams = await client.paginate(`GET /repos/${argv.org}/${repo.name}/teams`, {
                                     headers: {
                                         'X-GitHub-Api-Version': '2022-11-28'
-                                    }
 
-                                }).data
-
-                                if (current_team_members.length > 0) {
-                                    teams_with_members.push(team)
-                                }
-                            }
-
-                            logger.debug(`Teams with Members ${teams_with_members}`)
-
-                            let reviewers = ''
-                            // If teams with members empty, find org admins
-                            if (teams_with_members.length === 0) {
-                                const org_admins = await client.request(`GET /orgs/{org}/members`, {
-                                    org: argv.org,
-                                    role: "admin",
-                                    headers: {
-                                        'X-GitHub-Api-Version': '2022-11-28'
                                     }
                                 })
 
-                                logger.log(org_admins)
-                                for (const member of org_admins) {
-                                    logger.log(member)
-                                    reviewers += ` --reviewer @${member}`
+                                logger.debug(`Admin Teams: ${util.inspect(admin_teams, { depth: null })}`)
+
+                                for (const team of admin_teams) {
+                                    const current_team_members = await client.paginate(`GET ${team.members_url.replace(/{\/member}/, '')}`, {
+                                        headers: {
+                                            'X-GitHub-Api-Version': '2022-11-28'
+                                        }
+
+                                    })
+                                    logger.debug(`Team Members: ${util.inspect(current_team_members, { depth: null })}`)
+
+                                    if (current_team_members.length > 0) {
+                                        teams_with_members.push(team)
+                                    }
                                 }
+
+                                logger.debug(`Teams with Members: ${util.inspect(teams_with_members, { depth: null })}`)
+
+                                let reviewers = ''
+                                // If teams with members empty, find org admins
+                                if (teams_with_members.length === 0) {
+                                    const org_admins = await client.request(`GET /orgs/{org}/members`, {
+                                        org: argv.org,
+                                        role: "admin",
+                                        headers: {
+                                            'X-GitHub-Api-Version': '2022-11-28'
+                                        }
+                                    })
+
+                                    logger.debug(`Org Admins: ${util.inspect(org_admins, { depth: null })}`)
+                                    for (const member of org_admins) {
+                                        logger.debug(`${util.inspect(member, { depth: null })}`)
+                                        reviewers += ` --reviewer @${member.login}`
+                                    }
+                                } else {
+                                    for (const team of teams_with_members) {
+                                        logger.debug(`${util.inspect(team, { depth: null })}`)
+                                        reviewers += ` --reviewer @${argv.org}/${team.name}`
+                                    }
+                                }
+
+                                logger.debug(`Reviewers: ${util.inspect(reviewers, { depth: null })}`)
+                                shell.exec(`gh pr --repo ${argv.org}/${repo.name} create --title "Merge Upstream" --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" --base ${repo.default_branch} --head "${repo.default_branch}-sync" ${reviewers}`)
+
                             } else {
-                                for (const team of teams_with_members) {
-                                    logger.log(team)
-                                    reviewers += ` --reviewer @${argv.org}/${team}`
-                                }
+                                logger.info('Common Ancestor matches upstream so nothing to merge')
                             }
-
-                            logger.log(reviewers)
-                            shell.exec(`gh pr --repo ${argv.org}/${repo.name} create --title "Merge Upstream" --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" --base ${repo.default_branch} --head "${repo.default_branch}-sync" ${reviewers}`)
-
                         } else {
-                            console.info('Common Ancestor matches upstream so nothing to merge')
+                            logger.warn(`Failed to clone ${repo.name}`)
                         }
-                    } else {
-                        logger.warn(`Failed to clone ${repo.name}`)
+                    } catch (error) {
+                        logger.error(error)
+                    }
+                    finally {
+                        shell.exec(`rm -rf ${repo.name}`)
                     }
                 }
             }
         }
     } catch (error) {
         logger.error(error);
-    }
-    finally {
-        shell.exec(`rm - rf ${argv.repo}`)
     }
 }
 
