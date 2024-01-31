@@ -283,7 +283,7 @@ async function main() {
                                 let reviewers = ''
                                 // If teams with members empty, find org admins
                                 if (teams_with_members.length === 0) {
-                                    const org_admins = await client.request(`GET /orgs/{org}/members`, {
+                                    const org_admins = await client.paginate(`GET /orgs/{org}/members`, {
                                         org: argv.org,
                                         role: "admin",
                                         headers: {
@@ -294,7 +294,7 @@ async function main() {
                                     logger.debug(`Org Admins: ${util.inspect(org_admins, { depth: null })}`)
                                     for (const member of org_admins) {
                                         logger.debug(`${util.inspect(member, { depth: null })}`)
-                                        reviewers += ` --reviewer @${member.login}`
+                                        reviewers += ` --reviewer ${member.login}`
                                     }
                                 } else {
                                     for (const team of teams_with_members) {
