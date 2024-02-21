@@ -7,12 +7,7 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-      - run: npm install
-      - name: Run Scans
-        shell: bash -x {0}
-        env:
-          GH_TOKEN: ${{ secrets.ORG_TOKEN }}
-        run: |
-          node scan-repos.js -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} 
+      - uses: chocrates-test-org/actions-governance@main
+        with:
+          token: ${{ secrets.ORG_TOKEN }}
+          organization: 'chocrates-test-org'
