@@ -15121,20 +15121,22 @@ async function main() {
                         logger.info(`No scanning results: ${error}`)
                     }
                 }
+                
+                // if ther are no results then all alerts are closed remains false
+                if (code_scanning_alerts) {
+                    logger.debug(code_scanning_alerts)
+                    const open_alerts = code_scanning_alerts.data.filter(alert => alert.state === 'open')
 
-
-                logger.debug(code_scanning_alerts)
-                const open_alerts = code_scanning_alerts.data.filter(alert => alert.state === 'open')
-
-                // if there are no alerts, print a message
-                if (open_alerts.length == 0) {
-                    logger.info("No alerts found")
-                    repository['all_alerts_closed'] = true
-                } else {
-                    repository['all_alerts_closed'] = false
-                    // print code scanning alerts
-                    for (let i = 0; i < code_scanning_alerts.data.length; i++) {
-                        logger.info(code_scanning_alerts.data[i].rule.name);
+                    // if there are no alerts, print a message
+                    if (open_alerts.length == 0) {
+                        logger.info("No alerts found")
+                        repository['all_alerts_closed'] = true
+                    } else {
+                        repository['all_alerts_closed'] = false
+                        // print code scanning alerts
+                        for (let i = 0; i < code_scanning_alerts.data.length; i++) {
+                            logger.info(code_scanning_alerts.data[i].rule.name);
+                        }
                     }
                 }
             }
