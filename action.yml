@@ -17,7 +17,7 @@ runs:
         ORG: ${{ inputs.organization}}
       run: |
         VERBOSE=''
-        if [[ "${{ runner.debug }}" == "true" ]]
+        if [[ "${{ runner.debug }}" == "true" ]]; then
           VERBOSE='-vvv' 
         fi
         node dist/index.js --token $GH_TOKEN --organization $ORG ${VERBOSE:+"$VERBOSE"}
