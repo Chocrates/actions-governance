@@ -108,9 +108,7 @@ async function main() {
 
         logger.error(actions_repositories)
         // loop through results
-        for (let i = 0; i < actions_repositories.length; i++) {
-            const repository = actions_repositories[i]
-
+        for (const repository of actions_repositories) {
             let repository_configuration = await client.request(`GET /repos/{owner}/{repo}`, {
                 owner: argv.org,
                 repo: repository.name,
