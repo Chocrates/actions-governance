@@ -14985,6 +14985,13 @@ async function main() {
             global: true,
             demandOption: true
         })
+        .option("nag-number", {
+            alias: "n",
+            description: "Number of issues to create to warn users of non compliance",
+            global: true,
+            demandOption: false,
+            default: 3
+        })
         .count("verbose")
         .option("verbose", {
             alias: "v",
@@ -14997,6 +15004,7 @@ async function main() {
         .argv;
 
     const VERBOSITY_LEVEL = argv.verbose
+    const NAG_NUMBER = argv.nagNumber
 
     const logger = {
         error: (message) => { console.error(message) },
@@ -15057,7 +15065,8 @@ async function main() {
                 url: item.repository.html_url,
                 scanning_enabled: false,
                 scanning_workflow: false,
-                all_alerts_closed: false
+                all_alerts_closed: false,
+                visibility: undefined
             });
 
         }
@@ -15073,6 +15082,8 @@ async function main() {
                     'X-GitHub-Api-Version': '2022-11-28'
                 }
             })
+
+            repository.visibility = repository_configuration.data.visibility // kind of nasty but this should set the value in the actions_repositories object which we can use later
 
             logger.debug(`${util.inspect(repository_configuration, { depth: null })}`)
 
@@ -15136,68 +15147,6 @@ async function main() {
         // print results
         logger.debug(`${JSON.stringify(actions_repositories)}`)
 
-        /*
-        
-                  node scan-repos.js -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} | 
-                    jq -c '.[]' | 
-                    while read i; do 
-                      # Set json object as bash variables
-                      eval $(echo $i | jq -r '. | to_entries | .[] | .key + "=" + (.value | @sh)')
-        
-                      if [[ $scanning_enabled != true || $scanning_workflow != true || $all_alerts_closed != true ]]; then
-                        if [[ -z "$description" ]]; then
-                          echo "Description is empty, can't sync upstream to $name"
-                        else
-                          git clone https://${{ secrets.ORG_TOKEN }}@github.com/${{ github.repository_owner }}/$name.git
-                          cd $name
-                          curl https://raw.githubusercontent.com/repo-sync/github-sync/3832fe8e2be32372e1b3970bbae8e7079edeec88/github-sync.sh > github-sync.sh
-        
-                          GITHUB_TOKEN="${{ secrets.ORG_TOKEN }}" GITHUB_REPOSITORY="${{ github.repository_owner }}/$name" bash github-sync.sh $description "$default_branch:$default_branch-sync"
-                          
-                          # Get common ancestor
-                          COMMON_ANCESTOR=$(git merge-base remotes/origin/$default_branch-sync HEAD)
-                          # Get head of sync branch
-                          SYNC_HEAD=$(git show-ref remotes/origin/$default_branch-sync -s)
-                          # Open a PR if there is stuff to merge
-                          if [[ $COMMON_ANCESTOR != $SYNC_HEAD ]]; then
-                            
-                            # Find Admin Team
-                            TEAMS_WITH_MEMBERS=()
-                            ADMIN_TEAMS=$(gh api /repos/chocrates-test-org/go-dependency-submission/teams | jq -c '.[] | select(.permission == "admin")');
-                            IFS=$'\n'
-                            for CURRENT_TEAM in $ADMIN_TEAMS; do                                                                                                                                                                                                  
-                              CURRENT_TEAM_MEMBERS=$(GH_PAGER='' gh api $(echo $CURRENT_TEAM | jq '.members_url' | sed 's/"\(.*\){\/member}"/\1/'))
-                              if [[ $(echo $CURRENT_TEAM_MEMBERS | jq '. | length') -gt 0 ]]; then
-                                echo "Current Team: $CURRENT_TEAM"
-                                TEAMS_WITH_MEMBERS+=($CURRENT_TEAM)
-                              else
-                                echo "Team $(echo $CURRENT_TEAM | jq '.name') doesn't have members"
-                              fi
-                            done
-                            
-                            echo "Teams with Members $TEAMS_WITH_MEMBERS"
-        
-                            gh pr --repo "${{ github.repository_owner }}/$name" create --title "Merge Upstream" \
-                              --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" \
-                              --base $default_branch --head "$default_branch-sync" \
-                              --reviewer @chocrates-test-org/one
-                              
-                          else
-                            echo "Common ancestor matches upstream so nothing to merge"
-                          fi
-                          
-                          # node notify-non-compliance -t ${{ secrets.ORG_TOKEN }} -o ${{ github.repository_owner }} -r $name
-                          cd ..
-                          rm -rf $name
-                        fi
-                      else
-                        echo "don't nag"
-                      fi
-                    done
-        */
-
-
-
         // loop through repositories
         for (const repo of actions_repositories) {
             logger.debug(`Repo ${repo.name} scanning enabled: ${repo.scanning_enabled} scanning workflow: ${repo.scanning_workflow} all alerts closed: ${repo.all_alerts_closed}`)
@@ -15222,7 +15171,6 @@ async function main() {
                                 const admin_teams = await client.paginate(`GET /repos/${argv.org}/${repo.name}/teams`, {
                                     headers: {
                                         'X-GitHub-Api-Version': '2022-11-28'
-
                                     }
                                 })
 
@@ -15295,15 +15243,18 @@ async function main() {
                     }
                 })
 
-                if (issues.length > 3) {
-                    await client.request(`PUT /repos/{owner}/{repo}/actions/permissions/access`, {
-                        owner: argv.org,
-                        repo: repo.name,
-                        access_level: "none",
-                        headers: {
-                            'X-GitHub-Api-Version': '2022-11-28'
-                        }
-                    })
+                if (issues.length > NAG_NUMBER) {
+                    logger.error(`Repository visibilty ${repo.name}`)
+                    if (repo.visibility !== 'public') {
+                        await client.request(`PUT /repos/{owner}/{repo}/actions/permissions/access`, {
+                            owner: argv.org,
+                            repo: repo.name,
+                            access_level: "none",
+                            headers: {
+                                'X-GitHub-Api-Version': '2022-11-28'
+                            }
+                        })
+                    }
 
                     await client.request(`POST /repos/{owner}/{repo}/issues`, {
                         owner: argv.org,
