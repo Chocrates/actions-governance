@@ -15082,7 +15082,7 @@ async function main() {
                 }
             })
             
-            logger.error(`Repository Visibility ${repo.name}, repository_configuration.data.visibility ${repository_configuration.data.visibility}`)
+            logger.error(`Repository Visibility ${repository.name}, repository_configuration.data.visibility ${repository_configuration.data.visibility}`)
             repository.visibility = repository_configuration.data.visibility // kind of nasty but this should set the value in the actions_repositories object which we can use later
 
             logger.debug(`${util.inspect(repository_configuration, { depth: null })}`)
