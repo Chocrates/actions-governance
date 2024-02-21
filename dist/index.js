@@ -15049,7 +15049,6 @@ async function main() {
             headers: {
                 'X-GitHub-Api-Version': '2022-11-28'
             }
-
         })
 
         logger.debug(search_results)
@@ -15082,7 +15081,8 @@ async function main() {
                     'X-GitHub-Api-Version': '2022-11-28'
                 }
             })
-
+            
+            logger.error(`Repository Visibility ${repo.name}, repository_configuration.data.visibility ${repository_configuration.data.visibility}`)
             repository.visibility = repository_configuration.data.visibility // kind of nasty but this should set the value in the actions_repositories object which we can use later
 
             logger.debug(`${util.inspect(repository_configuration, { depth: null })}`)
