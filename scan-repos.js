@@ -116,7 +116,6 @@ async function main() {
                 }
             })
 
-            logger.error(`Repository Visibility ${repository.name}, repository_configuration.data.visibility ${repository_configuration.data.visibility}`)
             repository.visibility = repository_configuration.data.visibility // kind of nasty but this should set the value in the actions_repositories object which we can use later
 
             logger.debug(`${util.inspect(repository_configuration, { depth: null })}`)
@@ -278,7 +277,6 @@ async function main() {
                 })
 
                 if (issues.length > NAG_NUMBER) {
-                    logger.error(`Repository visibilty ${repo.visibility}`)
                     if (repo.visibility !== 'public') {
                         await client.request(`PUT /repos/{owner}/{repo}/actions/permissions/access`, {
                             owner: argv.org,

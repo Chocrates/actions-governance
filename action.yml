@@ -24,7 +24,4 @@ runs:
         if [[ "${{ runner.debug }}" == "1" ]]; then
           VERBOSE='-vvv' 
         fi
-        pwd
-        ls -l
         node dist/index.js --token $GH_TOKEN --org $ORG ${VERBOSE:+"$VERBOSE"}
-        echo "Exit Code: $?"
