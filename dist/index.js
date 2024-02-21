@@ -15070,7 +15070,6 @@ async function main() {
 
         }
 
-        logger.error(actions_repositories)
         // loop through results
         for (const repository of actions_repositories) {
             let repository_configuration = await client.request(`GET /repos/{owner}/{repo}`, {
@@ -15080,7 +15079,7 @@ async function main() {
                     'X-GitHub-Api-Version': '2022-11-28'
                 }
             })
-            
+
             logger.error(`Repository Visibility ${repository.name}, repository_configuration.data.visibility ${repository_configuration.data.visibility}`)
             repository.visibility = repository_configuration.data.visibility // kind of nasty but this should set the value in the actions_repositories object which we can use later
 
@@ -15120,7 +15119,6 @@ async function main() {
                         throw error
                     } else {
                         logger.info(`No scanning results: ${error}`)
-                        break
                     }
                 }
 
@@ -15139,7 +15137,6 @@ async function main() {
                         logger.info(code_scanning_alerts.data[i].rule.name);
                     }
                 }
-
             }
         }
 
