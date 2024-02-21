@@ -106,6 +106,7 @@ async function main() {
 
         }
 
+        logger.error(actions_repositories)
         // loop through results
         for (let i = 0; i < actions_repositories.length; i++) {
             const repository = actions_repositories[i]
