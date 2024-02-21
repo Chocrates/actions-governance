@@ -319,6 +319,51 @@ async function main() {
                         shell.exec(`rm -rf ${repo.name}`)
                     }
                 }
+
+                // check if nagged 3 times
+                const issues = await client.paginate(`GET /repos/{owner}/{repo}/issues`, {
+                    owner: argv.org,
+                    repo: repo.name,
+                    state: "all",
+                    labels: "non-compliant",
+                    headers: {
+                        'X-GitHub-Api-Version': '2022-11-28'
+                    }
+                })
+
+                if (issues.length > 3) {
+                    await client.request(`PUT /repos/{owner}/{repo}/actions/permissions/access`, {
+                        owner: argv.org,
+                        repo: repo.name,
+                        access_level: "none",
+                        headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    })
+
+                    await client.request(`POST /repos/{owner}/{repo}/issues`, {
+                        owner: argv.org,
+                        repo: repo.name,
+                        title: 'Repository Disabled for Actions',
+                        body: 'This repository has been disabled for use within actions due to non-compliance.  Please remediate by enabling code scanning and resolving all alerts before contacting the GitHub Organization Admins to re-enable this Action.',
+                        labels: ['non-compliant'],
+                        headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    })
+                } else {
+                    // nag
+                    await client.request(`POST /repos/{owner}/{repo}/issues`, {
+                        owner: argv.org,
+                        repo: repo.name,
+                        title: 'Repository Non-Compliant for use with GitHub Actions',
+                        body: 'This repository is non-compliant for use with GitHub Actions.  To remediate this please make sure Dependabot and code-scanning are enabled and all alerts are resolved. If applicable, a PR has been opened to merge upstream into this repository in hopes that it helps this repository come back in to compliance.  This repository will be disabled for use within actions after the 3rd notification.',
+                        labels: ['non-compliant'],
+                        headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    })
+                }
             }
         }
     } catch (error) {
