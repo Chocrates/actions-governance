@@ -21,7 +21,7 @@ runs:
         ORG: ${{ inputs.organization}}
       run: |
         VERBOSE=''
-        if [[ "${{ runner.debug }}" == "true" ]]; then
+        if [[ "${{ runner.debug }}" == "1" ]]; then
           VERBOSE='-vvv' 
         fi
         pwd
