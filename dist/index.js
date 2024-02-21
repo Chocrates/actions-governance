@@ -15244,7 +15244,7 @@ async function main() {
                 })
 
                 if (issues.length > NAG_NUMBER) {
-                    logger.error(`Repository visibilty ${repo.name}`)
+                    logger.error(`Repository visibilty ${repo.visibility}`)
                     if (repo.visibility !== 'public') {
                         await client.request(`PUT /repos/{owner}/{repo}/actions/permissions/access`, {
                             owner: argv.org,
