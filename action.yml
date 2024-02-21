@@ -10,6 +10,9 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
     - name: Run Scan
       shell: bash
       env:
@@ -20,4 +23,6 @@ runs:
         if [[ "${{ runner.debug }}" == "true" ]]; then
           VERBOSE='-vvv' 
         fi
+        pwd
+        ls -l
         node dist/index.js --token $GH_TOKEN --organization $ORG ${VERBOSE:+"$VERBOSE"}
