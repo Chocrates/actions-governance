@@ -26,4 +26,4 @@ runs:
         fi
         pwd
         ls -l
-        node dist/index.js --token $GH_TOKEN --organization $ORG ${VERBOSE:+"$VERBOSE"}
+        node dist/index.js --token $GH_TOKEN --org $ORG ${VERBOSE:+"$VERBOSE"}
