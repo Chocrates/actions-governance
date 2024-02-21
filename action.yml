@@ -1,0 +1,23 @@
+name: 'Actions Governance'
+description: 'An oppinionated approach to ensuring that local actions are staying compliant'
+inputs:
+  organization: 
+    description: 'The organization in which to scan'
+    required: true
+  token:
+    description: 'The PAT or GitHub App Installation token used to authenticate.'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Run Scan
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        ORG: ${{ inputs.organization}}
+      run: |
+        VERBOSE=''
+        if [[ "${{ runner.debug }}" == "true" ]]
+          VERBOSE='-vvv' 
+        fi
+        node dist/index.js --token $GH_TOKEN --organization $ORG ${VERBOSE:+"$VERBOSE"}
