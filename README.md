@@ -17,7 +17,7 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: chocrates-test-org/actions-governance@main
+      - uses: chocrates-test-org/actions-governance@v1
         with:
           token: ${{ secrets.ORG_TOKEN }}
           organization: 'chocrates-test-org'
@@ -42,7 +42,7 @@ jobs:
           private-key: ${{ secrets.PRIVATE_KEY }}
           github-api-url: "https://github.acme-inc.com/api/v3"
 
-      - uses: chocrates-test-org/actions-governance@main
+      - uses: chocrates-test-org/actions-governance@v1
         with:
           token: ${{ steps.app-token.outputs.token }}
           organization: 'chocrates-test-org'
