@@ -22,6 +22,31 @@ jobs:
           token: ${{ secrets.ORG_TOKEN }}
           organization: 'chocrates-test-org'
 ```
+Or using a GitHub App
+
+```yaml
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  '30 5,17 * * *'
+
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+          github-api-url: "https://github.acme-inc.com/api/v3"
+
+      - uses: chocrates-test-org/actions-governance@main
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          organization: 'chocrates-test-org'
+```
 
 ## Compliance
 
