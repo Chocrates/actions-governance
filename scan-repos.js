@@ -100,6 +100,7 @@ async function main() {
                 url: item.repository.html_url,
                 scanning_enabled: false,
                 scanning_workflow: false,
+                dependabot_scanning_enabled: false,
                 all_alerts_closed: false,
                 visibility: undefined
             });
@@ -123,6 +124,7 @@ async function main() {
             repository['description'] = repository_configuration.data.description ?? ''
             repository['default_branch'] = repository_configuration.data.default_branch
             repository['scanning_enabled'] = repository_configuration.data.security_and_analysis?.advanced_security?.status === 'enabled'
+            repository['dependabot_scanning_enabled'] = repository_configuration.data.security_and_analysis?.dependabot_security_updates?.status === 'enabled'
 
             // search for code in org
             let search_code_scanning_results = await client.request(`GET /search/code`, {
@@ -175,6 +177,45 @@ async function main() {
                     }
                 }
             }
+
+            if(repository.dependabot_scanning_enabled){
+                let dependabot_alerts
+                try {
+                    dependabot_alerts = await client.paginate(`GET /repos/{owner}/{repo}/dependabot/alerts`, {
+                        owner: argv.org,
+                        repo: repository.name,
+                        headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    })
+                } catch (error) {
+                    // ignore 404 errors
+                    if (error.status !== 404) {
+                        throw error
+                    } else {
+                        logger.info(`No dependabot alerts: ${error}`)
+                    }
+                }
+                
+                // if ther are no results then all alerts are closed remains false
+                if (dependabot_alerts) {
+                    logger.debug(dependabot_alerts)
+                    const open_alerts = dependabot_alerts.data.filter(alert => alert.state === 'open')
+
+                    // if there are no alerts, print a message
+                    if (open_alerts.length == 0) {
+                        logger.info("No alerts found")
+                        repository['all_alerts_closed'] = true
+                    } else {
+                        repository['all_alerts_closed'] = false
+                        // print code scanning alerts
+                        for (let i = 0; i < dependabot_alerts.data.length; i++) {
+                            logger.info(_alerts.data[i].security_advisory.cve_id);
+                        }
+                    }
+                }
+
+            }
         }
 
         // print results
@@ -182,9 +223,9 @@ async function main() {
 
         // loop through repositories
         for (const repo of actions_repositories) {
-            logger.debug(`Repo ${repo.name} scanning enabled: ${repo.scanning_enabled} scanning workflow: ${repo.scanning_workflow} all alerts closed: ${repo.all_alerts_closed}`)
+            logger.debug(`Repo ${repo.name} scanning enabled: ${repo.scanning_enabled} scanning workflow: ${repo.scanning_workflow} dependabot scanning enabled: ${repo.dependabot_scanning_enabled} all alerts closed: ${repo.all_alerts_closed}`)
             // if scanning is enabled, and there are alerts, and there are open alerts, nag
-            if (!repo.scanning_enabled || !repo.scanning_workflow || !repo.all_alerts_closed) {
+            if (!repo.scanning_enabled || !repo.scanning_workflow || !repo.all_alerts_closed || !repo.dependabot_scanning_enabled) {
                 if (repo.description === '') {
                     logger.info(`Description is empty, can't sync upstream to ${repo.name}`)
                 } else {
