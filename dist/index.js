@@ -1,791 +1,9 @@
-/******/ (() => { // webpackBootstrap
-/******/ 	var __webpack_modules__ = ({
-
-/***/ 334:
-/***/ ((module) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// pkg/dist-src/index.js
-var dist_src_exports = {};
-__export(dist_src_exports, {
-  createTokenAuth: () => createTokenAuth
-});
-module.exports = __toCommonJS(dist_src_exports);
-
-// pkg/dist-src/auth.js
-var REGEX_IS_INSTALLATION_LEGACY = /^v1\./;
-var REGEX_IS_INSTALLATION = /^ghs_/;
-var REGEX_IS_USER_TO_SERVER = /^ghu_/;
-async function auth(token) {
-  const isApp = token.split(/\./).length === 3;
-  const isInstallation = REGEX_IS_INSTALLATION_LEGACY.test(token) || REGEX_IS_INSTALLATION.test(token);
-  const isUserToServer = REGEX_IS_USER_TO_SERVER.test(token);
-  const tokenType = isApp ? "app" : isInstallation ? "installation" : isUserToServer ? "user-to-server" : "oauth";
-  return {
-    type: "token",
-    token,
-    tokenType
-  };
-}
-
-// pkg/dist-src/with-authorization-prefix.js
-function withAuthorizationPrefix(token) {
-  if (token.split(/\./).length === 3) {
-    return `bearer ${token}`;
-  }
-  return `token ${token}`;
-}
-
-// pkg/dist-src/hook.js
-async function hook(token, request, route, parameters) {
-  const endpoint = request.endpoint.merge(
-    route,
-    parameters
-  );
-  endpoint.headers.authorization = withAuthorizationPrefix(token);
-  return request(endpoint);
-}
-
-// pkg/dist-src/index.js
-var createTokenAuth = function createTokenAuth2(token) {
-  if (!token) {
-    throw new Error("[@octokit/auth-token] No token passed to createTokenAuth");
-  }
-  if (typeof token !== "string") {
-    throw new Error(
-      "[@octokit/auth-token] Token passed to createTokenAuth is not a string"
-    );
-  }
-  token = token.replace(/^(token|bearer) +/i, "");
-  return Object.assign(auth.bind(null, token), {
-    hook: hook.bind(null, token)
-  });
-};
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 6762:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// pkg/dist-src/index.js
-var dist_src_exports = {};
-__export(dist_src_exports, {
-  Octokit: () => Octokit
-});
-module.exports = __toCommonJS(dist_src_exports);
-var import_universal_user_agent = __nccwpck_require__(5030);
-var import_before_after_hook = __nccwpck_require__(3682);
-var import_request = __nccwpck_require__(6234);
-var import_graphql = __nccwpck_require__(8467);
-var import_auth_token = __nccwpck_require__(334);
-
-// pkg/dist-src/version.js
-var VERSION = "5.0.1";
-
-// pkg/dist-src/index.js
-var Octokit = class {
-  static {
-    this.VERSION = VERSION;
-  }
-  static defaults(defaults) {
-    const OctokitWithDefaults = class extends this {
-      constructor(...args) {
-        const options = args[0] || {};
-        if (typeof defaults === "function") {
-          super(defaults(options));
-          return;
-        }
-        super(
-          Object.assign(
-            {},
-            defaults,
-            options,
-            options.userAgent && defaults.userAgent ? {
-              userAgent: `${options.userAgent} ${defaults.userAgent}`
-            } : null
-          )
-        );
-      }
-    };
-    return OctokitWithDefaults;
-  }
-  static {
-    this.plugins = [];
-  }
-  /**
-   * Attach a plugin (or many) to your Octokit instance.
-   *
-   * @example
-   * const API = Octokit.plugin(plugin1, plugin2, plugin3, ...)
-   */
-  static plugin(...newPlugins) {
-    const currentPlugins = this.plugins;
-    const NewOctokit = class extends this {
-      static {
-        this.plugins = currentPlugins.concat(
-          newPlugins.filter((plugin) => !currentPlugins.includes(plugin))
-        );
-      }
-    };
-    return NewOctokit;
-  }
-  constructor(options = {}) {
-    const hook = new import_before_after_hook.Collection();
-    const requestDefaults = {
-      baseUrl: import_request.request.endpoint.DEFAULTS.baseUrl,
-      headers: {},
-      request: Object.assign({}, options.request, {
-        // @ts-ignore internal usage only, no need to type
-        hook: hook.bind(null, "request")
-      }),
-      mediaType: {
-        previews: [],
-        format: ""
-      }
-    };
-    requestDefaults.headers["user-agent"] = [
-      options.userAgent,
-      `octokit-core.js/${VERSION} ${(0, import_universal_user_agent.getUserAgent)()}`
-    ].filter(Boolean).join(" ");
-    if (options.baseUrl) {
-      requestDefaults.baseUrl = options.baseUrl;
-    }
-    if (options.previews) {
-      requestDefaults.mediaType.previews = options.previews;
-    }
-    if (options.timeZone) {
-      requestDefaults.headers["time-zone"] = options.timeZone;
-    }
-    this.request = import_request.request.defaults(requestDefaults);
-    this.graphql = (0, import_graphql.withCustomRequest)(this.request).defaults(requestDefaults);
-    this.log = Object.assign(
-      {
-        debug: () => {
-        },
-        info: () => {
-        },
-        warn: console.warn.bind(console),
-        error: console.error.bind(console)
-      },
-      options.log
-    );
-    this.hook = hook;
-    if (!options.authStrategy) {
-      if (!options.auth) {
-        this.auth = async () => ({
-          type: "unauthenticated"
-        });
-      } else {
-        const auth = (0, import_auth_token.createTokenAuth)(options.auth);
-        hook.wrap("request", auth.hook);
-        this.auth = auth;
-      }
-    } else {
-      const { authStrategy, ...otherOptions } = options;
-      const auth = authStrategy(
-        Object.assign(
-          {
-            request: this.request,
-            log: this.log,
-            // we pass the current octokit instance as well as its constructor options
-            // to allow for authentication strategies that return a new octokit instance
-            // that shares the same internal state as the current one. The original
-            // requirement for this was the "event-octokit" authentication strategy
-            // of https://github.com/probot/octokit-auth-probot.
-            octokit: this,
-            octokitOptions: otherOptions
-          },
-          options.auth
-        )
-      );
-      hook.wrap("request", auth.hook);
-      this.auth = auth;
-    }
-    const classConstructor = this.constructor;
-    classConstructor.plugins.forEach((plugin) => {
-      Object.assign(this, plugin(this, options));
-    });
-  }
-};
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 9440:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// pkg/dist-src/index.js
-var dist_src_exports = {};
-__export(dist_src_exports, {
-  endpoint: () => endpoint
-});
-module.exports = __toCommonJS(dist_src_exports);
-
-// pkg/dist-src/defaults.js
-var import_universal_user_agent = __nccwpck_require__(5030);
-
-// pkg/dist-src/version.js
-var VERSION = "9.0.2";
-
-// pkg/dist-src/defaults.js
-var userAgent = `octokit-endpoint.js/${VERSION} ${(0, import_universal_user_agent.getUserAgent)()}`;
-var DEFAULTS = {
-  method: "GET",
-  baseUrl: "https://api.github.com",
-  headers: {
-    accept: "application/vnd.github.v3+json",
-    "user-agent": userAgent
-  },
-  mediaType: {
-    format: ""
-  }
-};
-
-// pkg/dist-src/util/lowercase-keys.js
-function lowercaseKeys(object) {
-  if (!object) {
-    return {};
-  }
-  return Object.keys(object).reduce((newObj, key) => {
-    newObj[key.toLowerCase()] = object[key];
-    return newObj;
-  }, {});
-}
-
-// pkg/dist-src/util/merge-deep.js
-var import_is_plain_object = __nccwpck_require__(3287);
-function mergeDeep(defaults, options) {
-  const result = Object.assign({}, defaults);
-  Object.keys(options).forEach((key) => {
-    if ((0, import_is_plain_object.isPlainObject)(options[key])) {
-      if (!(key in defaults))
-        Object.assign(result, { [key]: options[key] });
-      else
-        result[key] = mergeDeep(defaults[key], options[key]);
-    } else {
-      Object.assign(result, { [key]: options[key] });
-    }
-  });
-  return result;
-}
-
-// pkg/dist-src/util/remove-undefined-properties.js
-function removeUndefinedProperties(obj) {
-  for (const key in obj) {
-    if (obj[key] === void 0) {
-      delete obj[key];
-    }
-  }
-  return obj;
-}
-
-// pkg/dist-src/merge.js
-function merge(defaults, route, options) {
-  if (typeof route === "string") {
-    let [method, url] = route.split(" ");
-    options = Object.assign(url ? { method, url } : { url: method }, options);
-  } else {
-    options = Object.assign({}, route);
-  }
-  options.headers = lowercaseKeys(options.headers);
-  removeUndefinedProperties(options);
-  removeUndefinedProperties(options.headers);
-  const mergedOptions = mergeDeep(defaults || {}, options);
-  if (options.url === "/graphql") {
-    if (defaults && defaults.mediaType.previews?.length) {
-      mergedOptions.mediaType.previews = defaults.mediaType.previews.filter(
-        (preview) => !mergedOptions.mediaType.previews.includes(preview)
-      ).concat(mergedOptions.mediaType.previews);
-    }
-    mergedOptions.mediaType.previews = (mergedOptions.mediaType.previews || []).map((preview) => preview.replace(/-preview/, ""));
-  }
-  return mergedOptions;
-}
-
-// pkg/dist-src/util/add-query-parameters.js
-function addQueryParameters(url, parameters) {
-  const separator = /\?/.test(url) ? "&" : "?";
-  const names = Object.keys(parameters);
-  if (names.length === 0) {
-    return url;
-  }
-  return url + separator + names.map((name) => {
-    if (name === "q") {
-      return "q=" + parameters.q.split("+").map(encodeURIComponent).join("+");
-    }
-    return `${name}=${encodeURIComponent(parameters[name])}`;
-  }).join("&");
-}
-
-// pkg/dist-src/util/extract-url-variable-names.js
-var urlVariableRegex = /\{[^}]+\}/g;
-function removeNonChars(variableName) {
-  return variableName.replace(/^\W+|\W+$/g, "").split(/,/);
-}
-function extractUrlVariableNames(url) {
-  const matches = url.match(urlVariableRegex);
-  if (!matches) {
-    return [];
-  }
-  return matches.map(removeNonChars).reduce((a, b) => a.concat(b), []);
-}
-
-// pkg/dist-src/util/omit.js
-function omit(object, keysToOmit) {
-  return Object.keys(object).filter((option) => !keysToOmit.includes(option)).reduce((obj, key) => {
-    obj[key] = object[key];
-    return obj;
-  }, {});
-}
-
-// pkg/dist-src/util/url-template.js
-function encodeReserved(str) {
-  return str.split(/(%[0-9A-Fa-f]{2})/g).map(function(part) {
-    if (!/%[0-9A-Fa-f]/.test(part)) {
-      part = encodeURI(part).replace(/%5B/g, "[").replace(/%5D/g, "]");
-    }
-    return part;
-  }).join("");
-}
-function encodeUnreserved(str) {
-  return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
-    return "%" + c.charCodeAt(0).toString(16).toUpperCase();
-  });
-}
-function encodeValue(operator, value, key) {
-  value = operator === "+" || operator === "#" ? encodeReserved(value) : encodeUnreserved(value);
-  if (key) {
-    return encodeUnreserved(key) + "=" + value;
-  } else {
-    return value;
-  }
-}
-function isDefined(value) {
-  return value !== void 0 && value !== null;
-}
-function isKeyOperator(operator) {
-  return operator === ";" || operator === "&" || operator === "?";
-}
-function getValues(context, operator, key, modifier) {
-  var value = context[key], result = [];
-  if (isDefined(value) && value !== "") {
-    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-      value = value.toString();
-      if (modifier && modifier !== "*") {
-        value = value.substring(0, parseInt(modifier, 10));
-      }
-      result.push(
-        encodeValue(operator, value, isKeyOperator(operator) ? key : "")
-      );
-    } else {
-      if (modifier === "*") {
-        if (Array.isArray(value)) {
-          value.filter(isDefined).forEach(function(value2) {
-            result.push(
-              encodeValue(operator, value2, isKeyOperator(operator) ? key : "")
-            );
-          });
-        } else {
-          Object.keys(value).forEach(function(k) {
-            if (isDefined(value[k])) {
-              result.push(encodeValue(operator, value[k], k));
-            }
-          });
-        }
-      } else {
-        const tmp = [];
-        if (Array.isArray(value)) {
-          value.filter(isDefined).forEach(function(value2) {
-            tmp.push(encodeValue(operator, value2));
-          });
-        } else {
-          Object.keys(value).forEach(function(k) {
-            if (isDefined(value[k])) {
-              tmp.push(encodeUnreserved(k));
-              tmp.push(encodeValue(operator, value[k].toString()));
-            }
-          });
-        }
-        if (isKeyOperator(operator)) {
-          result.push(encodeUnreserved(key) + "=" + tmp.join(","));
-        } else if (tmp.length !== 0) {
-          result.push(tmp.join(","));
-        }
-      }
-    }
-  } else {
-    if (operator === ";") {
-      if (isDefined(value)) {
-        result.push(encodeUnreserved(key));
-      }
-    } else if (value === "" && (operator === "&" || operator === "?")) {
-      result.push(encodeUnreserved(key) + "=");
-    } else if (value === "") {
-      result.push("");
-    }
-  }
-  return result;
-}
-function parseUrl(template) {
-  return {
-    expand: expand.bind(null, template)
-  };
-}
-function expand(template, context) {
-  var operators = ["+", "#", ".", "/", ";", "?", "&"];
-  template = template.replace(
-    /\{([^\{\}]+)\}|([^\{\}]+)/g,
-    function(_, expression, literal) {
-      if (expression) {
-        let operator = "";
-        const values = [];
-        if (operators.indexOf(expression.charAt(0)) !== -1) {
-          operator = expression.charAt(0);
-          expression = expression.substr(1);
-        }
-        expression.split(/,/g).forEach(function(variable) {
-          var tmp = /([^:\*]*)(?::(\d+)|(\*))?/.exec(variable);
-          values.push(getValues(context, operator, tmp[1], tmp[2] || tmp[3]));
-        });
-        if (operator && operator !== "+") {
-          var separator = ",";
-          if (operator === "?") {
-            separator = "&";
-          } else if (operator !== "#") {
-            separator = operator;
-          }
-          return (values.length !== 0 ? operator : "") + values.join(separator);
-        } else {
-          return values.join(",");
-        }
-      } else {
-        return encodeReserved(literal);
-      }
-    }
-  );
-  if (template === "/") {
-    return template;
-  } else {
-    return template.replace(/\/$/, "");
-  }
-}
-
-// pkg/dist-src/parse.js
-function parse(options) {
-  let method = options.method.toUpperCase();
-  let url = (options.url || "/").replace(/:([a-z]\w+)/g, "{$1}");
-  let headers = Object.assign({}, options.headers);
-  let body;
-  let parameters = omit(options, [
-    "method",
-    "baseUrl",
-    "url",
-    "headers",
-    "request",
-    "mediaType"
-  ]);
-  const urlVariableNames = extractUrlVariableNames(url);
-  url = parseUrl(url).expand(parameters);
-  if (!/^http/.test(url)) {
-    url = options.baseUrl + url;
-  }
-  const omittedParameters = Object.keys(options).filter((option) => urlVariableNames.includes(option)).concat("baseUrl");
-  const remainingParameters = omit(parameters, omittedParameters);
-  const isBinaryRequest = /application\/octet-stream/i.test(headers.accept);
-  if (!isBinaryRequest) {
-    if (options.mediaType.format) {
-      headers.accept = headers.accept.split(/,/).map(
-        (format) => format.replace(
-          /application\/vnd(\.\w+)(\.v3)?(\.\w+)?(\+json)?$/,
-          `application/vnd$1$2.${options.mediaType.format}`
-        )
-      ).join(",");
-    }
-    if (url.endsWith("/graphql")) {
-      if (options.mediaType.previews?.length) {
-        const previewsFromAcceptHeader = headers.accept.match(/[\w-]+(?=-preview)/g) || [];
-        headers.accept = previewsFromAcceptHeader.concat(options.mediaType.previews).map((preview) => {
-          const format = options.mediaType.format ? `.${options.mediaType.format}` : "+json";
-          return `application/vnd.github.${preview}-preview${format}`;
-        }).join(",");
-      }
-    }
-  }
-  if (["GET", "HEAD"].includes(method)) {
-    url = addQueryParameters(url, remainingParameters);
-  } else {
-    if ("data" in remainingParameters) {
-      body = remainingParameters.data;
-    } else {
-      if (Object.keys(remainingParameters).length) {
-        body = remainingParameters;
-      }
-    }
-  }
-  if (!headers["content-type"] && typeof body !== "undefined") {
-    headers["content-type"] = "application/json; charset=utf-8";
-  }
-  if (["PATCH", "PUT"].includes(method) && typeof body === "undefined") {
-    body = "";
-  }
-  return Object.assign(
-    { method, url, headers },
-    typeof body !== "undefined" ? { body } : null,
-    options.request ? { request: options.request } : null
-  );
-}
-
-// pkg/dist-src/endpoint-with-defaults.js
-function endpointWithDefaults(defaults, route, options) {
-  return parse(merge(defaults, route, options));
-}
-
-// pkg/dist-src/with-defaults.js
-function withDefaults(oldDefaults, newDefaults) {
-  const DEFAULTS2 = merge(oldDefaults, newDefaults);
-  const endpoint2 = endpointWithDefaults.bind(null, DEFAULTS2);
-  return Object.assign(endpoint2, {
-    DEFAULTS: DEFAULTS2,
-    defaults: withDefaults.bind(null, DEFAULTS2),
-    merge: merge.bind(null, DEFAULTS2),
-    parse
-  });
-}
-
-// pkg/dist-src/index.js
-var endpoint = withDefaults(null, DEFAULTS);
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 8467:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// pkg/dist-src/index.js
-var dist_src_exports = {};
-__export(dist_src_exports, {
-  GraphqlResponseError: () => GraphqlResponseError,
-  graphql: () => graphql2,
-  withCustomRequest: () => withCustomRequest
-});
-module.exports = __toCommonJS(dist_src_exports);
-var import_request3 = __nccwpck_require__(6234);
-var import_universal_user_agent = __nccwpck_require__(5030);
-
-// pkg/dist-src/version.js
-var VERSION = "7.0.2";
-
-// pkg/dist-src/with-defaults.js
-var import_request2 = __nccwpck_require__(6234);
-
-// pkg/dist-src/graphql.js
-var import_request = __nccwpck_require__(6234);
-
-// pkg/dist-src/error.js
-function _buildMessageForResponseErrors(data) {
-  return `Request failed due to following response errors:
-` + data.errors.map((e) => ` - ${e.message}`).join("\n");
-}
-var GraphqlResponseError = class extends Error {
-  constructor(request2, headers, response) {
-    super(_buildMessageForResponseErrors(response));
-    this.request = request2;
-    this.headers = headers;
-    this.response = response;
-    this.name = "GraphqlResponseError";
-    this.errors = response.errors;
-    this.data = response.data;
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
-  }
-};
-
-// pkg/dist-src/graphql.js
-var NON_VARIABLE_OPTIONS = [
-  "method",
-  "baseUrl",
-  "url",
-  "headers",
-  "request",
-  "query",
-  "mediaType"
-];
-var FORBIDDEN_VARIABLE_OPTIONS = ["query", "method", "url"];
-var GHES_V3_SUFFIX_REGEX = /\/api\/v3\/?$/;
-function graphql(request2, query, options) {
-  if (options) {
-    if (typeof query === "string" && "query" in options) {
-      return Promise.reject(
-        new Error(`[@octokit/graphql] "query" cannot be used as variable name`)
-      );
-    }
-    for (const key in options) {
-      if (!FORBIDDEN_VARIABLE_OPTIONS.includes(key))
-        continue;
-      return Promise.reject(
-        new Error(
-          `[@octokit/graphql] "${key}" cannot be used as variable name`
-        )
-      );
-    }
-  }
-  const parsedOptions = typeof query === "string" ? Object.assign({ query }, options) : query;
-  const requestOptions = Object.keys(
-    parsedOptions
-  ).reduce((result, key) => {
-    if (NON_VARIABLE_OPTIONS.includes(key)) {
-      result[key] = parsedOptions[key];
-      return result;
-    }
-    if (!result.variables) {
-      result.variables = {};
-    }
-    result.variables[key] = parsedOptions[key];
-    return result;
-  }, {});
-  const baseUrl = parsedOptions.baseUrl || request2.endpoint.DEFAULTS.baseUrl;
-  if (GHES_V3_SUFFIX_REGEX.test(baseUrl)) {
-    requestOptions.url = baseUrl.replace(GHES_V3_SUFFIX_REGEX, "/api/graphql");
-  }
-  return request2(requestOptions).then((response) => {
-    if (response.data.errors) {
-      const headers = {};
-      for (const key of Object.keys(response.headers)) {
-        headers[key] = response.headers[key];
-      }
-      throw new GraphqlResponseError(
-        requestOptions,
-        headers,
-        response.data
-      );
-    }
-    return response.data.data;
-  });
-}
-
-// pkg/dist-src/with-defaults.js
-function withDefaults(request2, newDefaults) {
-  const newRequest = request2.defaults(newDefaults);
-  const newApi = (query, options) => {
-    return graphql(newRequest, query, options);
-  };
-  return Object.assign(newApi, {
-    defaults: withDefaults.bind(null, newRequest),
-    endpoint: newRequest.endpoint
-  });
-}
-
-// pkg/dist-src/index.js
-var graphql2 = withDefaults(import_request3.request, {
-  headers: {
-    "user-agent": `octokit-graphql.js/${VERSION} ${(0, import_universal_user_agent.getUserAgent)()}`
-  },
-  method: "POST",
-  url: "/graphql"
-});
-function withCustomRequest(customRequest) {
-  return withDefaults(customRequest, {
-    method: "POST",
-    url: "/graphql"
-  });
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
+import { createRequire as __WEBPACK_EXTERNAL_createRequire } from "module";
+/******/ var __webpack_modules__ = ({
 
 /***/ 4193:
 /***/ ((module) => {
 
-"use strict";
 
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -816,7 +34,7 @@ __export(dist_src_exports, {
 module.exports = __toCommonJS(dist_src_exports);
 
 // pkg/dist-src/version.js
-var VERSION = "9.1.4";
+var VERSION = "9.2.0";
 
 // pkg/dist-src/normalize-paginated-list-response.js
 function normalizePaginatedListResponse(response) {
@@ -977,6 +195,8 @@ var paginatingEndpoints = [
   "GET /orgs/{org}/members/{username}/codespaces",
   "GET /orgs/{org}/migrations",
   "GET /orgs/{org}/migrations/{migration_id}/repositories",
+  "GET /orgs/{org}/organization-roles/{role_id}/teams",
+  "GET /orgs/{org}/organization-roles/{role_id}/users",
   "GET /orgs/{org}/outside_collaborators",
   "GET /orgs/{org}/packages",
   "GET /orgs/{org}/packages/{package_type}/{package_name}/versions",
@@ -1181,2987 +401,9 @@ paginateRest.VERSION = VERSION;
 
 /***/ }),
 
-/***/ 8883:
-/***/ ((module) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// pkg/dist-src/index.js
-var dist_src_exports = {};
-__export(dist_src_exports, {
-  requestLog: () => requestLog
-});
-module.exports = __toCommonJS(dist_src_exports);
-
-// pkg/dist-src/version.js
-var VERSION = "4.0.0";
-
-// pkg/dist-src/index.js
-function requestLog(octokit) {
-  octokit.hook.wrap("request", (request, options) => {
-    octokit.log.debug("request", options);
-    const start = Date.now();
-    const requestOptions = octokit.request.endpoint.parse(options);
-    const path = requestOptions.url.replace(options.baseUrl, "");
-    return request(options).then((response) => {
-      octokit.log.info(
-        `${requestOptions.method} ${path} - ${response.status} in ${Date.now() - start}ms`
-      );
-      return response;
-    }).catch((error) => {
-      octokit.log.info(
-        `${requestOptions.method} ${path} - ${error.status} in ${Date.now() - start}ms`
-      );
-      throw error;
-    });
-  });
-}
-requestLog.VERSION = VERSION;
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 3044:
-/***/ ((module) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// pkg/dist-src/index.js
-var dist_src_exports = {};
-__export(dist_src_exports, {
-  legacyRestEndpointMethods: () => legacyRestEndpointMethods,
-  restEndpointMethods: () => restEndpointMethods
-});
-module.exports = __toCommonJS(dist_src_exports);
-
-// pkg/dist-src/version.js
-var VERSION = "10.1.5";
-
-// pkg/dist-src/generated/endpoints.js
-var Endpoints = {
-  actions: {
-    addCustomLabelsToSelfHostedRunnerForOrg: [
-      "POST /orgs/{org}/actions/runners/{runner_id}/labels"
-    ],
-    addCustomLabelsToSelfHostedRunnerForRepo: [
-      "POST /repos/{owner}/{repo}/actions/runners/{runner_id}/labels"
-    ],
-    addSelectedRepoToOrgSecret: [
-      "PUT /orgs/{org}/actions/secrets/{secret_name}/repositories/{repository_id}"
-    ],
-    addSelectedRepoToOrgVariable: [
-      "PUT /orgs/{org}/actions/variables/{name}/repositories/{repository_id}"
-    ],
-    approveWorkflowRun: [
-      "POST /repos/{owner}/{repo}/actions/runs/{run_id}/approve"
-    ],
-    cancelWorkflowRun: [
-      "POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel"
-    ],
-    createEnvironmentVariable: [
-      "POST /repositories/{repository_id}/environments/{environment_name}/variables"
-    ],
-    createOrUpdateEnvironmentSecret: [
-      "PUT /repositories/{repository_id}/environments/{environment_name}/secrets/{secret_name}"
-    ],
-    createOrUpdateOrgSecret: ["PUT /orgs/{org}/actions/secrets/{secret_name}"],
-    createOrUpdateRepoSecret: [
-      "PUT /repos/{owner}/{repo}/actions/secrets/{secret_name}"
-    ],
-    createOrgVariable: ["POST /orgs/{org}/actions/variables"],
-    createRegistrationTokenForOrg: [
-      "POST /orgs/{org}/actions/runners/registration-token"
-    ],
-    createRegistrationTokenForRepo: [
-      "POST /repos/{owner}/{repo}/actions/runners/registration-token"
-    ],
-    createRemoveTokenForOrg: ["POST /orgs/{org}/actions/runners/remove-token"],
-    createRemoveTokenForRepo: [
-      "POST /repos/{owner}/{repo}/actions/runners/remove-token"
-    ],
-    createRepoVariable: ["POST /repos/{owner}/{repo}/actions/variables"],
-    createWorkflowDispatch: [
-      "POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches"
-    ],
-    deleteActionsCacheById: [
-      "DELETE /repos/{owner}/{repo}/actions/caches/{cache_id}"
-    ],
-    deleteActionsCacheByKey: [
-      "DELETE /repos/{owner}/{repo}/actions/caches{?key,ref}"
-    ],
-    deleteArtifact: [
-      "DELETE /repos/{owner}/{repo}/actions/artifacts/{artifact_id}"
-    ],
-    deleteEnvironmentSecret: [
-      "DELETE /repositories/{repository_id}/environments/{environment_name}/secrets/{secret_name}"
-    ],
-    deleteEnvironmentVariable: [
-      "DELETE /repositories/{repository_id}/environments/{environment_name}/variables/{name}"
-    ],
-    deleteOrgSecret: ["DELETE /orgs/{org}/actions/secrets/{secret_name}"],
-    deleteOrgVariable: ["DELETE /orgs/{org}/actions/variables/{name}"],
-    deleteRepoSecret: [
-      "DELETE /repos/{owner}/{repo}/actions/secrets/{secret_name}"
-    ],
-    deleteRepoVariable: [
-      "DELETE /repos/{owner}/{repo}/actions/variables/{name}"
-    ],
-    deleteSelfHostedRunnerFromOrg: [
-      "DELETE /orgs/{org}/actions/runners/{runner_id}"
-    ],
-    deleteSelfHostedRunnerFromRepo: [
-      "DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}"
-    ],
-    deleteWorkflowRun: ["DELETE /repos/{owner}/{repo}/actions/runs/{run_id}"],
-    deleteWorkflowRunLogs: [
-      "DELETE /repos/{owner}/{repo}/actions/runs/{run_id}/logs"
-    ],
-    disableSelectedRepositoryGithubActionsOrganization: [
-      "DELETE /orgs/{org}/actions/permissions/repositories/{repository_id}"
-    ],
-    disableWorkflow: [
-      "PUT /repos/{owner}/{repo}/actions/workflows/{workflow_id}/disable"
-    ],
-    downloadArtifact: [
-      "GET /repos/{owner}/{repo}/actions/artifacts/{artifact_id}/{archive_format}"
-    ],
-    downloadJobLogsForWorkflowRun: [
-      "GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs"
-    ],
-    downloadWorkflowRunAttemptLogs: [
-      "GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}/logs"
-    ],
-    downloadWorkflowRunLogs: [
-      "GET /repos/{owner}/{repo}/actions/runs/{run_id}/logs"
-    ],
-    enableSelectedRepositoryGithubActionsOrganization: [
-      "PUT /orgs/{org}/actions/permissions/repositories/{repository_id}"
-    ],
-    enableWorkflow: [
-      "PUT /repos/{owner}/{repo}/actions/workflows/{workflow_id}/enable"
-    ],
-    forceCancelWorkflowRun: [
-      "POST /repos/{owner}/{repo}/actions/runs/{run_id}/force-cancel"
-    ],
-    generateRunnerJitconfigForOrg: [
-      "POST /orgs/{org}/actions/runners/generate-jitconfig"
-    ],
-    generateRunnerJitconfigForRepo: [
-      "POST /repos/{owner}/{repo}/actions/runners/generate-jitconfig"
-    ],
-    getActionsCacheList: ["GET /repos/{owner}/{repo}/actions/caches"],
-    getActionsCacheUsage: ["GET /repos/{owner}/{repo}/actions/cache/usage"],
-    getActionsCacheUsageByRepoForOrg: [
-      "GET /orgs/{org}/actions/cache/usage-by-repository"
-    ],
-    getActionsCacheUsageForOrg: ["GET /orgs/{org}/actions/cache/usage"],
-    getAllowedActionsOrganization: [
-      "GET /orgs/{org}/actions/permissions/selected-actions"
-    ],
-    getAllowedActionsRepository: [
-      "GET /repos/{owner}/{repo}/actions/permissions/selected-actions"
-    ],
-    getArtifact: ["GET /repos/{owner}/{repo}/actions/artifacts/{artifact_id}"],
-    getEnvironmentPublicKey: [
-      "GET /repositories/{repository_id}/environments/{environment_name}/secrets/public-key"
-    ],
-    getEnvironmentSecret: [
-      "GET /repositories/{repository_id}/environments/{environment_name}/secrets/{secret_name}"
-    ],
-    getEnvironmentVariable: [
-      "GET /repositories/{repository_id}/environments/{environment_name}/variables/{name}"
-    ],
-    getGithubActionsDefaultWorkflowPermissionsOrganization: [
-      "GET /orgs/{org}/actions/permissions/workflow"
-    ],
-    getGithubActionsDefaultWorkflowPermissionsRepository: [
-      "GET /repos/{owner}/{repo}/actions/permissions/workflow"
-    ],
-    getGithubActionsPermissionsOrganization: [
-      "GET /orgs/{org}/actions/permissions"
-    ],
-    getGithubActionsPermissionsRepository: [
-      "GET /repos/{owner}/{repo}/actions/permissions"
-    ],
-    getJobForWorkflowRun: ["GET /repos/{owner}/{repo}/actions/jobs/{job_id}"],
-    getOrgPublicKey: ["GET /orgs/{org}/actions/secrets/public-key"],
-    getOrgSecret: ["GET /orgs/{org}/actions/secrets/{secret_name}"],
-    getOrgVariable: ["GET /orgs/{org}/actions/variables/{name}"],
-    getPendingDeploymentsForRun: [
-      "GET /repos/{owner}/{repo}/actions/runs/{run_id}/pending_deployments"
-    ],
-    getRepoPermissions: [
-      "GET /repos/{owner}/{repo}/actions/permissions",
-      {},
-      { renamed: ["actions", "getGithubActionsPermissionsRepository"] }
-    ],
-    getRepoPublicKey: ["GET /repos/{owner}/{repo}/actions/secrets/public-key"],
-    getRepoSecret: ["GET /repos/{owner}/{repo}/actions/secrets/{secret_name}"],
-    getRepoVariable: ["GET /repos/{owner}/{repo}/actions/variables/{name}"],
-    getReviewsForRun: [
-      "GET /repos/{owner}/{repo}/actions/runs/{run_id}/approvals"
-    ],
-    getSelfHostedRunnerForOrg: ["GET /orgs/{org}/actions/runners/{runner_id}"],
-    getSelfHostedRunnerForRepo: [
-      "GET /repos/{owner}/{repo}/actions/runners/{runner_id}"
-    ],
-    getWorkflow: ["GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}"],
-    getWorkflowAccessToRepository: [
-      "GET /repos/{owner}/{repo}/actions/permissions/access"
-    ],
-    getWorkflowRun: ["GET /repos/{owner}/{repo}/actions/runs/{run_id}"],
-    getWorkflowRunAttempt: [
-      "GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}"
-    ],
-    getWorkflowRunUsage: [
-      "GET /repos/{owner}/{repo}/actions/runs/{run_id}/timing"
-    ],
-    getWorkflowUsage: [
-      "GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/timing"
-    ],
-    listArtifactsForRepo: ["GET /repos/{owner}/{repo}/actions/artifacts"],
-    listEnvironmentSecrets: [
-      "GET /repositories/{repository_id}/environments/{environment_name}/secrets"
-    ],
-    listEnvironmentVariables: [
-      "GET /repositories/{repository_id}/environments/{environment_name}/variables"
-    ],
-    listJobsForWorkflowRun: [
-      "GET /repos/{owner}/{repo}/actions/runs/{run_id}/jobs"
-    ],
-    listJobsForWorkflowRunAttempt: [
-      "GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}/jobs"
-    ],
-    listLabelsForSelfHostedRunnerForOrg: [
-      "GET /orgs/{org}/actions/runners/{runner_id}/labels"
-    ],
-    listLabelsForSelfHostedRunnerForRepo: [
-      "GET /repos/{owner}/{repo}/actions/runners/{runner_id}/labels"
-    ],
-    listOrgSecrets: ["GET /orgs/{org}/actions/secrets"],
-    listOrgVariables: ["GET /orgs/{org}/actions/variables"],
-    listRepoOrganizationSecrets: [
-      "GET /repos/{owner}/{repo}/actions/organization-secrets"
-    ],
-    listRepoOrganizationVariables: [
-      "GET /repos/{owner}/{repo}/actions/organization-variables"
-    ],
-    listRepoSecrets: ["GET /repos/{owner}/{repo}/actions/secrets"],
-    listRepoVariables: ["GET /repos/{owner}/{repo}/actions/variables"],
-    listRepoWorkflows: ["GET /repos/{owner}/{repo}/actions/workflows"],
-    listRunnerApplicationsForOrg: ["GET /orgs/{org}/actions/runners/downloads"],
-    listRunnerApplicationsForRepo: [
-      "GET /repos/{owner}/{repo}/actions/runners/downloads"
-    ],
-    listSelectedReposForOrgSecret: [
-      "GET /orgs/{org}/actions/secrets/{secret_name}/repositories"
-    ],
-    listSelectedReposForOrgVariable: [
-      "GET /orgs/{org}/actions/variables/{name}/repositories"
-    ],
-    listSelectedRepositoriesEnabledGithubActionsOrganization: [
-      "GET /orgs/{org}/actions/permissions/repositories"
-    ],
-    listSelfHostedRunnersForOrg: ["GET /orgs/{org}/actions/runners"],
-    listSelfHostedRunnersForRepo: ["GET /repos/{owner}/{repo}/actions/runners"],
-    listWorkflowRunArtifacts: [
-      "GET /repos/{owner}/{repo}/actions/runs/{run_id}/artifacts"
-    ],
-    listWorkflowRuns: [
-      "GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs"
-    ],
-    listWorkflowRunsForRepo: ["GET /repos/{owner}/{repo}/actions/runs"],
-    reRunJobForWorkflowRun: [
-      "POST /repos/{owner}/{repo}/actions/jobs/{job_id}/rerun"
-    ],
-    reRunWorkflow: ["POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun"],
-    reRunWorkflowFailedJobs: [
-      "POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-failed-jobs"
-    ],
-    removeAllCustomLabelsFromSelfHostedRunnerForOrg: [
-      "DELETE /orgs/{org}/actions/runners/{runner_id}/labels"
-    ],
-    removeAllCustomLabelsFromSelfHostedRunnerForRepo: [
-      "DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}/labels"
-    ],
-    removeCustomLabelFromSelfHostedRunnerForOrg: [
-      "DELETE /orgs/{org}/actions/runners/{runner_id}/labels/{name}"
-    ],
-    removeCustomLabelFromSelfHostedRunnerForRepo: [
-      "DELETE /repos/{owner}/{repo}/actions/runners/{runner_id}/labels/{name}"
-    ],
-    removeSelectedRepoFromOrgSecret: [
-      "DELETE /orgs/{org}/actions/secrets/{secret_name}/repositories/{repository_id}"
-    ],
-    removeSelectedRepoFromOrgVariable: [
-      "DELETE /orgs/{org}/actions/variables/{name}/repositories/{repository_id}"
-    ],
-    reviewCustomGatesForRun: [
-      "POST /repos/{owner}/{repo}/actions/runs/{run_id}/deployment_protection_rule"
-    ],
-    reviewPendingDeploymentsForRun: [
-      "POST /repos/{owner}/{repo}/actions/runs/{run_id}/pending_deployments"
-    ],
-    setAllowedActionsOrganization: [
-      "PUT /orgs/{org}/actions/permissions/selected-actions"
-    ],
-    setAllowedActionsRepository: [
-      "PUT /repos/{owner}/{repo}/actions/permissions/selected-actions"
-    ],
-    setCustomLabelsForSelfHostedRunnerForOrg: [
-      "PUT /orgs/{org}/actions/runners/{runner_id}/labels"
-    ],
-    setCustomLabelsForSelfHostedRunnerForRepo: [
-      "PUT /repos/{owner}/{repo}/actions/runners/{runner_id}/labels"
-    ],
-    setGithubActionsDefaultWorkflowPermissionsOrganization: [
-      "PUT /orgs/{org}/actions/permissions/workflow"
-    ],
-    setGithubActionsDefaultWorkflowPermissionsRepository: [
-      "PUT /repos/{owner}/{repo}/actions/permissions/workflow"
-    ],
-    setGithubActionsPermissionsOrganization: [
-      "PUT /orgs/{org}/actions/permissions"
-    ],
-    setGithubActionsPermissionsRepository: [
-      "PUT /repos/{owner}/{repo}/actions/permissions"
-    ],
-    setSelectedReposForOrgSecret: [
-      "PUT /orgs/{org}/actions/secrets/{secret_name}/repositories"
-    ],
-    setSelectedReposForOrgVariable: [
-      "PUT /orgs/{org}/actions/variables/{name}/repositories"
-    ],
-    setSelectedRepositoriesEnabledGithubActionsOrganization: [
-      "PUT /orgs/{org}/actions/permissions/repositories"
-    ],
-    setWorkflowAccessToRepository: [
-      "PUT /repos/{owner}/{repo}/actions/permissions/access"
-    ],
-    updateEnvironmentVariable: [
-      "PATCH /repositories/{repository_id}/environments/{environment_name}/variables/{name}"
-    ],
-    updateOrgVariable: ["PATCH /orgs/{org}/actions/variables/{name}"],
-    updateRepoVariable: [
-      "PATCH /repos/{owner}/{repo}/actions/variables/{name}"
-    ]
-  },
-  activity: {
-    checkRepoIsStarredByAuthenticatedUser: ["GET /user/starred/{owner}/{repo}"],
-    deleteRepoSubscription: ["DELETE /repos/{owner}/{repo}/subscription"],
-    deleteThreadSubscription: [
-      "DELETE /notifications/threads/{thread_id}/subscription"
-    ],
-    getFeeds: ["GET /feeds"],
-    getRepoSubscription: ["GET /repos/{owner}/{repo}/subscription"],
-    getThread: ["GET /notifications/threads/{thread_id}"],
-    getThreadSubscriptionForAuthenticatedUser: [
-      "GET /notifications/threads/{thread_id}/subscription"
-    ],
-    listEventsForAuthenticatedUser: ["GET /users/{username}/events"],
-    listNotificationsForAuthenticatedUser: ["GET /notifications"],
-    listOrgEventsForAuthenticatedUser: [
-      "GET /users/{username}/events/orgs/{org}"
-    ],
-    listPublicEvents: ["GET /events"],
-    listPublicEventsForRepoNetwork: ["GET /networks/{owner}/{repo}/events"],
-    listPublicEventsForUser: ["GET /users/{username}/events/public"],
-    listPublicOrgEvents: ["GET /orgs/{org}/events"],
-    listReceivedEventsForUser: ["GET /users/{username}/received_events"],
-    listReceivedPublicEventsForUser: [
-      "GET /users/{username}/received_events/public"
-    ],
-    listRepoEvents: ["GET /repos/{owner}/{repo}/events"],
-    listRepoNotificationsForAuthenticatedUser: [
-      "GET /repos/{owner}/{repo}/notifications"
-    ],
-    listReposStarredByAuthenticatedUser: ["GET /user/starred"],
-    listReposStarredByUser: ["GET /users/{username}/starred"],
-    listReposWatchedByUser: ["GET /users/{username}/subscriptions"],
-    listStargazersForRepo: ["GET /repos/{owner}/{repo}/stargazers"],
-    listWatchedReposForAuthenticatedUser: ["GET /user/subscriptions"],
-    listWatchersForRepo: ["GET /repos/{owner}/{repo}/subscribers"],
-    markNotificationsAsRead: ["PUT /notifications"],
-    markRepoNotificationsAsRead: ["PUT /repos/{owner}/{repo}/notifications"],
-    markThreadAsRead: ["PATCH /notifications/threads/{thread_id}"],
-    setRepoSubscription: ["PUT /repos/{owner}/{repo}/subscription"],
-    setThreadSubscription: [
-      "PUT /notifications/threads/{thread_id}/subscription"
-    ],
-    starRepoForAuthenticatedUser: ["PUT /user/starred/{owner}/{repo}"],
-    unstarRepoForAuthenticatedUser: ["DELETE /user/starred/{owner}/{repo}"]
-  },
-  apps: {
-    addRepoToInstallation: [
-      "PUT /user/installations/{installation_id}/repositories/{repository_id}",
-      {},
-      { renamed: ["apps", "addRepoToInstallationForAuthenticatedUser"] }
-    ],
-    addRepoToInstallationForAuthenticatedUser: [
-      "PUT /user/installations/{installation_id}/repositories/{repository_id}"
-    ],
-    checkToken: ["POST /applications/{client_id}/token"],
-    createFromManifest: ["POST /app-manifests/{code}/conversions"],
-    createInstallationAccessToken: [
-      "POST /app/installations/{installation_id}/access_tokens"
-    ],
-    deleteAuthorization: ["DELETE /applications/{client_id}/grant"],
-    deleteInstallation: ["DELETE /app/installations/{installation_id}"],
-    deleteToken: ["DELETE /applications/{client_id}/token"],
-    getAuthenticated: ["GET /app"],
-    getBySlug: ["GET /apps/{app_slug}"],
-    getInstallation: ["GET /app/installations/{installation_id}"],
-    getOrgInstallation: ["GET /orgs/{org}/installation"],
-    getRepoInstallation: ["GET /repos/{owner}/{repo}/installation"],
-    getSubscriptionPlanForAccount: [
-      "GET /marketplace_listing/accounts/{account_id}"
-    ],
-    getSubscriptionPlanForAccountStubbed: [
-      "GET /marketplace_listing/stubbed/accounts/{account_id}"
-    ],
-    getUserInstallation: ["GET /users/{username}/installation"],
-    getWebhookConfigForApp: ["GET /app/hook/config"],
-    getWebhookDelivery: ["GET /app/hook/deliveries/{delivery_id}"],
-    listAccountsForPlan: ["GET /marketplace_listing/plans/{plan_id}/accounts"],
-    listAccountsForPlanStubbed: [
-      "GET /marketplace_listing/stubbed/plans/{plan_id}/accounts"
-    ],
-    listInstallationReposForAuthenticatedUser: [
-      "GET /user/installations/{installation_id}/repositories"
-    ],
-    listInstallationRequestsForAuthenticatedApp: [
-      "GET /app/installation-requests"
-    ],
-    listInstallations: ["GET /app/installations"],
-    listInstallationsForAuthenticatedUser: ["GET /user/installations"],
-    listPlans: ["GET /marketplace_listing/plans"],
-    listPlansStubbed: ["GET /marketplace_listing/stubbed/plans"],
-    listReposAccessibleToInstallation: ["GET /installation/repositories"],
-    listSubscriptionsForAuthenticatedUser: ["GET /user/marketplace_purchases"],
-    listSubscriptionsForAuthenticatedUserStubbed: [
-      "GET /user/marketplace_purchases/stubbed"
-    ],
-    listWebhookDeliveries: ["GET /app/hook/deliveries"],
-    redeliverWebhookDelivery: [
-      "POST /app/hook/deliveries/{delivery_id}/attempts"
-    ],
-    removeRepoFromInstallation: [
-      "DELETE /user/installations/{installation_id}/repositories/{repository_id}",
-      {},
-      { renamed: ["apps", "removeRepoFromInstallationForAuthenticatedUser"] }
-    ],
-    removeRepoFromInstallationForAuthenticatedUser: [
-      "DELETE /user/installations/{installation_id}/repositories/{repository_id}"
-    ],
-    resetToken: ["PATCH /applications/{client_id}/token"],
-    revokeInstallationAccessToken: ["DELETE /installation/token"],
-    scopeToken: ["POST /applications/{client_id}/token/scoped"],
-    suspendInstallation: ["PUT /app/installations/{installation_id}/suspended"],
-    unsuspendInstallation: [
-      "DELETE /app/installations/{installation_id}/suspended"
-    ],
-    updateWebhookConfigForApp: ["PATCH /app/hook/config"]
-  },
-  billing: {
-    getGithubActionsBillingOrg: ["GET /orgs/{org}/settings/billing/actions"],
-    getGithubActionsBillingUser: [
-      "GET /users/{username}/settings/billing/actions"
-    ],
-    getGithubPackagesBillingOrg: ["GET /orgs/{org}/settings/billing/packages"],
-    getGithubPackagesBillingUser: [
-      "GET /users/{username}/settings/billing/packages"
-    ],
-    getSharedStorageBillingOrg: [
-      "GET /orgs/{org}/settings/billing/shared-storage"
-    ],
-    getSharedStorageBillingUser: [
-      "GET /users/{username}/settings/billing/shared-storage"
-    ]
-  },
-  checks: {
-    create: ["POST /repos/{owner}/{repo}/check-runs"],
-    createSuite: ["POST /repos/{owner}/{repo}/check-suites"],
-    get: ["GET /repos/{owner}/{repo}/check-runs/{check_run_id}"],
-    getSuite: ["GET /repos/{owner}/{repo}/check-suites/{check_suite_id}"],
-    listAnnotations: [
-      "GET /repos/{owner}/{repo}/check-runs/{check_run_id}/annotations"
-    ],
-    listForRef: ["GET /repos/{owner}/{repo}/commits/{ref}/check-runs"],
-    listForSuite: [
-      "GET /repos/{owner}/{repo}/check-suites/{check_suite_id}/check-runs"
-    ],
-    listSuitesForRef: ["GET /repos/{owner}/{repo}/commits/{ref}/check-suites"],
-    rerequestRun: [
-      "POST /repos/{owner}/{repo}/check-runs/{check_run_id}/rerequest"
-    ],
-    rerequestSuite: [
-      "POST /repos/{owner}/{repo}/check-suites/{check_suite_id}/rerequest"
-    ],
-    setSuitesPreferences: [
-      "PATCH /repos/{owner}/{repo}/check-suites/preferences"
-    ],
-    update: ["PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}"]
-  },
-  codeScanning: {
-    deleteAnalysis: [
-      "DELETE /repos/{owner}/{repo}/code-scanning/analyses/{analysis_id}{?confirm_delete}"
-    ],
-    getAlert: [
-      "GET /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}",
-      {},
-      { renamedParameters: { alert_id: "alert_number" } }
-    ],
-    getAnalysis: [
-      "GET /repos/{owner}/{repo}/code-scanning/analyses/{analysis_id}"
-    ],
-    getCodeqlDatabase: [
-      "GET /repos/{owner}/{repo}/code-scanning/codeql/databases/{language}"
-    ],
-    getDefaultSetup: ["GET /repos/{owner}/{repo}/code-scanning/default-setup"],
-    getSarif: ["GET /repos/{owner}/{repo}/code-scanning/sarifs/{sarif_id}"],
-    listAlertInstances: [
-      "GET /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}/instances"
-    ],
-    listAlertsForOrg: ["GET /orgs/{org}/code-scanning/alerts"],
-    listAlertsForRepo: ["GET /repos/{owner}/{repo}/code-scanning/alerts"],
-    listAlertsInstances: [
-      "GET /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}/instances",
-      {},
-      { renamed: ["codeScanning", "listAlertInstances"] }
-    ],
-    listCodeqlDatabases: [
-      "GET /repos/{owner}/{repo}/code-scanning/codeql/databases"
-    ],
-    listRecentAnalyses: ["GET /repos/{owner}/{repo}/code-scanning/analyses"],
-    updateAlert: [
-      "PATCH /repos/{owner}/{repo}/code-scanning/alerts/{alert_number}"
-    ],
-    updateDefaultSetup: [
-      "PATCH /repos/{owner}/{repo}/code-scanning/default-setup"
-    ],
-    uploadSarif: ["POST /repos/{owner}/{repo}/code-scanning/sarifs"]
-  },
-  codesOfConduct: {
-    getAllCodesOfConduct: ["GET /codes_of_conduct"],
-    getConductCode: ["GET /codes_of_conduct/{key}"]
-  },
-  codespaces: {
-    addRepositoryForSecretForAuthenticatedUser: [
-      "PUT /user/codespaces/secrets/{secret_name}/repositories/{repository_id}"
-    ],
-    addSelectedRepoToOrgSecret: [
-      "PUT /orgs/{org}/codespaces/secrets/{secret_name}/repositories/{repository_id}"
-    ],
-    checkPermissionsForDevcontainer: [
-      "GET /repos/{owner}/{repo}/codespaces/permissions_check"
-    ],
-    codespaceMachinesForAuthenticatedUser: [
-      "GET /user/codespaces/{codespace_name}/machines"
-    ],
-    createForAuthenticatedUser: ["POST /user/codespaces"],
-    createOrUpdateOrgSecret: [
-      "PUT /orgs/{org}/codespaces/secrets/{secret_name}"
-    ],
-    createOrUpdateRepoSecret: [
-      "PUT /repos/{owner}/{repo}/codespaces/secrets/{secret_name}"
-    ],
-    createOrUpdateSecretForAuthenticatedUser: [
-      "PUT /user/codespaces/secrets/{secret_name}"
-    ],
-    createWithPrForAuthenticatedUser: [
-      "POST /repos/{owner}/{repo}/pulls/{pull_number}/codespaces"
-    ],
-    createWithRepoForAuthenticatedUser: [
-      "POST /repos/{owner}/{repo}/codespaces"
-    ],
-    deleteForAuthenticatedUser: ["DELETE /user/codespaces/{codespace_name}"],
-    deleteFromOrganization: [
-      "DELETE /orgs/{org}/members/{username}/codespaces/{codespace_name}"
-    ],
-    deleteOrgSecret: ["DELETE /orgs/{org}/codespaces/secrets/{secret_name}"],
-    deleteRepoSecret: [
-      "DELETE /repos/{owner}/{repo}/codespaces/secrets/{secret_name}"
-    ],
-    deleteSecretForAuthenticatedUser: [
-      "DELETE /user/codespaces/secrets/{secret_name}"
-    ],
-    exportForAuthenticatedUser: [
-      "POST /user/codespaces/{codespace_name}/exports"
-    ],
-    getCodespacesForUserInOrg: [
-      "GET /orgs/{org}/members/{username}/codespaces"
-    ],
-    getExportDetailsForAuthenticatedUser: [
-      "GET /user/codespaces/{codespace_name}/exports/{export_id}"
-    ],
-    getForAuthenticatedUser: ["GET /user/codespaces/{codespace_name}"],
-    getOrgPublicKey: ["GET /orgs/{org}/codespaces/secrets/public-key"],
-    getOrgSecret: ["GET /orgs/{org}/codespaces/secrets/{secret_name}"],
-    getPublicKeyForAuthenticatedUser: [
-      "GET /user/codespaces/secrets/public-key"
-    ],
-    getRepoPublicKey: [
-      "GET /repos/{owner}/{repo}/codespaces/secrets/public-key"
-    ],
-    getRepoSecret: [
-      "GET /repos/{owner}/{repo}/codespaces/secrets/{secret_name}"
-    ],
-    getSecretForAuthenticatedUser: [
-      "GET /user/codespaces/secrets/{secret_name}"
-    ],
-    listDevcontainersInRepositoryForAuthenticatedUser: [
-      "GET /repos/{owner}/{repo}/codespaces/devcontainers"
-    ],
-    listForAuthenticatedUser: ["GET /user/codespaces"],
-    listInOrganization: [
-      "GET /orgs/{org}/codespaces",
-      {},
-      { renamedParameters: { org_id: "org" } }
-    ],
-    listInRepositoryForAuthenticatedUser: [
-      "GET /repos/{owner}/{repo}/codespaces"
-    ],
-    listOrgSecrets: ["GET /orgs/{org}/codespaces/secrets"],
-    listRepoSecrets: ["GET /repos/{owner}/{repo}/codespaces/secrets"],
-    listRepositoriesForSecretForAuthenticatedUser: [
-      "GET /user/codespaces/secrets/{secret_name}/repositories"
-    ],
-    listSecretsForAuthenticatedUser: ["GET /user/codespaces/secrets"],
-    listSelectedReposForOrgSecret: [
-      "GET /orgs/{org}/codespaces/secrets/{secret_name}/repositories"
-    ],
-    preFlightWithRepoForAuthenticatedUser: [
-      "GET /repos/{owner}/{repo}/codespaces/new"
-    ],
-    publishForAuthenticatedUser: [
-      "POST /user/codespaces/{codespace_name}/publish"
-    ],
-    removeRepositoryForSecretForAuthenticatedUser: [
-      "DELETE /user/codespaces/secrets/{secret_name}/repositories/{repository_id}"
-    ],
-    removeSelectedRepoFromOrgSecret: [
-      "DELETE /orgs/{org}/codespaces/secrets/{secret_name}/repositories/{repository_id}"
-    ],
-    repoMachinesForAuthenticatedUser: [
-      "GET /repos/{owner}/{repo}/codespaces/machines"
-    ],
-    setRepositoriesForSecretForAuthenticatedUser: [
-      "PUT /user/codespaces/secrets/{secret_name}/repositories"
-    ],
-    setSelectedReposForOrgSecret: [
-      "PUT /orgs/{org}/codespaces/secrets/{secret_name}/repositories"
-    ],
-    startForAuthenticatedUser: ["POST /user/codespaces/{codespace_name}/start"],
-    stopForAuthenticatedUser: ["POST /user/codespaces/{codespace_name}/stop"],
-    stopInOrganization: [
-      "POST /orgs/{org}/members/{username}/codespaces/{codespace_name}/stop"
-    ],
-    updateForAuthenticatedUser: ["PATCH /user/codespaces/{codespace_name}"]
-  },
-  copilot: {
-    addCopilotForBusinessSeatsForTeams: [
-      "POST /orgs/{org}/copilot/billing/selected_teams"
-    ],
-    addCopilotForBusinessSeatsForUsers: [
-      "POST /orgs/{org}/copilot/billing/selected_users"
-    ],
-    cancelCopilotSeatAssignmentForTeams: [
-      "DELETE /orgs/{org}/copilot/billing/selected_teams"
-    ],
-    cancelCopilotSeatAssignmentForUsers: [
-      "DELETE /orgs/{org}/copilot/billing/selected_users"
-    ],
-    getCopilotOrganizationDetails: ["GET /orgs/{org}/copilot/billing"],
-    getCopilotSeatDetailsForUser: [
-      "GET /orgs/{org}/members/{username}/copilot"
-    ],
-    listCopilotSeats: ["GET /orgs/{org}/copilot/billing/seats"]
-  },
-  dependabot: {
-    addSelectedRepoToOrgSecret: [
-      "PUT /orgs/{org}/dependabot/secrets/{secret_name}/repositories/{repository_id}"
-    ],
-    createOrUpdateOrgSecret: [
-      "PUT /orgs/{org}/dependabot/secrets/{secret_name}"
-    ],
-    createOrUpdateRepoSecret: [
-      "PUT /repos/{owner}/{repo}/dependabot/secrets/{secret_name}"
-    ],
-    deleteOrgSecret: ["DELETE /orgs/{org}/dependabot/secrets/{secret_name}"],
-    deleteRepoSecret: [
-      "DELETE /repos/{owner}/{repo}/dependabot/secrets/{secret_name}"
-    ],
-    getAlert: ["GET /repos/{owner}/{repo}/dependabot/alerts/{alert_number}"],
-    getOrgPublicKey: ["GET /orgs/{org}/dependabot/secrets/public-key"],
-    getOrgSecret: ["GET /orgs/{org}/dependabot/secrets/{secret_name}"],
-    getRepoPublicKey: [
-      "GET /repos/{owner}/{repo}/dependabot/secrets/public-key"
-    ],
-    getRepoSecret: [
-      "GET /repos/{owner}/{repo}/dependabot/secrets/{secret_name}"
-    ],
-    listAlertsForEnterprise: [
-      "GET /enterprises/{enterprise}/dependabot/alerts"
-    ],
-    listAlertsForOrg: ["GET /orgs/{org}/dependabot/alerts"],
-    listAlertsForRepo: ["GET /repos/{owner}/{repo}/dependabot/alerts"],
-    listOrgSecrets: ["GET /orgs/{org}/dependabot/secrets"],
-    listRepoSecrets: ["GET /repos/{owner}/{repo}/dependabot/secrets"],
-    listSelectedReposForOrgSecret: [
-      "GET /orgs/{org}/dependabot/secrets/{secret_name}/repositories"
-    ],
-    removeSelectedRepoFromOrgSecret: [
-      "DELETE /orgs/{org}/dependabot/secrets/{secret_name}/repositories/{repository_id}"
-    ],
-    setSelectedReposForOrgSecret: [
-      "PUT /orgs/{org}/dependabot/secrets/{secret_name}/repositories"
-    ],
-    updateAlert: [
-      "PATCH /repos/{owner}/{repo}/dependabot/alerts/{alert_number}"
-    ]
-  },
-  dependencyGraph: {
-    createRepositorySnapshot: [
-      "POST /repos/{owner}/{repo}/dependency-graph/snapshots"
-    ],
-    diffRange: [
-      "GET /repos/{owner}/{repo}/dependency-graph/compare/{basehead}"
-    ],
-    exportSbom: ["GET /repos/{owner}/{repo}/dependency-graph/sbom"]
-  },
-  emojis: { get: ["GET /emojis"] },
-  gists: {
-    checkIsStarred: ["GET /gists/{gist_id}/star"],
-    create: ["POST /gists"],
-    createComment: ["POST /gists/{gist_id}/comments"],
-    delete: ["DELETE /gists/{gist_id}"],
-    deleteComment: ["DELETE /gists/{gist_id}/comments/{comment_id}"],
-    fork: ["POST /gists/{gist_id}/forks"],
-    get: ["GET /gists/{gist_id}"],
-    getComment: ["GET /gists/{gist_id}/comments/{comment_id}"],
-    getRevision: ["GET /gists/{gist_id}/{sha}"],
-    list: ["GET /gists"],
-    listComments: ["GET /gists/{gist_id}/comments"],
-    listCommits: ["GET /gists/{gist_id}/commits"],
-    listForUser: ["GET /users/{username}/gists"],
-    listForks: ["GET /gists/{gist_id}/forks"],
-    listPublic: ["GET /gists/public"],
-    listStarred: ["GET /gists/starred"],
-    star: ["PUT /gists/{gist_id}/star"],
-    unstar: ["DELETE /gists/{gist_id}/star"],
-    update: ["PATCH /gists/{gist_id}"],
-    updateComment: ["PATCH /gists/{gist_id}/comments/{comment_id}"]
-  },
-  git: {
-    createBlob: ["POST /repos/{owner}/{repo}/git/blobs"],
-    createCommit: ["POST /repos/{owner}/{repo}/git/commits"],
-    createRef: ["POST /repos/{owner}/{repo}/git/refs"],
-    createTag: ["POST /repos/{owner}/{repo}/git/tags"],
-    createTree: ["POST /repos/{owner}/{repo}/git/trees"],
-    deleteRef: ["DELETE /repos/{owner}/{repo}/git/refs/{ref}"],
-    getBlob: ["GET /repos/{owner}/{repo}/git/blobs/{file_sha}"],
-    getCommit: ["GET /repos/{owner}/{repo}/git/commits/{commit_sha}"],
-    getRef: ["GET /repos/{owner}/{repo}/git/ref/{ref}"],
-    getTag: ["GET /repos/{owner}/{repo}/git/tags/{tag_sha}"],
-    getTree: ["GET /repos/{owner}/{repo}/git/trees/{tree_sha}"],
-    listMatchingRefs: ["GET /repos/{owner}/{repo}/git/matching-refs/{ref}"],
-    updateRef: ["PATCH /repos/{owner}/{repo}/git/refs/{ref}"]
-  },
-  gitignore: {
-    getAllTemplates: ["GET /gitignore/templates"],
-    getTemplate: ["GET /gitignore/templates/{name}"]
-  },
-  interactions: {
-    getRestrictionsForAuthenticatedUser: ["GET /user/interaction-limits"],
-    getRestrictionsForOrg: ["GET /orgs/{org}/interaction-limits"],
-    getRestrictionsForRepo: ["GET /repos/{owner}/{repo}/interaction-limits"],
-    getRestrictionsForYourPublicRepos: [
-      "GET /user/interaction-limits",
-      {},
-      { renamed: ["interactions", "getRestrictionsForAuthenticatedUser"] }
-    ],
-    removeRestrictionsForAuthenticatedUser: ["DELETE /user/interaction-limits"],
-    removeRestrictionsForOrg: ["DELETE /orgs/{org}/interaction-limits"],
-    removeRestrictionsForRepo: [
-      "DELETE /repos/{owner}/{repo}/interaction-limits"
-    ],
-    removeRestrictionsForYourPublicRepos: [
-      "DELETE /user/interaction-limits",
-      {},
-      { renamed: ["interactions", "removeRestrictionsForAuthenticatedUser"] }
-    ],
-    setRestrictionsForAuthenticatedUser: ["PUT /user/interaction-limits"],
-    setRestrictionsForOrg: ["PUT /orgs/{org}/interaction-limits"],
-    setRestrictionsForRepo: ["PUT /repos/{owner}/{repo}/interaction-limits"],
-    setRestrictionsForYourPublicRepos: [
-      "PUT /user/interaction-limits",
-      {},
-      { renamed: ["interactions", "setRestrictionsForAuthenticatedUser"] }
-    ]
-  },
-  issues: {
-    addAssignees: [
-      "POST /repos/{owner}/{repo}/issues/{issue_number}/assignees"
-    ],
-    addLabels: ["POST /repos/{owner}/{repo}/issues/{issue_number}/labels"],
-    checkUserCanBeAssigned: ["GET /repos/{owner}/{repo}/assignees/{assignee}"],
-    checkUserCanBeAssignedToIssue: [
-      "GET /repos/{owner}/{repo}/issues/{issue_number}/assignees/{assignee}"
-    ],
-    create: ["POST /repos/{owner}/{repo}/issues"],
-    createComment: [
-      "POST /repos/{owner}/{repo}/issues/{issue_number}/comments"
-    ],
-    createLabel: ["POST /repos/{owner}/{repo}/labels"],
-    createMilestone: ["POST /repos/{owner}/{repo}/milestones"],
-    deleteComment: [
-      "DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}"
-    ],
-    deleteLabel: ["DELETE /repos/{owner}/{repo}/labels/{name}"],
-    deleteMilestone: [
-      "DELETE /repos/{owner}/{repo}/milestones/{milestone_number}"
-    ],
-    get: ["GET /repos/{owner}/{repo}/issues/{issue_number}"],
-    getComment: ["GET /repos/{owner}/{repo}/issues/comments/{comment_id}"],
-    getEvent: ["GET /repos/{owner}/{repo}/issues/events/{event_id}"],
-    getLabel: ["GET /repos/{owner}/{repo}/labels/{name}"],
-    getMilestone: ["GET /repos/{owner}/{repo}/milestones/{milestone_number}"],
-    list: ["GET /issues"],
-    listAssignees: ["GET /repos/{owner}/{repo}/assignees"],
-    listComments: ["GET /repos/{owner}/{repo}/issues/{issue_number}/comments"],
-    listCommentsForRepo: ["GET /repos/{owner}/{repo}/issues/comments"],
-    listEvents: ["GET /repos/{owner}/{repo}/issues/{issue_number}/events"],
-    listEventsForRepo: ["GET /repos/{owner}/{repo}/issues/events"],
-    listEventsForTimeline: [
-      "GET /repos/{owner}/{repo}/issues/{issue_number}/timeline"
-    ],
-    listForAuthenticatedUser: ["GET /user/issues"],
-    listForOrg: ["GET /orgs/{org}/issues"],
-    listForRepo: ["GET /repos/{owner}/{repo}/issues"],
-    listLabelsForMilestone: [
-      "GET /repos/{owner}/{repo}/milestones/{milestone_number}/labels"
-    ],
-    listLabelsForRepo: ["GET /repos/{owner}/{repo}/labels"],
-    listLabelsOnIssue: [
-      "GET /repos/{owner}/{repo}/issues/{issue_number}/labels"
-    ],
-    listMilestones: ["GET /repos/{owner}/{repo}/milestones"],
-    lock: ["PUT /repos/{owner}/{repo}/issues/{issue_number}/lock"],
-    removeAllLabels: [
-      "DELETE /repos/{owner}/{repo}/issues/{issue_number}/labels"
-    ],
-    removeAssignees: [
-      "DELETE /repos/{owner}/{repo}/issues/{issue_number}/assignees"
-    ],
-    removeLabel: [
-      "DELETE /repos/{owner}/{repo}/issues/{issue_number}/labels/{name}"
-    ],
-    setLabels: ["PUT /repos/{owner}/{repo}/issues/{issue_number}/labels"],
-    unlock: ["DELETE /repos/{owner}/{repo}/issues/{issue_number}/lock"],
-    update: ["PATCH /repos/{owner}/{repo}/issues/{issue_number}"],
-    updateComment: ["PATCH /repos/{owner}/{repo}/issues/comments/{comment_id}"],
-    updateLabel: ["PATCH /repos/{owner}/{repo}/labels/{name}"],
-    updateMilestone: [
-      "PATCH /repos/{owner}/{repo}/milestones/{milestone_number}"
-    ]
-  },
-  licenses: {
-    get: ["GET /licenses/{license}"],
-    getAllCommonlyUsed: ["GET /licenses"],
-    getForRepo: ["GET /repos/{owner}/{repo}/license"]
-  },
-  markdown: {
-    render: ["POST /markdown"],
-    renderRaw: [
-      "POST /markdown/raw",
-      { headers: { "content-type": "text/plain; charset=utf-8" } }
-    ]
-  },
-  meta: {
-    get: ["GET /meta"],
-    getAllVersions: ["GET /versions"],
-    getOctocat: ["GET /octocat"],
-    getZen: ["GET /zen"],
-    root: ["GET /"]
-  },
-  migrations: {
-    cancelImport: [
-      "DELETE /repos/{owner}/{repo}/import",
-      {},
-      {
-        deprecated: "octokit.rest.migrations.cancelImport() is deprecated, see https://docs.github.com/rest/migrations/source-imports#cancel-an-import"
-      }
-    ],
-    deleteArchiveForAuthenticatedUser: [
-      "DELETE /user/migrations/{migration_id}/archive"
-    ],
-    deleteArchiveForOrg: [
-      "DELETE /orgs/{org}/migrations/{migration_id}/archive"
-    ],
-    downloadArchiveForOrg: [
-      "GET /orgs/{org}/migrations/{migration_id}/archive"
-    ],
-    getArchiveForAuthenticatedUser: [
-      "GET /user/migrations/{migration_id}/archive"
-    ],
-    getCommitAuthors: [
-      "GET /repos/{owner}/{repo}/import/authors",
-      {},
-      {
-        deprecated: "octokit.rest.migrations.getCommitAuthors() is deprecated, see https://docs.github.com/rest/migrations/source-imports#get-commit-authors"
-      }
-    ],
-    getImportStatus: [
-      "GET /repos/{owner}/{repo}/import",
-      {},
-      {
-        deprecated: "octokit.rest.migrations.getImportStatus() is deprecated, see https://docs.github.com/rest/migrations/source-imports#get-an-import-status"
-      }
-    ],
-    getLargeFiles: [
-      "GET /repos/{owner}/{repo}/import/large_files",
-      {},
-      {
-        deprecated: "octokit.rest.migrations.getLargeFiles() is deprecated, see https://docs.github.com/rest/migrations/source-imports#get-large-files"
-      }
-    ],
-    getStatusForAuthenticatedUser: ["GET /user/migrations/{migration_id}"],
-    getStatusForOrg: ["GET /orgs/{org}/migrations/{migration_id}"],
-    listForAuthenticatedUser: ["GET /user/migrations"],
-    listForOrg: ["GET /orgs/{org}/migrations"],
-    listReposForAuthenticatedUser: [
-      "GET /user/migrations/{migration_id}/repositories"
-    ],
-    listReposForOrg: ["GET /orgs/{org}/migrations/{migration_id}/repositories"],
-    listReposForUser: [
-      "GET /user/migrations/{migration_id}/repositories",
-      {},
-      { renamed: ["migrations", "listReposForAuthenticatedUser"] }
-    ],
-    mapCommitAuthor: [
-      "PATCH /repos/{owner}/{repo}/import/authors/{author_id}",
-      {},
-      {
-        deprecated: "octokit.rest.migrations.mapCommitAuthor() is deprecated, see https://docs.github.com/rest/migrations/source-imports#map-a-commit-author"
-      }
-    ],
-    setLfsPreference: [
-      "PATCH /repos/{owner}/{repo}/import/lfs",
-      {},
-      {
-        deprecated: "octokit.rest.migrations.setLfsPreference() is deprecated, see https://docs.github.com/rest/migrations/source-imports#update-git-lfs-preference"
-      }
-    ],
-    startForAuthenticatedUser: ["POST /user/migrations"],
-    startForOrg: ["POST /orgs/{org}/migrations"],
-    startImport: [
-      "PUT /repos/{owner}/{repo}/import",
-      {},
-      {
-        deprecated: "octokit.rest.migrations.startImport() is deprecated, see https://docs.github.com/rest/migrations/source-imports#start-an-import"
-      }
-    ],
-    unlockRepoForAuthenticatedUser: [
-      "DELETE /user/migrations/{migration_id}/repos/{repo_name}/lock"
-    ],
-    unlockRepoForOrg: [
-      "DELETE /orgs/{org}/migrations/{migration_id}/repos/{repo_name}/lock"
-    ],
-    updateImport: [
-      "PATCH /repos/{owner}/{repo}/import",
-      {},
-      {
-        deprecated: "octokit.rest.migrations.updateImport() is deprecated, see https://docs.github.com/rest/migrations/source-imports#update-an-import"
-      }
-    ]
-  },
-  orgs: {
-    addSecurityManagerTeam: [
-      "PUT /orgs/{org}/security-managers/teams/{team_slug}"
-    ],
-    blockUser: ["PUT /orgs/{org}/blocks/{username}"],
-    cancelInvitation: ["DELETE /orgs/{org}/invitations/{invitation_id}"],
-    checkBlockedUser: ["GET /orgs/{org}/blocks/{username}"],
-    checkMembershipForUser: ["GET /orgs/{org}/members/{username}"],
-    checkPublicMembershipForUser: ["GET /orgs/{org}/public_members/{username}"],
-    convertMemberToOutsideCollaborator: [
-      "PUT /orgs/{org}/outside_collaborators/{username}"
-    ],
-    createInvitation: ["POST /orgs/{org}/invitations"],
-    createOrUpdateCustomProperties: ["PATCH /orgs/{org}/properties/schema"],
-    createOrUpdateCustomPropertiesValuesForRepos: [
-      "PATCH /orgs/{org}/properties/values"
-    ],
-    createOrUpdateCustomProperty: [
-      "PUT /orgs/{org}/properties/schema/{custom_property_name}"
-    ],
-    createWebhook: ["POST /orgs/{org}/hooks"],
-    delete: ["DELETE /orgs/{org}"],
-    deleteWebhook: ["DELETE /orgs/{org}/hooks/{hook_id}"],
-    enableOrDisableSecurityProductOnAllOrgRepos: [
-      "POST /orgs/{org}/{security_product}/{enablement}"
-    ],
-    get: ["GET /orgs/{org}"],
-    getAllCustomProperties: ["GET /orgs/{org}/properties/schema"],
-    getCustomProperty: [
-      "GET /orgs/{org}/properties/schema/{custom_property_name}"
-    ],
-    getMembershipForAuthenticatedUser: ["GET /user/memberships/orgs/{org}"],
-    getMembershipForUser: ["GET /orgs/{org}/memberships/{username}"],
-    getWebhook: ["GET /orgs/{org}/hooks/{hook_id}"],
-    getWebhookConfigForOrg: ["GET /orgs/{org}/hooks/{hook_id}/config"],
-    getWebhookDelivery: [
-      "GET /orgs/{org}/hooks/{hook_id}/deliveries/{delivery_id}"
-    ],
-    list: ["GET /organizations"],
-    listAppInstallations: ["GET /orgs/{org}/installations"],
-    listBlockedUsers: ["GET /orgs/{org}/blocks"],
-    listCustomPropertiesValuesForRepos: ["GET /orgs/{org}/properties/values"],
-    listFailedInvitations: ["GET /orgs/{org}/failed_invitations"],
-    listForAuthenticatedUser: ["GET /user/orgs"],
-    listForUser: ["GET /users/{username}/orgs"],
-    listInvitationTeams: ["GET /orgs/{org}/invitations/{invitation_id}/teams"],
-    listMembers: ["GET /orgs/{org}/members"],
-    listMembershipsForAuthenticatedUser: ["GET /user/memberships/orgs"],
-    listOutsideCollaborators: ["GET /orgs/{org}/outside_collaborators"],
-    listPatGrantRepositories: [
-      "GET /orgs/{org}/personal-access-tokens/{pat_id}/repositories"
-    ],
-    listPatGrantRequestRepositories: [
-      "GET /orgs/{org}/personal-access-token-requests/{pat_request_id}/repositories"
-    ],
-    listPatGrantRequests: ["GET /orgs/{org}/personal-access-token-requests"],
-    listPatGrants: ["GET /orgs/{org}/personal-access-tokens"],
-    listPendingInvitations: ["GET /orgs/{org}/invitations"],
-    listPublicMembers: ["GET /orgs/{org}/public_members"],
-    listSecurityManagerTeams: ["GET /orgs/{org}/security-managers"],
-    listWebhookDeliveries: ["GET /orgs/{org}/hooks/{hook_id}/deliveries"],
-    listWebhooks: ["GET /orgs/{org}/hooks"],
-    pingWebhook: ["POST /orgs/{org}/hooks/{hook_id}/pings"],
-    redeliverWebhookDelivery: [
-      "POST /orgs/{org}/hooks/{hook_id}/deliveries/{delivery_id}/attempts"
-    ],
-    removeCustomProperty: [
-      "DELETE /orgs/{org}/properties/schema/{custom_property_name}"
-    ],
-    removeMember: ["DELETE /orgs/{org}/members/{username}"],
-    removeMembershipForUser: ["DELETE /orgs/{org}/memberships/{username}"],
-    removeOutsideCollaborator: [
-      "DELETE /orgs/{org}/outside_collaborators/{username}"
-    ],
-    removePublicMembershipForAuthenticatedUser: [
-      "DELETE /orgs/{org}/public_members/{username}"
-    ],
-    removeSecurityManagerTeam: [
-      "DELETE /orgs/{org}/security-managers/teams/{team_slug}"
-    ],
-    reviewPatGrantRequest: [
-      "POST /orgs/{org}/personal-access-token-requests/{pat_request_id}"
-    ],
-    reviewPatGrantRequestsInBulk: [
-      "POST /orgs/{org}/personal-access-token-requests"
-    ],
-    setMembershipForUser: ["PUT /orgs/{org}/memberships/{username}"],
-    setPublicMembershipForAuthenticatedUser: [
-      "PUT /orgs/{org}/public_members/{username}"
-    ],
-    unblockUser: ["DELETE /orgs/{org}/blocks/{username}"],
-    update: ["PATCH /orgs/{org}"],
-    updateMembershipForAuthenticatedUser: [
-      "PATCH /user/memberships/orgs/{org}"
-    ],
-    updatePatAccess: ["POST /orgs/{org}/personal-access-tokens/{pat_id}"],
-    updatePatAccesses: ["POST /orgs/{org}/personal-access-tokens"],
-    updateWebhook: ["PATCH /orgs/{org}/hooks/{hook_id}"],
-    updateWebhookConfigForOrg: ["PATCH /orgs/{org}/hooks/{hook_id}/config"]
-  },
-  packages: {
-    deletePackageForAuthenticatedUser: [
-      "DELETE /user/packages/{package_type}/{package_name}"
-    ],
-    deletePackageForOrg: [
-      "DELETE /orgs/{org}/packages/{package_type}/{package_name}"
-    ],
-    deletePackageForUser: [
-      "DELETE /users/{username}/packages/{package_type}/{package_name}"
-    ],
-    deletePackageVersionForAuthenticatedUser: [
-      "DELETE /user/packages/{package_type}/{package_name}/versions/{package_version_id}"
-    ],
-    deletePackageVersionForOrg: [
-      "DELETE /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}"
-    ],
-    deletePackageVersionForUser: [
-      "DELETE /users/{username}/packages/{package_type}/{package_name}/versions/{package_version_id}"
-    ],
-    getAllPackageVersionsForAPackageOwnedByAnOrg: [
-      "GET /orgs/{org}/packages/{package_type}/{package_name}/versions",
-      {},
-      { renamed: ["packages", "getAllPackageVersionsForPackageOwnedByOrg"] }
-    ],
-    getAllPackageVersionsForAPackageOwnedByTheAuthenticatedUser: [
-      "GET /user/packages/{package_type}/{package_name}/versions",
-      {},
-      {
-        renamed: [
-          "packages",
-          "getAllPackageVersionsForPackageOwnedByAuthenticatedUser"
-        ]
-      }
-    ],
-    getAllPackageVersionsForPackageOwnedByAuthenticatedUser: [
-      "GET /user/packages/{package_type}/{package_name}/versions"
-    ],
-    getAllPackageVersionsForPackageOwnedByOrg: [
-      "GET /orgs/{org}/packages/{package_type}/{package_name}/versions"
-    ],
-    getAllPackageVersionsForPackageOwnedByUser: [
-      "GET /users/{username}/packages/{package_type}/{package_name}/versions"
-    ],
-    getPackageForAuthenticatedUser: [
-      "GET /user/packages/{package_type}/{package_name}"
-    ],
-    getPackageForOrganization: [
-      "GET /orgs/{org}/packages/{package_type}/{package_name}"
-    ],
-    getPackageForUser: [
-      "GET /users/{username}/packages/{package_type}/{package_name}"
-    ],
-    getPackageVersionForAuthenticatedUser: [
-      "GET /user/packages/{package_type}/{package_name}/versions/{package_version_id}"
-    ],
-    getPackageVersionForOrganization: [
-      "GET /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}"
-    ],
-    getPackageVersionForUser: [
-      "GET /users/{username}/packages/{package_type}/{package_name}/versions/{package_version_id}"
-    ],
-    listDockerMigrationConflictingPackagesForAuthenticatedUser: [
-      "GET /user/docker/conflicts"
-    ],
-    listDockerMigrationConflictingPackagesForOrganization: [
-      "GET /orgs/{org}/docker/conflicts"
-    ],
-    listDockerMigrationConflictingPackagesForUser: [
-      "GET /users/{username}/docker/conflicts"
-    ],
-    listPackagesForAuthenticatedUser: ["GET /user/packages"],
-    listPackagesForOrganization: ["GET /orgs/{org}/packages"],
-    listPackagesForUser: ["GET /users/{username}/packages"],
-    restorePackageForAuthenticatedUser: [
-      "POST /user/packages/{package_type}/{package_name}/restore{?token}"
-    ],
-    restorePackageForOrg: [
-      "POST /orgs/{org}/packages/{package_type}/{package_name}/restore{?token}"
-    ],
-    restorePackageForUser: [
-      "POST /users/{username}/packages/{package_type}/{package_name}/restore{?token}"
-    ],
-    restorePackageVersionForAuthenticatedUser: [
-      "POST /user/packages/{package_type}/{package_name}/versions/{package_version_id}/restore"
-    ],
-    restorePackageVersionForOrg: [
-      "POST /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}/restore"
-    ],
-    restorePackageVersionForUser: [
-      "POST /users/{username}/packages/{package_type}/{package_name}/versions/{package_version_id}/restore"
-    ]
-  },
-  projects: {
-    addCollaborator: ["PUT /projects/{project_id}/collaborators/{username}"],
-    createCard: ["POST /projects/columns/{column_id}/cards"],
-    createColumn: ["POST /projects/{project_id}/columns"],
-    createForAuthenticatedUser: ["POST /user/projects"],
-    createForOrg: ["POST /orgs/{org}/projects"],
-    createForRepo: ["POST /repos/{owner}/{repo}/projects"],
-    delete: ["DELETE /projects/{project_id}"],
-    deleteCard: ["DELETE /projects/columns/cards/{card_id}"],
-    deleteColumn: ["DELETE /projects/columns/{column_id}"],
-    get: ["GET /projects/{project_id}"],
-    getCard: ["GET /projects/columns/cards/{card_id}"],
-    getColumn: ["GET /projects/columns/{column_id}"],
-    getPermissionForUser: [
-      "GET /projects/{project_id}/collaborators/{username}/permission"
-    ],
-    listCards: ["GET /projects/columns/{column_id}/cards"],
-    listCollaborators: ["GET /projects/{project_id}/collaborators"],
-    listColumns: ["GET /projects/{project_id}/columns"],
-    listForOrg: ["GET /orgs/{org}/projects"],
-    listForRepo: ["GET /repos/{owner}/{repo}/projects"],
-    listForUser: ["GET /users/{username}/projects"],
-    moveCard: ["POST /projects/columns/cards/{card_id}/moves"],
-    moveColumn: ["POST /projects/columns/{column_id}/moves"],
-    removeCollaborator: [
-      "DELETE /projects/{project_id}/collaborators/{username}"
-    ],
-    update: ["PATCH /projects/{project_id}"],
-    updateCard: ["PATCH /projects/columns/cards/{card_id}"],
-    updateColumn: ["PATCH /projects/columns/{column_id}"]
-  },
-  pulls: {
-    checkIfMerged: ["GET /repos/{owner}/{repo}/pulls/{pull_number}/merge"],
-    create: ["POST /repos/{owner}/{repo}/pulls"],
-    createReplyForReviewComment: [
-      "POST /repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies"
-    ],
-    createReview: ["POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews"],
-    createReviewComment: [
-      "POST /repos/{owner}/{repo}/pulls/{pull_number}/comments"
-    ],
-    deletePendingReview: [
-      "DELETE /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}"
-    ],
-    deleteReviewComment: [
-      "DELETE /repos/{owner}/{repo}/pulls/comments/{comment_id}"
-    ],
-    dismissReview: [
-      "PUT /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}/dismissals"
-    ],
-    get: ["GET /repos/{owner}/{repo}/pulls/{pull_number}"],
-    getReview: [
-      "GET /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}"
-    ],
-    getReviewComment: ["GET /repos/{owner}/{repo}/pulls/comments/{comment_id}"],
-    list: ["GET /repos/{owner}/{repo}/pulls"],
-    listCommentsForReview: [
-      "GET /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}/comments"
-    ],
-    listCommits: ["GET /repos/{owner}/{repo}/pulls/{pull_number}/commits"],
-    listFiles: ["GET /repos/{owner}/{repo}/pulls/{pull_number}/files"],
-    listRequestedReviewers: [
-      "GET /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers"
-    ],
-    listReviewComments: [
-      "GET /repos/{owner}/{repo}/pulls/{pull_number}/comments"
-    ],
-    listReviewCommentsForRepo: ["GET /repos/{owner}/{repo}/pulls/comments"],
-    listReviews: ["GET /repos/{owner}/{repo}/pulls/{pull_number}/reviews"],
-    merge: ["PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge"],
-    removeRequestedReviewers: [
-      "DELETE /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers"
-    ],
-    requestReviewers: [
-      "POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers"
-    ],
-    submitReview: [
-      "POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}/events"
-    ],
-    update: ["PATCH /repos/{owner}/{repo}/pulls/{pull_number}"],
-    updateBranch: [
-      "PUT /repos/{owner}/{repo}/pulls/{pull_number}/update-branch"
-    ],
-    updateReview: [
-      "PUT /repos/{owner}/{repo}/pulls/{pull_number}/reviews/{review_id}"
-    ],
-    updateReviewComment: [
-      "PATCH /repos/{owner}/{repo}/pulls/comments/{comment_id}"
-    ]
-  },
-  rateLimit: { get: ["GET /rate_limit"] },
-  reactions: {
-    createForCommitComment: [
-      "POST /repos/{owner}/{repo}/comments/{comment_id}/reactions"
-    ],
-    createForIssue: [
-      "POST /repos/{owner}/{repo}/issues/{issue_number}/reactions"
-    ],
-    createForIssueComment: [
-      "POST /repos/{owner}/{repo}/issues/comments/{comment_id}/reactions"
-    ],
-    createForPullRequestReviewComment: [
-      "POST /repos/{owner}/{repo}/pulls/comments/{comment_id}/reactions"
-    ],
-    createForRelease: [
-      "POST /repos/{owner}/{repo}/releases/{release_id}/reactions"
-    ],
-    createForTeamDiscussionCommentInOrg: [
-      "POST /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments/{comment_number}/reactions"
-    ],
-    createForTeamDiscussionInOrg: [
-      "POST /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/reactions"
-    ],
-    deleteForCommitComment: [
-      "DELETE /repos/{owner}/{repo}/comments/{comment_id}/reactions/{reaction_id}"
-    ],
-    deleteForIssue: [
-      "DELETE /repos/{owner}/{repo}/issues/{issue_number}/reactions/{reaction_id}"
-    ],
-    deleteForIssueComment: [
-      "DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}/reactions/{reaction_id}"
-    ],
-    deleteForPullRequestComment: [
-      "DELETE /repos/{owner}/{repo}/pulls/comments/{comment_id}/reactions/{reaction_id}"
-    ],
-    deleteForRelease: [
-      "DELETE /repos/{owner}/{repo}/releases/{release_id}/reactions/{reaction_id}"
-    ],
-    deleteForTeamDiscussion: [
-      "DELETE /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/reactions/{reaction_id}"
-    ],
-    deleteForTeamDiscussionComment: [
-      "DELETE /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments/{comment_number}/reactions/{reaction_id}"
-    ],
-    listForCommitComment: [
-      "GET /repos/{owner}/{repo}/comments/{comment_id}/reactions"
-    ],
-    listForIssue: ["GET /repos/{owner}/{repo}/issues/{issue_number}/reactions"],
-    listForIssueComment: [
-      "GET /repos/{owner}/{repo}/issues/comments/{comment_id}/reactions"
-    ],
-    listForPullRequestReviewComment: [
-      "GET /repos/{owner}/{repo}/pulls/comments/{comment_id}/reactions"
-    ],
-    listForRelease: [
-      "GET /repos/{owner}/{repo}/releases/{release_id}/reactions"
-    ],
-    listForTeamDiscussionCommentInOrg: [
-      "GET /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments/{comment_number}/reactions"
-    ],
-    listForTeamDiscussionInOrg: [
-      "GET /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/reactions"
-    ]
-  },
-  repos: {
-    acceptInvitation: [
-      "PATCH /user/repository_invitations/{invitation_id}",
-      {},
-      { renamed: ["repos", "acceptInvitationForAuthenticatedUser"] }
-    ],
-    acceptInvitationForAuthenticatedUser: [
-      "PATCH /user/repository_invitations/{invitation_id}"
-    ],
-    addAppAccessRestrictions: [
-      "POST /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps",
-      {},
-      { mapToData: "apps" }
-    ],
-    addCollaborator: ["PUT /repos/{owner}/{repo}/collaborators/{username}"],
-    addStatusCheckContexts: [
-      "POST /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts",
-      {},
-      { mapToData: "contexts" }
-    ],
-    addTeamAccessRestrictions: [
-      "POST /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams",
-      {},
-      { mapToData: "teams" }
-    ],
-    addUserAccessRestrictions: [
-      "POST /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users",
-      {},
-      { mapToData: "users" }
-    ],
-    checkAutomatedSecurityFixes: [
-      "GET /repos/{owner}/{repo}/automated-security-fixes"
-    ],
-    checkCollaborator: ["GET /repos/{owner}/{repo}/collaborators/{username}"],
-    checkVulnerabilityAlerts: [
-      "GET /repos/{owner}/{repo}/vulnerability-alerts"
-    ],
-    codeownersErrors: ["GET /repos/{owner}/{repo}/codeowners/errors"],
-    compareCommits: ["GET /repos/{owner}/{repo}/compare/{base}...{head}"],
-    compareCommitsWithBasehead: [
-      "GET /repos/{owner}/{repo}/compare/{basehead}"
-    ],
-    createAutolink: ["POST /repos/{owner}/{repo}/autolinks"],
-    createCommitComment: [
-      "POST /repos/{owner}/{repo}/commits/{commit_sha}/comments"
-    ],
-    createCommitSignatureProtection: [
-      "POST /repos/{owner}/{repo}/branches/{branch}/protection/required_signatures"
-    ],
-    createCommitStatus: ["POST /repos/{owner}/{repo}/statuses/{sha}"],
-    createDeployKey: ["POST /repos/{owner}/{repo}/keys"],
-    createDeployment: ["POST /repos/{owner}/{repo}/deployments"],
-    createDeploymentBranchPolicy: [
-      "POST /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies"
-    ],
-    createDeploymentProtectionRule: [
-      "POST /repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules"
-    ],
-    createDeploymentStatus: [
-      "POST /repos/{owner}/{repo}/deployments/{deployment_id}/statuses"
-    ],
-    createDispatchEvent: ["POST /repos/{owner}/{repo}/dispatches"],
-    createForAuthenticatedUser: ["POST /user/repos"],
-    createFork: ["POST /repos/{owner}/{repo}/forks"],
-    createInOrg: ["POST /orgs/{org}/repos"],
-    createOrUpdateEnvironment: [
-      "PUT /repos/{owner}/{repo}/environments/{environment_name}"
-    ],
-    createOrUpdateFileContents: ["PUT /repos/{owner}/{repo}/contents/{path}"],
-    createOrgRuleset: ["POST /orgs/{org}/rulesets"],
-    createPagesDeployment: ["POST /repos/{owner}/{repo}/pages/deployment"],
-    createPagesSite: ["POST /repos/{owner}/{repo}/pages"],
-    createRelease: ["POST /repos/{owner}/{repo}/releases"],
-    createRepoRuleset: ["POST /repos/{owner}/{repo}/rulesets"],
-    createTagProtection: ["POST /repos/{owner}/{repo}/tags/protection"],
-    createUsingTemplate: [
-      "POST /repos/{template_owner}/{template_repo}/generate"
-    ],
-    createWebhook: ["POST /repos/{owner}/{repo}/hooks"],
-    declineInvitation: [
-      "DELETE /user/repository_invitations/{invitation_id}",
-      {},
-      { renamed: ["repos", "declineInvitationForAuthenticatedUser"] }
-    ],
-    declineInvitationForAuthenticatedUser: [
-      "DELETE /user/repository_invitations/{invitation_id}"
-    ],
-    delete: ["DELETE /repos/{owner}/{repo}"],
-    deleteAccessRestrictions: [
-      "DELETE /repos/{owner}/{repo}/branches/{branch}/protection/restrictions"
-    ],
-    deleteAdminBranchProtection: [
-      "DELETE /repos/{owner}/{repo}/branches/{branch}/protection/enforce_admins"
-    ],
-    deleteAnEnvironment: [
-      "DELETE /repos/{owner}/{repo}/environments/{environment_name}"
-    ],
-    deleteAutolink: ["DELETE /repos/{owner}/{repo}/autolinks/{autolink_id}"],
-    deleteBranchProtection: [
-      "DELETE /repos/{owner}/{repo}/branches/{branch}/protection"
-    ],
-    deleteCommitComment: ["DELETE /repos/{owner}/{repo}/comments/{comment_id}"],
-    deleteCommitSignatureProtection: [
-      "DELETE /repos/{owner}/{repo}/branches/{branch}/protection/required_signatures"
-    ],
-    deleteDeployKey: ["DELETE /repos/{owner}/{repo}/keys/{key_id}"],
-    deleteDeployment: [
-      "DELETE /repos/{owner}/{repo}/deployments/{deployment_id}"
-    ],
-    deleteDeploymentBranchPolicy: [
-      "DELETE /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies/{branch_policy_id}"
-    ],
-    deleteFile: ["DELETE /repos/{owner}/{repo}/contents/{path}"],
-    deleteInvitation: [
-      "DELETE /repos/{owner}/{repo}/invitations/{invitation_id}"
-    ],
-    deleteOrgRuleset: ["DELETE /orgs/{org}/rulesets/{ruleset_id}"],
-    deletePagesSite: ["DELETE /repos/{owner}/{repo}/pages"],
-    deletePullRequestReviewProtection: [
-      "DELETE /repos/{owner}/{repo}/branches/{branch}/protection/required_pull_request_reviews"
-    ],
-    deleteRelease: ["DELETE /repos/{owner}/{repo}/releases/{release_id}"],
-    deleteReleaseAsset: [
-      "DELETE /repos/{owner}/{repo}/releases/assets/{asset_id}"
-    ],
-    deleteRepoRuleset: ["DELETE /repos/{owner}/{repo}/rulesets/{ruleset_id}"],
-    deleteTagProtection: [
-      "DELETE /repos/{owner}/{repo}/tags/protection/{tag_protection_id}"
-    ],
-    deleteWebhook: ["DELETE /repos/{owner}/{repo}/hooks/{hook_id}"],
-    disableAutomatedSecurityFixes: [
-      "DELETE /repos/{owner}/{repo}/automated-security-fixes"
-    ],
-    disableDeploymentProtectionRule: [
-      "DELETE /repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules/{protection_rule_id}"
-    ],
-    disablePrivateVulnerabilityReporting: [
-      "DELETE /repos/{owner}/{repo}/private-vulnerability-reporting"
-    ],
-    disableVulnerabilityAlerts: [
-      "DELETE /repos/{owner}/{repo}/vulnerability-alerts"
-    ],
-    downloadArchive: [
-      "GET /repos/{owner}/{repo}/zipball/{ref}",
-      {},
-      { renamed: ["repos", "downloadZipballArchive"] }
-    ],
-    downloadTarballArchive: ["GET /repos/{owner}/{repo}/tarball/{ref}"],
-    downloadZipballArchive: ["GET /repos/{owner}/{repo}/zipball/{ref}"],
-    enableAutomatedSecurityFixes: [
-      "PUT /repos/{owner}/{repo}/automated-security-fixes"
-    ],
-    enablePrivateVulnerabilityReporting: [
-      "PUT /repos/{owner}/{repo}/private-vulnerability-reporting"
-    ],
-    enableVulnerabilityAlerts: [
-      "PUT /repos/{owner}/{repo}/vulnerability-alerts"
-    ],
-    generateReleaseNotes: [
-      "POST /repos/{owner}/{repo}/releases/generate-notes"
-    ],
-    get: ["GET /repos/{owner}/{repo}"],
-    getAccessRestrictions: [
-      "GET /repos/{owner}/{repo}/branches/{branch}/protection/restrictions"
-    ],
-    getAdminBranchProtection: [
-      "GET /repos/{owner}/{repo}/branches/{branch}/protection/enforce_admins"
-    ],
-    getAllDeploymentProtectionRules: [
-      "GET /repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules"
-    ],
-    getAllEnvironments: ["GET /repos/{owner}/{repo}/environments"],
-    getAllStatusCheckContexts: [
-      "GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts"
-    ],
-    getAllTopics: ["GET /repos/{owner}/{repo}/topics"],
-    getAppsWithAccessToProtectedBranch: [
-      "GET /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps"
-    ],
-    getAutolink: ["GET /repos/{owner}/{repo}/autolinks/{autolink_id}"],
-    getBranch: ["GET /repos/{owner}/{repo}/branches/{branch}"],
-    getBranchProtection: [
-      "GET /repos/{owner}/{repo}/branches/{branch}/protection"
-    ],
-    getBranchRules: ["GET /repos/{owner}/{repo}/rules/branches/{branch}"],
-    getClones: ["GET /repos/{owner}/{repo}/traffic/clones"],
-    getCodeFrequencyStats: ["GET /repos/{owner}/{repo}/stats/code_frequency"],
-    getCollaboratorPermissionLevel: [
-      "GET /repos/{owner}/{repo}/collaborators/{username}/permission"
-    ],
-    getCombinedStatusForRef: ["GET /repos/{owner}/{repo}/commits/{ref}/status"],
-    getCommit: ["GET /repos/{owner}/{repo}/commits/{ref}"],
-    getCommitActivityStats: ["GET /repos/{owner}/{repo}/stats/commit_activity"],
-    getCommitComment: ["GET /repos/{owner}/{repo}/comments/{comment_id}"],
-    getCommitSignatureProtection: [
-      "GET /repos/{owner}/{repo}/branches/{branch}/protection/required_signatures"
-    ],
-    getCommunityProfileMetrics: ["GET /repos/{owner}/{repo}/community/profile"],
-    getContent: ["GET /repos/{owner}/{repo}/contents/{path}"],
-    getContributorsStats: ["GET /repos/{owner}/{repo}/stats/contributors"],
-    getCustomDeploymentProtectionRule: [
-      "GET /repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules/{protection_rule_id}"
-    ],
-    getCustomPropertiesValues: ["GET /repos/{owner}/{repo}/properties/values"],
-    getDeployKey: ["GET /repos/{owner}/{repo}/keys/{key_id}"],
-    getDeployment: ["GET /repos/{owner}/{repo}/deployments/{deployment_id}"],
-    getDeploymentBranchPolicy: [
-      "GET /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies/{branch_policy_id}"
-    ],
-    getDeploymentStatus: [
-      "GET /repos/{owner}/{repo}/deployments/{deployment_id}/statuses/{status_id}"
-    ],
-    getEnvironment: [
-      "GET /repos/{owner}/{repo}/environments/{environment_name}"
-    ],
-    getLatestPagesBuild: ["GET /repos/{owner}/{repo}/pages/builds/latest"],
-    getLatestRelease: ["GET /repos/{owner}/{repo}/releases/latest"],
-    getOrgRuleSuite: ["GET /orgs/{org}/rulesets/rule-suites/{rule_suite_id}"],
-    getOrgRuleSuites: ["GET /orgs/{org}/rulesets/rule-suites"],
-    getOrgRuleset: ["GET /orgs/{org}/rulesets/{ruleset_id}"],
-    getOrgRulesets: ["GET /orgs/{org}/rulesets"],
-    getPages: ["GET /repos/{owner}/{repo}/pages"],
-    getPagesBuild: ["GET /repos/{owner}/{repo}/pages/builds/{build_id}"],
-    getPagesHealthCheck: ["GET /repos/{owner}/{repo}/pages/health"],
-    getParticipationStats: ["GET /repos/{owner}/{repo}/stats/participation"],
-    getPullRequestReviewProtection: [
-      "GET /repos/{owner}/{repo}/branches/{branch}/protection/required_pull_request_reviews"
-    ],
-    getPunchCardStats: ["GET /repos/{owner}/{repo}/stats/punch_card"],
-    getReadme: ["GET /repos/{owner}/{repo}/readme"],
-    getReadmeInDirectory: ["GET /repos/{owner}/{repo}/readme/{dir}"],
-    getRelease: ["GET /repos/{owner}/{repo}/releases/{release_id}"],
-    getReleaseAsset: ["GET /repos/{owner}/{repo}/releases/assets/{asset_id}"],
-    getReleaseByTag: ["GET /repos/{owner}/{repo}/releases/tags/{tag}"],
-    getRepoRuleSuite: [
-      "GET /repos/{owner}/{repo}/rulesets/rule-suites/{rule_suite_id}"
-    ],
-    getRepoRuleSuites: ["GET /repos/{owner}/{repo}/rulesets/rule-suites"],
-    getRepoRuleset: ["GET /repos/{owner}/{repo}/rulesets/{ruleset_id}"],
-    getRepoRulesets: ["GET /repos/{owner}/{repo}/rulesets"],
-    getStatusChecksProtection: [
-      "GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks"
-    ],
-    getTeamsWithAccessToProtectedBranch: [
-      "GET /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams"
-    ],
-    getTopPaths: ["GET /repos/{owner}/{repo}/traffic/popular/paths"],
-    getTopReferrers: ["GET /repos/{owner}/{repo}/traffic/popular/referrers"],
-    getUsersWithAccessToProtectedBranch: [
-      "GET /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users"
-    ],
-    getViews: ["GET /repos/{owner}/{repo}/traffic/views"],
-    getWebhook: ["GET /repos/{owner}/{repo}/hooks/{hook_id}"],
-    getWebhookConfigForRepo: [
-      "GET /repos/{owner}/{repo}/hooks/{hook_id}/config"
-    ],
-    getWebhookDelivery: [
-      "GET /repos/{owner}/{repo}/hooks/{hook_id}/deliveries/{delivery_id}"
-    ],
-    listActivities: ["GET /repos/{owner}/{repo}/activity"],
-    listAutolinks: ["GET /repos/{owner}/{repo}/autolinks"],
-    listBranches: ["GET /repos/{owner}/{repo}/branches"],
-    listBranchesForHeadCommit: [
-      "GET /repos/{owner}/{repo}/commits/{commit_sha}/branches-where-head"
-    ],
-    listCollaborators: ["GET /repos/{owner}/{repo}/collaborators"],
-    listCommentsForCommit: [
-      "GET /repos/{owner}/{repo}/commits/{commit_sha}/comments"
-    ],
-    listCommitCommentsForRepo: ["GET /repos/{owner}/{repo}/comments"],
-    listCommitStatusesForRef: [
-      "GET /repos/{owner}/{repo}/commits/{ref}/statuses"
-    ],
-    listCommits: ["GET /repos/{owner}/{repo}/commits"],
-    listContributors: ["GET /repos/{owner}/{repo}/contributors"],
-    listCustomDeploymentRuleIntegrations: [
-      "GET /repos/{owner}/{repo}/environments/{environment_name}/deployment_protection_rules/apps"
-    ],
-    listDeployKeys: ["GET /repos/{owner}/{repo}/keys"],
-    listDeploymentBranchPolicies: [
-      "GET /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies"
-    ],
-    listDeploymentStatuses: [
-      "GET /repos/{owner}/{repo}/deployments/{deployment_id}/statuses"
-    ],
-    listDeployments: ["GET /repos/{owner}/{repo}/deployments"],
-    listForAuthenticatedUser: ["GET /user/repos"],
-    listForOrg: ["GET /orgs/{org}/repos"],
-    listForUser: ["GET /users/{username}/repos"],
-    listForks: ["GET /repos/{owner}/{repo}/forks"],
-    listInvitations: ["GET /repos/{owner}/{repo}/invitations"],
-    listInvitationsForAuthenticatedUser: ["GET /user/repository_invitations"],
-    listLanguages: ["GET /repos/{owner}/{repo}/languages"],
-    listPagesBuilds: ["GET /repos/{owner}/{repo}/pages/builds"],
-    listPublic: ["GET /repositories"],
-    listPullRequestsAssociatedWithCommit: [
-      "GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls"
-    ],
-    listReleaseAssets: [
-      "GET /repos/{owner}/{repo}/releases/{release_id}/assets"
-    ],
-    listReleases: ["GET /repos/{owner}/{repo}/releases"],
-    listTagProtection: ["GET /repos/{owner}/{repo}/tags/protection"],
-    listTags: ["GET /repos/{owner}/{repo}/tags"],
-    listTeams: ["GET /repos/{owner}/{repo}/teams"],
-    listWebhookDeliveries: [
-      "GET /repos/{owner}/{repo}/hooks/{hook_id}/deliveries"
-    ],
-    listWebhooks: ["GET /repos/{owner}/{repo}/hooks"],
-    merge: ["POST /repos/{owner}/{repo}/merges"],
-    mergeUpstream: ["POST /repos/{owner}/{repo}/merge-upstream"],
-    pingWebhook: ["POST /repos/{owner}/{repo}/hooks/{hook_id}/pings"],
-    redeliverWebhookDelivery: [
-      "POST /repos/{owner}/{repo}/hooks/{hook_id}/deliveries/{delivery_id}/attempts"
-    ],
-    removeAppAccessRestrictions: [
-      "DELETE /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps",
-      {},
-      { mapToData: "apps" }
-    ],
-    removeCollaborator: [
-      "DELETE /repos/{owner}/{repo}/collaborators/{username}"
-    ],
-    removeStatusCheckContexts: [
-      "DELETE /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts",
-      {},
-      { mapToData: "contexts" }
-    ],
-    removeStatusCheckProtection: [
-      "DELETE /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks"
-    ],
-    removeTeamAccessRestrictions: [
-      "DELETE /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams",
-      {},
-      { mapToData: "teams" }
-    ],
-    removeUserAccessRestrictions: [
-      "DELETE /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users",
-      {},
-      { mapToData: "users" }
-    ],
-    renameBranch: ["POST /repos/{owner}/{repo}/branches/{branch}/rename"],
-    replaceAllTopics: ["PUT /repos/{owner}/{repo}/topics"],
-    requestPagesBuild: ["POST /repos/{owner}/{repo}/pages/builds"],
-    setAdminBranchProtection: [
-      "POST /repos/{owner}/{repo}/branches/{branch}/protection/enforce_admins"
-    ],
-    setAppAccessRestrictions: [
-      "PUT /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/apps",
-      {},
-      { mapToData: "apps" }
-    ],
-    setStatusCheckContexts: [
-      "PUT /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks/contexts",
-      {},
-      { mapToData: "contexts" }
-    ],
-    setTeamAccessRestrictions: [
-      "PUT /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/teams",
-      {},
-      { mapToData: "teams" }
-    ],
-    setUserAccessRestrictions: [
-      "PUT /repos/{owner}/{repo}/branches/{branch}/protection/restrictions/users",
-      {},
-      { mapToData: "users" }
-    ],
-    testPushWebhook: ["POST /repos/{owner}/{repo}/hooks/{hook_id}/tests"],
-    transfer: ["POST /repos/{owner}/{repo}/transfer"],
-    update: ["PATCH /repos/{owner}/{repo}"],
-    updateBranchProtection: [
-      "PUT /repos/{owner}/{repo}/branches/{branch}/protection"
-    ],
-    updateCommitComment: ["PATCH /repos/{owner}/{repo}/comments/{comment_id}"],
-    updateDeploymentBranchPolicy: [
-      "PUT /repos/{owner}/{repo}/environments/{environment_name}/deployment-branch-policies/{branch_policy_id}"
-    ],
-    updateInformationAboutPagesSite: ["PUT /repos/{owner}/{repo}/pages"],
-    updateInvitation: [
-      "PATCH /repos/{owner}/{repo}/invitations/{invitation_id}"
-    ],
-    updateOrgRuleset: ["PUT /orgs/{org}/rulesets/{ruleset_id}"],
-    updatePullRequestReviewProtection: [
-      "PATCH /repos/{owner}/{repo}/branches/{branch}/protection/required_pull_request_reviews"
-    ],
-    updateRelease: ["PATCH /repos/{owner}/{repo}/releases/{release_id}"],
-    updateReleaseAsset: [
-      "PATCH /repos/{owner}/{repo}/releases/assets/{asset_id}"
-    ],
-    updateRepoRuleset: ["PUT /repos/{owner}/{repo}/rulesets/{ruleset_id}"],
-    updateStatusCheckPotection: [
-      "PATCH /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks",
-      {},
-      { renamed: ["repos", "updateStatusCheckProtection"] }
-    ],
-    updateStatusCheckProtection: [
-      "PATCH /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks"
-    ],
-    updateWebhook: ["PATCH /repos/{owner}/{repo}/hooks/{hook_id}"],
-    updateWebhookConfigForRepo: [
-      "PATCH /repos/{owner}/{repo}/hooks/{hook_id}/config"
-    ],
-    uploadReleaseAsset: [
-      "POST /repos/{owner}/{repo}/releases/{release_id}/assets{?name,label}",
-      { baseUrl: "https://uploads.github.com" }
-    ]
-  },
-  search: {
-    code: ["GET /search/code"],
-    commits: ["GET /search/commits"],
-    issuesAndPullRequests: ["GET /search/issues"],
-    labels: ["GET /search/labels"],
-    repos: ["GET /search/repositories"],
-    topics: ["GET /search/topics"],
-    users: ["GET /search/users"]
-  },
-  secretScanning: {
-    getAlert: [
-      "GET /repos/{owner}/{repo}/secret-scanning/alerts/{alert_number}"
-    ],
-    listAlertsForEnterprise: [
-      "GET /enterprises/{enterprise}/secret-scanning/alerts"
-    ],
-    listAlertsForOrg: ["GET /orgs/{org}/secret-scanning/alerts"],
-    listAlertsForRepo: ["GET /repos/{owner}/{repo}/secret-scanning/alerts"],
-    listLocationsForAlert: [
-      "GET /repos/{owner}/{repo}/secret-scanning/alerts/{alert_number}/locations"
-    ],
-    updateAlert: [
-      "PATCH /repos/{owner}/{repo}/secret-scanning/alerts/{alert_number}"
-    ]
-  },
-  securityAdvisories: {
-    createPrivateVulnerabilityReport: [
-      "POST /repos/{owner}/{repo}/security-advisories/reports"
-    ],
-    createRepositoryAdvisory: [
-      "POST /repos/{owner}/{repo}/security-advisories"
-    ],
-    createRepositoryAdvisoryCveRequest: [
-      "POST /repos/{owner}/{repo}/security-advisories/{ghsa_id}/cve"
-    ],
-    getGlobalAdvisory: ["GET /advisories/{ghsa_id}"],
-    getRepositoryAdvisory: [
-      "GET /repos/{owner}/{repo}/security-advisories/{ghsa_id}"
-    ],
-    listGlobalAdvisories: ["GET /advisories"],
-    listOrgRepositoryAdvisories: ["GET /orgs/{org}/security-advisories"],
-    listRepositoryAdvisories: ["GET /repos/{owner}/{repo}/security-advisories"],
-    updateRepositoryAdvisory: [
-      "PATCH /repos/{owner}/{repo}/security-advisories/{ghsa_id}"
-    ]
-  },
-  teams: {
-    addOrUpdateMembershipForUserInOrg: [
-      "PUT /orgs/{org}/teams/{team_slug}/memberships/{username}"
-    ],
-    addOrUpdateProjectPermissionsInOrg: [
-      "PUT /orgs/{org}/teams/{team_slug}/projects/{project_id}"
-    ],
-    addOrUpdateRepoPermissionsInOrg: [
-      "PUT /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}"
-    ],
-    checkPermissionsForProjectInOrg: [
-      "GET /orgs/{org}/teams/{team_slug}/projects/{project_id}"
-    ],
-    checkPermissionsForRepoInOrg: [
-      "GET /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}"
-    ],
-    create: ["POST /orgs/{org}/teams"],
-    createDiscussionCommentInOrg: [
-      "POST /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments"
-    ],
-    createDiscussionInOrg: ["POST /orgs/{org}/teams/{team_slug}/discussions"],
-    deleteDiscussionCommentInOrg: [
-      "DELETE /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments/{comment_number}"
-    ],
-    deleteDiscussionInOrg: [
-      "DELETE /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}"
-    ],
-    deleteInOrg: ["DELETE /orgs/{org}/teams/{team_slug}"],
-    getByName: ["GET /orgs/{org}/teams/{team_slug}"],
-    getDiscussionCommentInOrg: [
-      "GET /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments/{comment_number}"
-    ],
-    getDiscussionInOrg: [
-      "GET /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}"
-    ],
-    getMembershipForUserInOrg: [
-      "GET /orgs/{org}/teams/{team_slug}/memberships/{username}"
-    ],
-    list: ["GET /orgs/{org}/teams"],
-    listChildInOrg: ["GET /orgs/{org}/teams/{team_slug}/teams"],
-    listDiscussionCommentsInOrg: [
-      "GET /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments"
-    ],
-    listDiscussionsInOrg: ["GET /orgs/{org}/teams/{team_slug}/discussions"],
-    listForAuthenticatedUser: ["GET /user/teams"],
-    listMembersInOrg: ["GET /orgs/{org}/teams/{team_slug}/members"],
-    listPendingInvitationsInOrg: [
-      "GET /orgs/{org}/teams/{team_slug}/invitations"
-    ],
-    listProjectsInOrg: ["GET /orgs/{org}/teams/{team_slug}/projects"],
-    listReposInOrg: ["GET /orgs/{org}/teams/{team_slug}/repos"],
-    removeMembershipForUserInOrg: [
-      "DELETE /orgs/{org}/teams/{team_slug}/memberships/{username}"
-    ],
-    removeProjectInOrg: [
-      "DELETE /orgs/{org}/teams/{team_slug}/projects/{project_id}"
-    ],
-    removeRepoInOrg: [
-      "DELETE /orgs/{org}/teams/{team_slug}/repos/{owner}/{repo}"
-    ],
-    updateDiscussionCommentInOrg: [
-      "PATCH /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments/{comment_number}"
-    ],
-    updateDiscussionInOrg: [
-      "PATCH /orgs/{org}/teams/{team_slug}/discussions/{discussion_number}"
-    ],
-    updateInOrg: ["PATCH /orgs/{org}/teams/{team_slug}"]
-  },
-  users: {
-    addEmailForAuthenticated: [
-      "POST /user/emails",
-      {},
-      { renamed: ["users", "addEmailForAuthenticatedUser"] }
-    ],
-    addEmailForAuthenticatedUser: ["POST /user/emails"],
-    addSocialAccountForAuthenticatedUser: ["POST /user/social_accounts"],
-    block: ["PUT /user/blocks/{username}"],
-    checkBlocked: ["GET /user/blocks/{username}"],
-    checkFollowingForUser: ["GET /users/{username}/following/{target_user}"],
-    checkPersonIsFollowedByAuthenticated: ["GET /user/following/{username}"],
-    createGpgKeyForAuthenticated: [
-      "POST /user/gpg_keys",
-      {},
-      { renamed: ["users", "createGpgKeyForAuthenticatedUser"] }
-    ],
-    createGpgKeyForAuthenticatedUser: ["POST /user/gpg_keys"],
-    createPublicSshKeyForAuthenticated: [
-      "POST /user/keys",
-      {},
-      { renamed: ["users", "createPublicSshKeyForAuthenticatedUser"] }
-    ],
-    createPublicSshKeyForAuthenticatedUser: ["POST /user/keys"],
-    createSshSigningKeyForAuthenticatedUser: ["POST /user/ssh_signing_keys"],
-    deleteEmailForAuthenticated: [
-      "DELETE /user/emails",
-      {},
-      { renamed: ["users", "deleteEmailForAuthenticatedUser"] }
-    ],
-    deleteEmailForAuthenticatedUser: ["DELETE /user/emails"],
-    deleteGpgKeyForAuthenticated: [
-      "DELETE /user/gpg_keys/{gpg_key_id}",
-      {},
-      { renamed: ["users", "deleteGpgKeyForAuthenticatedUser"] }
-    ],
-    deleteGpgKeyForAuthenticatedUser: ["DELETE /user/gpg_keys/{gpg_key_id}"],
-    deletePublicSshKeyForAuthenticated: [
-      "DELETE /user/keys/{key_id}",
-      {},
-      { renamed: ["users", "deletePublicSshKeyForAuthenticatedUser"] }
-    ],
-    deletePublicSshKeyForAuthenticatedUser: ["DELETE /user/keys/{key_id}"],
-    deleteSocialAccountForAuthenticatedUser: ["DELETE /user/social_accounts"],
-    deleteSshSigningKeyForAuthenticatedUser: [
-      "DELETE /user/ssh_signing_keys/{ssh_signing_key_id}"
-    ],
-    follow: ["PUT /user/following/{username}"],
-    getAuthenticated: ["GET /user"],
-    getByUsername: ["GET /users/{username}"],
-    getContextForUser: ["GET /users/{username}/hovercard"],
-    getGpgKeyForAuthenticated: [
-      "GET /user/gpg_keys/{gpg_key_id}",
-      {},
-      { renamed: ["users", "getGpgKeyForAuthenticatedUser"] }
-    ],
-    getGpgKeyForAuthenticatedUser: ["GET /user/gpg_keys/{gpg_key_id}"],
-    getPublicSshKeyForAuthenticated: [
-      "GET /user/keys/{key_id}",
-      {},
-      { renamed: ["users", "getPublicSshKeyForAuthenticatedUser"] }
-    ],
-    getPublicSshKeyForAuthenticatedUser: ["GET /user/keys/{key_id}"],
-    getSshSigningKeyForAuthenticatedUser: [
-      "GET /user/ssh_signing_keys/{ssh_signing_key_id}"
-    ],
-    list: ["GET /users"],
-    listBlockedByAuthenticated: [
-      "GET /user/blocks",
-      {},
-      { renamed: ["users", "listBlockedByAuthenticatedUser"] }
-    ],
-    listBlockedByAuthenticatedUser: ["GET /user/blocks"],
-    listEmailsForAuthenticated: [
-      "GET /user/emails",
-      {},
-      { renamed: ["users", "listEmailsForAuthenticatedUser"] }
-    ],
-    listEmailsForAuthenticatedUser: ["GET /user/emails"],
-    listFollowedByAuthenticated: [
-      "GET /user/following",
-      {},
-      { renamed: ["users", "listFollowedByAuthenticatedUser"] }
-    ],
-    listFollowedByAuthenticatedUser: ["GET /user/following"],
-    listFollowersForAuthenticatedUser: ["GET /user/followers"],
-    listFollowersForUser: ["GET /users/{username}/followers"],
-    listFollowingForUser: ["GET /users/{username}/following"],
-    listGpgKeysForAuthenticated: [
-      "GET /user/gpg_keys",
-      {},
-      { renamed: ["users", "listGpgKeysForAuthenticatedUser"] }
-    ],
-    listGpgKeysForAuthenticatedUser: ["GET /user/gpg_keys"],
-    listGpgKeysForUser: ["GET /users/{username}/gpg_keys"],
-    listPublicEmailsForAuthenticated: [
-      "GET /user/public_emails",
-      {},
-      { renamed: ["users", "listPublicEmailsForAuthenticatedUser"] }
-    ],
-    listPublicEmailsForAuthenticatedUser: ["GET /user/public_emails"],
-    listPublicKeysForUser: ["GET /users/{username}/keys"],
-    listPublicSshKeysForAuthenticated: [
-      "GET /user/keys",
-      {},
-      { renamed: ["users", "listPublicSshKeysForAuthenticatedUser"] }
-    ],
-    listPublicSshKeysForAuthenticatedUser: ["GET /user/keys"],
-    listSocialAccountsForAuthenticatedUser: ["GET /user/social_accounts"],
-    listSocialAccountsForUser: ["GET /users/{username}/social_accounts"],
-    listSshSigningKeysForAuthenticatedUser: ["GET /user/ssh_signing_keys"],
-    listSshSigningKeysForUser: ["GET /users/{username}/ssh_signing_keys"],
-    setPrimaryEmailVisibilityForAuthenticated: [
-      "PATCH /user/email/visibility",
-      {},
-      { renamed: ["users", "setPrimaryEmailVisibilityForAuthenticatedUser"] }
-    ],
-    setPrimaryEmailVisibilityForAuthenticatedUser: [
-      "PATCH /user/email/visibility"
-    ],
-    unblock: ["DELETE /user/blocks/{username}"],
-    unfollow: ["DELETE /user/following/{username}"],
-    updateAuthenticated: ["PATCH /user"]
-  }
-};
-var endpoints_default = Endpoints;
-
-// pkg/dist-src/endpoints-to-methods.js
-var endpointMethodsMap = /* @__PURE__ */ new Map();
-for (const [scope, endpoints] of Object.entries(endpoints_default)) {
-  for (const [methodName, endpoint] of Object.entries(endpoints)) {
-    const [route, defaults, decorations] = endpoint;
-    const [method, url] = route.split(/ /);
-    const endpointDefaults = Object.assign(
-      {
-        method,
-        url
-      },
-      defaults
-    );
-    if (!endpointMethodsMap.has(scope)) {
-      endpointMethodsMap.set(scope, /* @__PURE__ */ new Map());
-    }
-    endpointMethodsMap.get(scope).set(methodName, {
-      scope,
-      methodName,
-      endpointDefaults,
-      decorations
-    });
-  }
-}
-var handler = {
-  has({ scope }, methodName) {
-    return endpointMethodsMap.get(scope).has(methodName);
-  },
-  getOwnPropertyDescriptor(target, methodName) {
-    return {
-      value: this.get(target, methodName),
-      // ensures method is in the cache
-      configurable: true,
-      writable: true,
-      enumerable: true
-    };
-  },
-  defineProperty(target, methodName, descriptor) {
-    Object.defineProperty(target.cache, methodName, descriptor);
-    return true;
-  },
-  deleteProperty(target, methodName) {
-    delete target.cache[methodName];
-    return true;
-  },
-  ownKeys({ scope }) {
-    return [...endpointMethodsMap.get(scope).keys()];
-  },
-  set(target, methodName, value) {
-    return target.cache[methodName] = value;
-  },
-  get({ octokit, scope, cache }, methodName) {
-    if (cache[methodName]) {
-      return cache[methodName];
-    }
-    const method = endpointMethodsMap.get(scope).get(methodName);
-    if (!method) {
-      return void 0;
-    }
-    const { endpointDefaults, decorations } = method;
-    if (decorations) {
-      cache[methodName] = decorate(
-        octokit,
-        scope,
-        methodName,
-        endpointDefaults,
-        decorations
-      );
-    } else {
-      cache[methodName] = octokit.request.defaults(endpointDefaults);
-    }
-    return cache[methodName];
-  }
-};
-function endpointsToMethods(octokit) {
-  const newMethods = {};
-  for (const scope of endpointMethodsMap.keys()) {
-    newMethods[scope] = new Proxy({ octokit, scope, cache: {} }, handler);
-  }
-  return newMethods;
-}
-function decorate(octokit, scope, methodName, defaults, decorations) {
-  const requestWithDefaults = octokit.request.defaults(defaults);
-  function withDecorations(...args) {
-    let options = requestWithDefaults.endpoint.merge(...args);
-    if (decorations.mapToData) {
-      options = Object.assign({}, options, {
-        data: options[decorations.mapToData],
-        [decorations.mapToData]: void 0
-      });
-      return requestWithDefaults(options);
-    }
-    if (decorations.renamed) {
-      const [newScope, newMethodName] = decorations.renamed;
-      octokit.log.warn(
-        `octokit.${scope}.${methodName}() has been renamed to octokit.${newScope}.${newMethodName}()`
-      );
-    }
-    if (decorations.deprecated) {
-      octokit.log.warn(decorations.deprecated);
-    }
-    if (decorations.renamedParameters) {
-      const options2 = requestWithDefaults.endpoint.merge(...args);
-      for (const [name, alias] of Object.entries(
-        decorations.renamedParameters
-      )) {
-        if (name in options2) {
-          octokit.log.warn(
-            `"${name}" parameter is deprecated for "octokit.${scope}.${methodName}()". Use "${alias}" instead`
-          );
-          if (!(alias in options2)) {
-            options2[alias] = options2[name];
-          }
-          delete options2[name];
-        }
-      }
-      return requestWithDefaults(options2);
-    }
-    return requestWithDefaults(...args);
-  }
-  return Object.assign(withDecorations, requestWithDefaults);
-}
-
-// pkg/dist-src/index.js
-function restEndpointMethods(octokit) {
-  const api = endpointsToMethods(octokit);
-  return {
-    rest: api
-  };
-}
-restEndpointMethods.VERSION = VERSION;
-function legacyRestEndpointMethods(octokit) {
-  const api = endpointsToMethods(octokit);
-  return {
-    ...api,
-    rest: api
-  };
-}
-legacyRestEndpointMethods.VERSION = VERSION;
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 9968:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// pkg/dist-src/index.js
-var dist_src_exports = {};
-__export(dist_src_exports, {
-  throttling: () => throttling
-});
-module.exports = __toCommonJS(dist_src_exports);
-var import_light = __toESM(__nccwpck_require__(1174));
-var import_core = __nccwpck_require__(6762);
-
-// pkg/dist-src/version.js
-var VERSION = "8.1.3";
-
-// pkg/dist-src/wrap-request.js
-var noop = () => Promise.resolve();
-function wrapRequest(state, request, options) {
-  return state.retryLimiter.schedule(doRequest, state, request, options);
-}
-async function doRequest(state, request, options) {
-  const isWrite = options.method !== "GET" && options.method !== "HEAD";
-  const { pathname } = new URL(options.url, "http://github.test");
-  const isSearch = options.method === "GET" && pathname.startsWith("/search/");
-  const isGraphQL = pathname.startsWith("/graphql");
-  const retryCount = ~~request.retryCount;
-  const jobOptions = retryCount > 0 ? { priority: 0, weight: 0 } : {};
-  if (state.clustering) {
-    jobOptions.expiration = 1e3 * 60;
-  }
-  if (isWrite || isGraphQL) {
-    await state.write.key(state.id).schedule(jobOptions, noop);
-  }
-  if (isWrite && state.triggersNotification(pathname)) {
-    await state.notifications.key(state.id).schedule(jobOptions, noop);
-  }
-  if (isSearch) {
-    await state.search.key(state.id).schedule(jobOptions, noop);
-  }
-  const req = state.global.key(state.id).schedule(
-    jobOptions,
-    request,
-    options
-  );
-  if (isGraphQL) {
-    const res = await req;
-    if (res.data.errors != null && res.data.errors.some((error) => error.type === "RATE_LIMITED")) {
-      const error = Object.assign(new Error("GraphQL Rate Limit Exceeded"), {
-        response: res,
-        data: res.data
-      });
-      throw error;
-    }
-  }
-  return req;
-}
-
-// pkg/dist-src/generated/triggers-notification-paths.js
-var triggers_notification_paths_default = [
-  "/orgs/{org}/invitations",
-  "/orgs/{org}/invitations/{invitation_id}",
-  "/orgs/{org}/teams/{team_slug}/discussions",
-  "/orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments",
-  "/repos/{owner}/{repo}/collaborators/{username}",
-  "/repos/{owner}/{repo}/commits/{commit_sha}/comments",
-  "/repos/{owner}/{repo}/issues",
-  "/repos/{owner}/{repo}/issues/{issue_number}/comments",
-  "/repos/{owner}/{repo}/pulls",
-  "/repos/{owner}/{repo}/pulls/{pull_number}/comments",
-  "/repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies",
-  "/repos/{owner}/{repo}/pulls/{pull_number}/merge",
-  "/repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers",
-  "/repos/{owner}/{repo}/pulls/{pull_number}/reviews",
-  "/repos/{owner}/{repo}/releases",
-  "/teams/{team_id}/discussions",
-  "/teams/{team_id}/discussions/{discussion_number}/comments"
-];
-
-// pkg/dist-src/route-matcher.js
-function routeMatcher(paths) {
-  const regexes = paths.map(
-    (path) => path.split("/").map((c) => c.startsWith("{") ? "(?:.+?)" : c).join("/")
-  );
-  const regex2 = `^(?:${regexes.map((r) => `(?:${r})`).join("|")})[^/]*$`;
-  return new RegExp(regex2, "i");
-}
-
-// pkg/dist-src/index.js
-var regex = routeMatcher(triggers_notification_paths_default);
-var triggersNotification = regex.test.bind(regex);
-var groups = {};
-var createGroups = function(Bottleneck, common) {
-  groups.global = new Bottleneck.Group({
-    id: "octokit-global",
-    maxConcurrent: 10,
-    ...common
-  });
-  groups.search = new Bottleneck.Group({
-    id: "octokit-search",
-    maxConcurrent: 1,
-    minTime: 2e3,
-    ...common
-  });
-  groups.write = new Bottleneck.Group({
-    id: "octokit-write",
-    maxConcurrent: 1,
-    minTime: 1e3,
-    ...common
-  });
-  groups.notifications = new Bottleneck.Group({
-    id: "octokit-notifications",
-    maxConcurrent: 1,
-    minTime: 3e3,
-    ...common
-  });
-};
-function throttling(octokit, octokitOptions) {
-  const {
-    enabled = true,
-    Bottleneck = import_light.default,
-    id = "no-id",
-    timeout = 1e3 * 60 * 2,
-    // Redis TTL: 2 minutes
-    connection
-  } = octokitOptions.throttle || {};
-  if (!enabled) {
-    return {};
-  }
-  const common = { connection, timeout };
-  if (groups.global == null) {
-    createGroups(Bottleneck, common);
-  }
-  const state = Object.assign(
-    {
-      clustering: connection != null,
-      triggersNotification,
-      fallbackSecondaryRateRetryAfter: 60,
-      retryAfterBaseValue: 1e3,
-      retryLimiter: new Bottleneck(),
-      id,
-      ...groups
-    },
-    octokitOptions.throttle
-  );
-  if (typeof state.onSecondaryRateLimit !== "function" || typeof state.onRateLimit !== "function") {
-    throw new Error(`octokit/plugin-throttling error:
-        You must pass the onSecondaryRateLimit and onRateLimit error handlers.
-        See https://octokit.github.io/rest.js/#throttling
-
-        const octokit = new Octokit({
-          throttle: {
-            onSecondaryRateLimit: (retryAfter, options) => {/* ... */},
-            onRateLimit: (retryAfter, options) => {/* ... */}
-          }
-        })
-    `);
-  }
-  const events = {};
-  const emitter = new Bottleneck.Events(events);
-  events.on("secondary-limit", state.onSecondaryRateLimit);
-  events.on("rate-limit", state.onRateLimit);
-  events.on(
-    "error",
-    (e) => octokit.log.warn("Error in throttling-plugin limit handler", e)
-  );
-  state.retryLimiter.on("failed", async function(error, info) {
-    const [state2, request, options] = info.args;
-    const { pathname } = new URL(options.url, "http://github.test");
-    const shouldRetryGraphQL = pathname.startsWith("/graphql") && error.status !== 401;
-    if (!(shouldRetryGraphQL || error.status === 403)) {
-      return;
-    }
-    const retryCount = ~~request.retryCount;
-    request.retryCount = retryCount;
-    options.request.retryCount = retryCount;
-    const { wantRetry, retryAfter = 0 } = await async function() {
-      if (/\bsecondary rate\b/i.test(error.message)) {
-        const retryAfter2 = Number(error.response.headers["retry-after"]) || state2.fallbackSecondaryRateRetryAfter;
-        const wantRetry2 = await emitter.trigger(
-          "secondary-limit",
-          retryAfter2,
-          options,
-          octokit,
-          retryCount
-        );
-        return { wantRetry: wantRetry2, retryAfter: retryAfter2 };
-      }
-      if (error.response.headers != null && error.response.headers["x-ratelimit-remaining"] === "0" || (error.response.data?.errors ?? []).some(
-        (error2) => error2.type === "RATE_LIMITED"
-      )) {
-        const rateLimitReset = new Date(
-          ~~error.response.headers["x-ratelimit-reset"] * 1e3
-        ).getTime();
-        const retryAfter2 = Math.max(
-          // Add one second so we retry _after_ the reset time
-          // https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#exceeding-the-rate-limit
-          Math.ceil((rateLimitReset - Date.now()) / 1e3) + 1,
-          0
-        );
-        const wantRetry2 = await emitter.trigger(
-          "rate-limit",
-          retryAfter2,
-          options,
-          octokit,
-          retryCount
-        );
-        return { wantRetry: wantRetry2, retryAfter: retryAfter2 };
-      }
-      return {};
-    }();
-    if (wantRetry) {
-      request.retryCount++;
-      return retryAfter * state2.retryAfterBaseValue;
-    }
-  });
-  octokit.hook.wrap("request", wrapRequest.bind(null, state));
-  return {};
-}
-throttling.VERSION = VERSION;
-throttling.triggersNotification = triggersNotification;
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 537:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// pkg/dist-src/index.js
-var dist_src_exports = {};
-__export(dist_src_exports, {
-  RequestError: () => RequestError
-});
-module.exports = __toCommonJS(dist_src_exports);
-var import_deprecation = __nccwpck_require__(8932);
-var import_once = __toESM(__nccwpck_require__(1223));
-var logOnceCode = (0, import_once.default)((deprecation) => console.warn(deprecation));
-var logOnceHeaders = (0, import_once.default)((deprecation) => console.warn(deprecation));
-var RequestError = class extends Error {
-  constructor(message, statusCode, options) {
-    super(message);
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
-    this.name = "HttpError";
-    this.status = statusCode;
-    let headers;
-    if ("headers" in options && typeof options.headers !== "undefined") {
-      headers = options.headers;
-    }
-    if ("response" in options) {
-      this.response = options.response;
-      headers = options.response.headers;
-    }
-    const requestCopy = Object.assign({}, options.request);
-    if (options.request.headers.authorization) {
-      requestCopy.headers = Object.assign({}, options.request.headers, {
-        authorization: options.request.headers.authorization.replace(
-          / .*$/,
-          " [REDACTED]"
-        )
-      });
-    }
-    requestCopy.url = requestCopy.url.replace(/\bclient_secret=\w+/g, "client_secret=[REDACTED]").replace(/\baccess_token=\w+/g, "access_token=[REDACTED]");
-    this.request = requestCopy;
-    Object.defineProperty(this, "code", {
-      get() {
-        logOnceCode(
-          new import_deprecation.Deprecation(
-            "[@octokit/request-error] `error.code` is deprecated, use `error.status`."
-          )
-        );
-        return statusCode;
-      }
-    });
-    Object.defineProperty(this, "headers", {
-      get() {
-        logOnceHeaders(
-          new import_deprecation.Deprecation(
-            "[@octokit/request-error] `error.headers` is deprecated, use `error.response.headers`."
-          )
-        );
-        return headers || {};
-      }
-    });
-  }
-};
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 6234:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// pkg/dist-src/index.js
-var dist_src_exports = {};
-__export(dist_src_exports, {
-  request: () => request
-});
-module.exports = __toCommonJS(dist_src_exports);
-var import_endpoint = __nccwpck_require__(9440);
-var import_universal_user_agent = __nccwpck_require__(5030);
-
-// pkg/dist-src/version.js
-var VERSION = "8.1.5";
-
-// pkg/dist-src/fetch-wrapper.js
-var import_is_plain_object = __nccwpck_require__(3287);
-var import_request_error = __nccwpck_require__(537);
-
-// pkg/dist-src/get-buffer-response.js
-function getBufferResponse(response) {
-  return response.arrayBuffer();
-}
-
-// pkg/dist-src/fetch-wrapper.js
-function fetchWrapper(requestOptions) {
-  var _a, _b, _c;
-  const log = requestOptions.request && requestOptions.request.log ? requestOptions.request.log : console;
-  const parseSuccessResponseBody = ((_a = requestOptions.request) == null ? void 0 : _a.parseSuccessResponseBody) !== false;
-  if ((0, import_is_plain_object.isPlainObject)(requestOptions.body) || Array.isArray(requestOptions.body)) {
-    requestOptions.body = JSON.stringify(requestOptions.body);
-  }
-  let headers = {};
-  let status;
-  let url;
-  let { fetch } = globalThis;
-  if ((_b = requestOptions.request) == null ? void 0 : _b.fetch) {
-    fetch = requestOptions.request.fetch;
-  }
-  if (!fetch) {
-    throw new Error(
-      "fetch is not set. Please pass a fetch implementation as new Octokit({ request: { fetch }}). Learn more at https://github.com/octokit/octokit.js/#fetch-missing"
-    );
-  }
-  return fetch(requestOptions.url, {
-    method: requestOptions.method,
-    body: requestOptions.body,
-    headers: requestOptions.headers,
-    signal: (_c = requestOptions.request) == null ? void 0 : _c.signal,
-    // duplex must be set if request.body is ReadableStream or Async Iterables.
-    // See https://fetch.spec.whatwg.org/#dom-requestinit-duplex.
-    ...requestOptions.body && { duplex: "half" }
-  }).then(async (response) => {
-    url = response.url;
-    status = response.status;
-    for (const keyAndValue of response.headers) {
-      headers[keyAndValue[0]] = keyAndValue[1];
-    }
-    if ("deprecation" in headers) {
-      const matches = headers.link && headers.link.match(/<([^>]+)>; rel="deprecation"/);
-      const deprecationLink = matches && matches.pop();
-      log.warn(
-        `[@octokit/request] "${requestOptions.method} ${requestOptions.url}" is deprecated. It is scheduled to be removed on ${headers.sunset}${deprecationLink ? `. See ${deprecationLink}` : ""}`
-      );
-    }
-    if (status === 204 || status === 205) {
-      return;
-    }
-    if (requestOptions.method === "HEAD") {
-      if (status < 400) {
-        return;
-      }
-      throw new import_request_error.RequestError(response.statusText, status, {
-        response: {
-          url,
-          status,
-          headers,
-          data: void 0
-        },
-        request: requestOptions
-      });
-    }
-    if (status === 304) {
-      throw new import_request_error.RequestError("Not modified", status, {
-        response: {
-          url,
-          status,
-          headers,
-          data: await getResponseData(response)
-        },
-        request: requestOptions
-      });
-    }
-    if (status >= 400) {
-      const data = await getResponseData(response);
-      const error = new import_request_error.RequestError(toErrorMessage(data), status, {
-        response: {
-          url,
-          status,
-          headers,
-          data
-        },
-        request: requestOptions
-      });
-      throw error;
-    }
-    return parseSuccessResponseBody ? await getResponseData(response) : response.body;
-  }).then((data) => {
-    return {
-      status,
-      url,
-      headers,
-      data
-    };
-  }).catch((error) => {
-    if (error instanceof import_request_error.RequestError)
-      throw error;
-    else if (error.name === "AbortError")
-      throw error;
-    let message = error.message;
-    if (error.name === "TypeError" && "cause" in error) {
-      if (error.cause instanceof Error) {
-        message = error.cause.message;
-      } else if (typeof error.cause === "string") {
-        message = error.cause;
-      }
-    }
-    throw new import_request_error.RequestError(message, 500, {
-      request: requestOptions
-    });
-  });
-}
-async function getResponseData(response) {
-  const contentType = response.headers.get("content-type");
-  if (/application\/json/.test(contentType)) {
-    return response.json().catch(() => response.text()).catch(() => "");
-  }
-  if (!contentType || /^text\/|charset=utf-8$/.test(contentType)) {
-    return response.text();
-  }
-  return getBufferResponse(response);
-}
-function toErrorMessage(data) {
-  if (typeof data === "string")
-    return data;
-  if ("message" in data) {
-    if (Array.isArray(data.errors)) {
-      return `${data.message}: ${data.errors.map(JSON.stringify).join(", ")}`;
-    }
-    return data.message;
-  }
-  return `Unknown error: ${JSON.stringify(data)}`;
-}
-
-// pkg/dist-src/with-defaults.js
-function withDefaults(oldEndpoint, newDefaults) {
-  const endpoint2 = oldEndpoint.defaults(newDefaults);
-  const newApi = function(route, parameters) {
-    const endpointOptions = endpoint2.merge(route, parameters);
-    if (!endpointOptions.request || !endpointOptions.request.hook) {
-      return fetchWrapper(endpoint2.parse(endpointOptions));
-    }
-    const request2 = (route2, parameters2) => {
-      return fetchWrapper(
-        endpoint2.parse(endpoint2.merge(route2, parameters2))
-      );
-    };
-    Object.assign(request2, {
-      endpoint: endpoint2,
-      defaults: withDefaults.bind(null, endpoint2)
-    });
-    return endpointOptions.request.hook(request2, endpointOptions);
-  };
-  return Object.assign(newApi, {
-    endpoint: endpoint2,
-    defaults: withDefaults.bind(null, endpoint2)
-  });
-}
-
-// pkg/dist-src/index.js
-var request = withDefaults(import_endpoint.endpoint, {
-  headers: {
-    "user-agent": `octokit-request.js/${VERSION} ${(0, import_universal_user_agent.getUserAgent)()}`
-  }
-});
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 5375:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// pkg/dist-src/index.js
-var dist_src_exports = {};
-__export(dist_src_exports, {
-  Octokit: () => Octokit
-});
-module.exports = __toCommonJS(dist_src_exports);
-var import_core = __nccwpck_require__(6762);
-var import_plugin_request_log = __nccwpck_require__(8883);
-var import_plugin_paginate_rest = __nccwpck_require__(4193);
-var import_plugin_rest_endpoint_methods = __nccwpck_require__(3044);
-
-// pkg/dist-src/version.js
-var VERSION = "20.0.2";
-
-// pkg/dist-src/index.js
-var Octokit = import_core.Octokit.plugin(
-  import_plugin_request_log.requestLog,
-  import_plugin_rest_endpoint_methods.legacyRestEndpointMethods,
-  import_plugin_paginate_rest.paginateRest
-).defaults({
-  userAgent: `octokit-rest.js/${VERSION}`
-});
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 5063:
-/***/ ((module) => {
-
-"use strict";
-
-
-module.exports = ({onlyFirst = false} = {}) => {
-	const pattern = [
-		'[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-		'(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
-	].join('|');
-
-	return new RegExp(pattern, onlyFirst ? undefined : 'g');
-};
-
-
-/***/ }),
-
-/***/ 2068:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-/* module decorator */ module = __nccwpck_require__.nmd(module);
-
-
-const wrapAnsi16 = (fn, offset) => (...args) => {
-	const code = fn(...args);
-	return `\u001B[${code + offset}m`;
-};
-
-const wrapAnsi256 = (fn, offset) => (...args) => {
-	const code = fn(...args);
-	return `\u001B[${38 + offset};5;${code}m`;
-};
-
-const wrapAnsi16m = (fn, offset) => (...args) => {
-	const rgb = fn(...args);
-	return `\u001B[${38 + offset};2;${rgb[0]};${rgb[1]};${rgb[2]}m`;
-};
-
-const ansi2ansi = n => n;
-const rgb2rgb = (r, g, b) => [r, g, b];
-
-const setLazyProperty = (object, property, get) => {
-	Object.defineProperty(object, property, {
-		get: () => {
-			const value = get();
-
-			Object.defineProperty(object, property, {
-				value,
-				enumerable: true,
-				configurable: true
-			});
-
-			return value;
-		},
-		enumerable: true,
-		configurable: true
-	});
-};
-
-/** @type {typeof import('color-convert')} */
-let colorConvert;
-const makeDynamicStyles = (wrap, targetSpace, identity, isBackground) => {
-	if (colorConvert === undefined) {
-		colorConvert = __nccwpck_require__(6931);
-	}
-
-	const offset = isBackground ? 10 : 0;
-	const styles = {};
-
-	for (const [sourceSpace, suite] of Object.entries(colorConvert)) {
-		const name = sourceSpace === 'ansi16' ? 'ansi' : sourceSpace;
-		if (sourceSpace === targetSpace) {
-			styles[name] = wrap(identity, offset);
-		} else if (typeof suite === 'object') {
-			styles[name] = wrap(suite[targetSpace], offset);
-		}
-	}
-
-	return styles;
-};
-
-function assembleStyles() {
-	const codes = new Map();
-	const styles = {
-		modifier: {
-			reset: [0, 0],
-			// 21 isn't widely supported and 22 does the same thing
-			bold: [1, 22],
-			dim: [2, 22],
-			italic: [3, 23],
-			underline: [4, 24],
-			inverse: [7, 27],
-			hidden: [8, 28],
-			strikethrough: [9, 29]
-		},
-		color: {
-			black: [30, 39],
-			red: [31, 39],
-			green: [32, 39],
-			yellow: [33, 39],
-			blue: [34, 39],
-			magenta: [35, 39],
-			cyan: [36, 39],
-			white: [37, 39],
-
-			// Bright color
-			blackBright: [90, 39],
-			redBright: [91, 39],
-			greenBright: [92, 39],
-			yellowBright: [93, 39],
-			blueBright: [94, 39],
-			magentaBright: [95, 39],
-			cyanBright: [96, 39],
-			whiteBright: [97, 39]
-		},
-		bgColor: {
-			bgBlack: [40, 49],
-			bgRed: [41, 49],
-			bgGreen: [42, 49],
-			bgYellow: [43, 49],
-			bgBlue: [44, 49],
-			bgMagenta: [45, 49],
-			bgCyan: [46, 49],
-			bgWhite: [47, 49],
-
-			// Bright color
-			bgBlackBright: [100, 49],
-			bgRedBright: [101, 49],
-			bgGreenBright: [102, 49],
-			bgYellowBright: [103, 49],
-			bgBlueBright: [104, 49],
-			bgMagentaBright: [105, 49],
-			bgCyanBright: [106, 49],
-			bgWhiteBright: [107, 49]
-		}
-	};
-
-	// Alias bright black as gray (and grey)
-	styles.color.gray = styles.color.blackBright;
-	styles.bgColor.bgGray = styles.bgColor.bgBlackBright;
-	styles.color.grey = styles.color.blackBright;
-	styles.bgColor.bgGrey = styles.bgColor.bgBlackBright;
-
-	for (const [groupName, group] of Object.entries(styles)) {
-		for (const [styleName, style] of Object.entries(group)) {
-			styles[styleName] = {
-				open: `\u001B[${style[0]}m`,
-				close: `\u001B[${style[1]}m`
-			};
-
-			group[styleName] = styles[styleName];
-
-			codes.set(style[0], style[1]);
-		}
-
-		Object.defineProperty(styles, groupName, {
-			value: group,
-			enumerable: false
-		});
-	}
-
-	Object.defineProperty(styles, 'codes', {
-		value: codes,
-		enumerable: false
-	});
-
-	styles.color.close = '\u001B[39m';
-	styles.bgColor.close = '\u001B[49m';
-
-	setLazyProperty(styles.color, 'ansi', () => makeDynamicStyles(wrapAnsi16, 'ansi16', ansi2ansi, false));
-	setLazyProperty(styles.color, 'ansi256', () => makeDynamicStyles(wrapAnsi256, 'ansi256', ansi2ansi, false));
-	setLazyProperty(styles.color, 'ansi16m', () => makeDynamicStyles(wrapAnsi16m, 'rgb', rgb2rgb, false));
-	setLazyProperty(styles.bgColor, 'ansi', () => makeDynamicStyles(wrapAnsi16, 'ansi16', ansi2ansi, true));
-	setLazyProperty(styles.bgColor, 'ansi256', () => makeDynamicStyles(wrapAnsi256, 'ansi256', ansi2ansi, true));
-	setLazyProperty(styles.bgColor, 'ansi16m', () => makeDynamicStyles(wrapAnsi16m, 'rgb', rgb2rgb, true));
-
-	return styles;
-}
-
-// Make the export immutable
-Object.defineProperty(module, 'exports', {
-	enumerable: true,
-	get: assembleStyles
-});
-
-
-/***/ }),
-
 /***/ 9417:
 /***/ ((module) => {
 
-"use strict";
 
 module.exports = balanced;
 function balanced(a, b, str) {
@@ -4223,187 +465,6 @@ function range(a, b, str) {
   }
 
   return result;
-}
-
-
-/***/ }),
-
-/***/ 3682:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var register = __nccwpck_require__(4670);
-var addHook = __nccwpck_require__(5549);
-var removeHook = __nccwpck_require__(6819);
-
-// bind with array of arguments: https://stackoverflow.com/a/21792913
-var bind = Function.bind;
-var bindable = bind.bind(bind);
-
-function bindApi(hook, state, name) {
-  var removeHookRef = bindable(removeHook, null).apply(
-    null,
-    name ? [state, name] : [state]
-  );
-  hook.api = { remove: removeHookRef };
-  hook.remove = removeHookRef;
-  ["before", "error", "after", "wrap"].forEach(function (kind) {
-    var args = name ? [state, kind, name] : [state, kind];
-    hook[kind] = hook.api[kind] = bindable(addHook, null).apply(null, args);
-  });
-}
-
-function HookSingular() {
-  var singularHookName = "h";
-  var singularHookState = {
-    registry: {},
-  };
-  var singularHook = register.bind(null, singularHookState, singularHookName);
-  bindApi(singularHook, singularHookState, singularHookName);
-  return singularHook;
-}
-
-function HookCollection() {
-  var state = {
-    registry: {},
-  };
-
-  var hook = register.bind(null, state);
-  bindApi(hook, state);
-
-  return hook;
-}
-
-var collectionHookDeprecationMessageDisplayed = false;
-function Hook() {
-  if (!collectionHookDeprecationMessageDisplayed) {
-    console.warn(
-      '[before-after-hook]: "Hook()" repurposing warning, use "Hook.Collection()". Read more: https://git.io/upgrade-before-after-hook-to-1.4'
-    );
-    collectionHookDeprecationMessageDisplayed = true;
-  }
-  return HookCollection();
-}
-
-Hook.Singular = HookSingular.bind();
-Hook.Collection = HookCollection.bind();
-
-module.exports = Hook;
-// expose constructors as a named property for TypeScript
-module.exports.Hook = Hook;
-module.exports.Singular = Hook.Singular;
-module.exports.Collection = Hook.Collection;
-
-
-/***/ }),
-
-/***/ 5549:
-/***/ ((module) => {
-
-module.exports = addHook;
-
-function addHook(state, kind, name, hook) {
-  var orig = hook;
-  if (!state.registry[name]) {
-    state.registry[name] = [];
-  }
-
-  if (kind === "before") {
-    hook = function (method, options) {
-      return Promise.resolve()
-        .then(orig.bind(null, options))
-        .then(method.bind(null, options));
-    };
-  }
-
-  if (kind === "after") {
-    hook = function (method, options) {
-      var result;
-      return Promise.resolve()
-        .then(method.bind(null, options))
-        .then(function (result_) {
-          result = result_;
-          return orig(result, options);
-        })
-        .then(function () {
-          return result;
-        });
-    };
-  }
-
-  if (kind === "error") {
-    hook = function (method, options) {
-      return Promise.resolve()
-        .then(method.bind(null, options))
-        .catch(function (error) {
-          return orig(error, options);
-        });
-    };
-  }
-
-  state.registry[name].push({
-    hook: hook,
-    orig: orig,
-  });
-}
-
-
-/***/ }),
-
-/***/ 4670:
-/***/ ((module) => {
-
-module.exports = register;
-
-function register(state, name, method, options) {
-  if (typeof method !== "function") {
-    throw new Error("method for before hook must be a function");
-  }
-
-  if (!options) {
-    options = {};
-  }
-
-  if (Array.isArray(name)) {
-    return name.reverse().reduce(function (callback, name) {
-      return register.bind(null, state, name, callback, options);
-    }, method)();
-  }
-
-  return Promise.resolve().then(function () {
-    if (!state.registry[name]) {
-      return method(options);
-    }
-
-    return state.registry[name].reduce(function (method, registered) {
-      return registered.hook.bind(null, method, options);
-    }, method)();
-  });
-}
-
-
-/***/ }),
-
-/***/ 6819:
-/***/ ((module) => {
-
-module.exports = removeHook;
-
-function removeHook(state, name, method) {
-  if (!state.registry[name]) {
-    return;
-  }
-
-  var index = state.registry[name]
-    .map(function (registered) {
-      return registered.orig;
-    })
-    .indexOf(method);
-
-  if (index === -1) {
-    return;
-  }
-
-  state.registry[name].splice(index, 1);
 }
 
 
@@ -6147,1204 +2208,6 @@ function expand(str, isTop) {
 
 /***/ }),
 
-/***/ 7391:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-/* MIT license */
-/* eslint-disable no-mixed-operators */
-const cssKeywords = __nccwpck_require__(8510);
-
-// NOTE: conversions should only return primitive values (i.e. arrays, or
-//       values that give correct `typeof` results).
-//       do not use box values types (i.e. Number(), String(), etc.)
-
-const reverseKeywords = {};
-for (const key of Object.keys(cssKeywords)) {
-	reverseKeywords[cssKeywords[key]] = key;
-}
-
-const convert = {
-	rgb: {channels: 3, labels: 'rgb'},
-	hsl: {channels: 3, labels: 'hsl'},
-	hsv: {channels: 3, labels: 'hsv'},
-	hwb: {channels: 3, labels: 'hwb'},
-	cmyk: {channels: 4, labels: 'cmyk'},
-	xyz: {channels: 3, labels: 'xyz'},
-	lab: {channels: 3, labels: 'lab'},
-	lch: {channels: 3, labels: 'lch'},
-	hex: {channels: 1, labels: ['hex']},
-	keyword: {channels: 1, labels: ['keyword']},
-	ansi16: {channels: 1, labels: ['ansi16']},
-	ansi256: {channels: 1, labels: ['ansi256']},
-	hcg: {channels: 3, labels: ['h', 'c', 'g']},
-	apple: {channels: 3, labels: ['r16', 'g16', 'b16']},
-	gray: {channels: 1, labels: ['gray']}
-};
-
-module.exports = convert;
-
-// Hide .channels and .labels properties
-for (const model of Object.keys(convert)) {
-	if (!('channels' in convert[model])) {
-		throw new Error('missing channels property: ' + model);
-	}
-
-	if (!('labels' in convert[model])) {
-		throw new Error('missing channel labels property: ' + model);
-	}
-
-	if (convert[model].labels.length !== convert[model].channels) {
-		throw new Error('channel and label counts mismatch: ' + model);
-	}
-
-	const {channels, labels} = convert[model];
-	delete convert[model].channels;
-	delete convert[model].labels;
-	Object.defineProperty(convert[model], 'channels', {value: channels});
-	Object.defineProperty(convert[model], 'labels', {value: labels});
-}
-
-convert.rgb.hsl = function (rgb) {
-	const r = rgb[0] / 255;
-	const g = rgb[1] / 255;
-	const b = rgb[2] / 255;
-	const min = Math.min(r, g, b);
-	const max = Math.max(r, g, b);
-	const delta = max - min;
-	let h;
-	let s;
-
-	if (max === min) {
-		h = 0;
-	} else if (r === max) {
-		h = (g - b) / delta;
-	} else if (g === max) {
-		h = 2 + (b - r) / delta;
-	} else if (b === max) {
-		h = 4 + (r - g) / delta;
-	}
-
-	h = Math.min(h * 60, 360);
-
-	if (h < 0) {
-		h += 360;
-	}
-
-	const l = (min + max) / 2;
-
-	if (max === min) {
-		s = 0;
-	} else if (l <= 0.5) {
-		s = delta / (max + min);
-	} else {
-		s = delta / (2 - max - min);
-	}
-
-	return [h, s * 100, l * 100];
-};
-
-convert.rgb.hsv = function (rgb) {
-	let rdif;
-	let gdif;
-	let bdif;
-	let h;
-	let s;
-
-	const r = rgb[0] / 255;
-	const g = rgb[1] / 255;
-	const b = rgb[2] / 255;
-	const v = Math.max(r, g, b);
-	const diff = v - Math.min(r, g, b);
-	const diffc = function (c) {
-		return (v - c) / 6 / diff + 1 / 2;
-	};
-
-	if (diff === 0) {
-		h = 0;
-		s = 0;
-	} else {
-		s = diff / v;
-		rdif = diffc(r);
-		gdif = diffc(g);
-		bdif = diffc(b);
-
-		if (r === v) {
-			h = bdif - gdif;
-		} else if (g === v) {
-			h = (1 / 3) + rdif - bdif;
-		} else if (b === v) {
-			h = (2 / 3) + gdif - rdif;
-		}
-
-		if (h < 0) {
-			h += 1;
-		} else if (h > 1) {
-			h -= 1;
-		}
-	}
-
-	return [
-		h * 360,
-		s * 100,
-		v * 100
-	];
-};
-
-convert.rgb.hwb = function (rgb) {
-	const r = rgb[0];
-	const g = rgb[1];
-	let b = rgb[2];
-	const h = convert.rgb.hsl(rgb)[0];
-	const w = 1 / 255 * Math.min(r, Math.min(g, b));
-
-	b = 1 - 1 / 255 * Math.max(r, Math.max(g, b));
-
-	return [h, w * 100, b * 100];
-};
-
-convert.rgb.cmyk = function (rgb) {
-	const r = rgb[0] / 255;
-	const g = rgb[1] / 255;
-	const b = rgb[2] / 255;
-
-	const k = Math.min(1 - r, 1 - g, 1 - b);
-	const c = (1 - r - k) / (1 - k) || 0;
-	const m = (1 - g - k) / (1 - k) || 0;
-	const y = (1 - b - k) / (1 - k) || 0;
-
-	return [c * 100, m * 100, y * 100, k * 100];
-};
-
-function comparativeDistance(x, y) {
-	/*
-		See https://en.m.wikipedia.org/wiki/Euclidean_distance#Squared_Euclidean_distance
-	*/
-	return (
-		((x[0] - y[0]) ** 2) +
-		((x[1] - y[1]) ** 2) +
-		((x[2] - y[2]) ** 2)
-	);
-}
-
-convert.rgb.keyword = function (rgb) {
-	const reversed = reverseKeywords[rgb];
-	if (reversed) {
-		return reversed;
-	}
-
-	let currentClosestDistance = Infinity;
-	let currentClosestKeyword;
-
-	for (const keyword of Object.keys(cssKeywords)) {
-		const value = cssKeywords[keyword];
-
-		// Compute comparative distance
-		const distance = comparativeDistance(rgb, value);
-
-		// Check if its less, if so set as closest
-		if (distance < currentClosestDistance) {
-			currentClosestDistance = distance;
-			currentClosestKeyword = keyword;
-		}
-	}
-
-	return currentClosestKeyword;
-};
-
-convert.keyword.rgb = function (keyword) {
-	return cssKeywords[keyword];
-};
-
-convert.rgb.xyz = function (rgb) {
-	let r = rgb[0] / 255;
-	let g = rgb[1] / 255;
-	let b = rgb[2] / 255;
-
-	// Assume sRGB
-	r = r > 0.04045 ? (((r + 0.055) / 1.055) ** 2.4) : (r / 12.92);
-	g = g > 0.04045 ? (((g + 0.055) / 1.055) ** 2.4) : (g / 12.92);
-	b = b > 0.04045 ? (((b + 0.055) / 1.055) ** 2.4) : (b / 12.92);
-
-	const x = (r * 0.4124) + (g * 0.3576) + (b * 0.1805);
-	const y = (r * 0.2126) + (g * 0.7152) + (b * 0.0722);
-	const z = (r * 0.0193) + (g * 0.1192) + (b * 0.9505);
-
-	return [x * 100, y * 100, z * 100];
-};
-
-convert.rgb.lab = function (rgb) {
-	const xyz = convert.rgb.xyz(rgb);
-	let x = xyz[0];
-	let y = xyz[1];
-	let z = xyz[2];
-
-	x /= 95.047;
-	y /= 100;
-	z /= 108.883;
-
-	x = x > 0.008856 ? (x ** (1 / 3)) : (7.787 * x) + (16 / 116);
-	y = y > 0.008856 ? (y ** (1 / 3)) : (7.787 * y) + (16 / 116);
-	z = z > 0.008856 ? (z ** (1 / 3)) : (7.787 * z) + (16 / 116);
-
-	const l = (116 * y) - 16;
-	const a = 500 * (x - y);
-	const b = 200 * (y - z);
-
-	return [l, a, b];
-};
-
-convert.hsl.rgb = function (hsl) {
-	const h = hsl[0] / 360;
-	const s = hsl[1] / 100;
-	const l = hsl[2] / 100;
-	let t2;
-	let t3;
-	let val;
-
-	if (s === 0) {
-		val = l * 255;
-		return [val, val, val];
-	}
-
-	if (l < 0.5) {
-		t2 = l * (1 + s);
-	} else {
-		t2 = l + s - l * s;
-	}
-
-	const t1 = 2 * l - t2;
-
-	const rgb = [0, 0, 0];
-	for (let i = 0; i < 3; i++) {
-		t3 = h + 1 / 3 * -(i - 1);
-		if (t3 < 0) {
-			t3++;
-		}
-
-		if (t3 > 1) {
-			t3--;
-		}
-
-		if (6 * t3 < 1) {
-			val = t1 + (t2 - t1) * 6 * t3;
-		} else if (2 * t3 < 1) {
-			val = t2;
-		} else if (3 * t3 < 2) {
-			val = t1 + (t2 - t1) * (2 / 3 - t3) * 6;
-		} else {
-			val = t1;
-		}
-
-		rgb[i] = val * 255;
-	}
-
-	return rgb;
-};
-
-convert.hsl.hsv = function (hsl) {
-	const h = hsl[0];
-	let s = hsl[1] / 100;
-	let l = hsl[2] / 100;
-	let smin = s;
-	const lmin = Math.max(l, 0.01);
-
-	l *= 2;
-	s *= (l <= 1) ? l : 2 - l;
-	smin *= lmin <= 1 ? lmin : 2 - lmin;
-	const v = (l + s) / 2;
-	const sv = l === 0 ? (2 * smin) / (lmin + smin) : (2 * s) / (l + s);
-
-	return [h, sv * 100, v * 100];
-};
-
-convert.hsv.rgb = function (hsv) {
-	const h = hsv[0] / 60;
-	const s = hsv[1] / 100;
-	let v = hsv[2] / 100;
-	const hi = Math.floor(h) % 6;
-
-	const f = h - Math.floor(h);
-	const p = 255 * v * (1 - s);
-	const q = 255 * v * (1 - (s * f));
-	const t = 255 * v * (1 - (s * (1 - f)));
-	v *= 255;
-
-	switch (hi) {
-		case 0:
-			return [v, t, p];
-		case 1:
-			return [q, v, p];
-		case 2:
-			return [p, v, t];
-		case 3:
-			return [p, q, v];
-		case 4:
-			return [t, p, v];
-		case 5:
-			return [v, p, q];
-	}
-};
-
-convert.hsv.hsl = function (hsv) {
-	const h = hsv[0];
-	const s = hsv[1] / 100;
-	const v = hsv[2] / 100;
-	const vmin = Math.max(v, 0.01);
-	let sl;
-	let l;
-
-	l = (2 - s) * v;
-	const lmin = (2 - s) * vmin;
-	sl = s * vmin;
-	sl /= (lmin <= 1) ? lmin : 2 - lmin;
-	sl = sl || 0;
-	l /= 2;
-
-	return [h, sl * 100, l * 100];
-};
-
-// http://dev.w3.org/csswg/css-color/#hwb-to-rgb
-convert.hwb.rgb = function (hwb) {
-	const h = hwb[0] / 360;
-	let wh = hwb[1] / 100;
-	let bl = hwb[2] / 100;
-	const ratio = wh + bl;
-	let f;
-
-	// Wh + bl cant be > 1
-	if (ratio > 1) {
-		wh /= ratio;
-		bl /= ratio;
-	}
-
-	const i = Math.floor(6 * h);
-	const v = 1 - bl;
-	f = 6 * h - i;
-
-	if ((i & 0x01) !== 0) {
-		f = 1 - f;
-	}
-
-	const n = wh + f * (v - wh); // Linear interpolation
-
-	let r;
-	let g;
-	let b;
-	/* eslint-disable max-statements-per-line,no-multi-spaces */
-	switch (i) {
-		default:
-		case 6:
-		case 0: r = v;  g = n;  b = wh; break;
-		case 1: r = n;  g = v;  b = wh; break;
-		case 2: r = wh; g = v;  b = n; break;
-		case 3: r = wh; g = n;  b = v; break;
-		case 4: r = n;  g = wh; b = v; break;
-		case 5: r = v;  g = wh; b = n; break;
-	}
-	/* eslint-enable max-statements-per-line,no-multi-spaces */
-
-	return [r * 255, g * 255, b * 255];
-};
-
-convert.cmyk.rgb = function (cmyk) {
-	const c = cmyk[0] / 100;
-	const m = cmyk[1] / 100;
-	const y = cmyk[2] / 100;
-	const k = cmyk[3] / 100;
-
-	const r = 1 - Math.min(1, c * (1 - k) + k);
-	const g = 1 - Math.min(1, m * (1 - k) + k);
-	const b = 1 - Math.min(1, y * (1 - k) + k);
-
-	return [r * 255, g * 255, b * 255];
-};
-
-convert.xyz.rgb = function (xyz) {
-	const x = xyz[0] / 100;
-	const y = xyz[1] / 100;
-	const z = xyz[2] / 100;
-	let r;
-	let g;
-	let b;
-
-	r = (x * 3.2406) + (y * -1.5372) + (z * -0.4986);
-	g = (x * -0.9689) + (y * 1.8758) + (z * 0.0415);
-	b = (x * 0.0557) + (y * -0.2040) + (z * 1.0570);
-
-	// Assume sRGB
-	r = r > 0.0031308
-		? ((1.055 * (r ** (1.0 / 2.4))) - 0.055)
-		: r * 12.92;
-
-	g = g > 0.0031308
-		? ((1.055 * (g ** (1.0 / 2.4))) - 0.055)
-		: g * 12.92;
-
-	b = b > 0.0031308
-		? ((1.055 * (b ** (1.0 / 2.4))) - 0.055)
-		: b * 12.92;
-
-	r = Math.min(Math.max(0, r), 1);
-	g = Math.min(Math.max(0, g), 1);
-	b = Math.min(Math.max(0, b), 1);
-
-	return [r * 255, g * 255, b * 255];
-};
-
-convert.xyz.lab = function (xyz) {
-	let x = xyz[0];
-	let y = xyz[1];
-	let z = xyz[2];
-
-	x /= 95.047;
-	y /= 100;
-	z /= 108.883;
-
-	x = x > 0.008856 ? (x ** (1 / 3)) : (7.787 * x) + (16 / 116);
-	y = y > 0.008856 ? (y ** (1 / 3)) : (7.787 * y) + (16 / 116);
-	z = z > 0.008856 ? (z ** (1 / 3)) : (7.787 * z) + (16 / 116);
-
-	const l = (116 * y) - 16;
-	const a = 500 * (x - y);
-	const b = 200 * (y - z);
-
-	return [l, a, b];
-};
-
-convert.lab.xyz = function (lab) {
-	const l = lab[0];
-	const a = lab[1];
-	const b = lab[2];
-	let x;
-	let y;
-	let z;
-
-	y = (l + 16) / 116;
-	x = a / 500 + y;
-	z = y - b / 200;
-
-	const y2 = y ** 3;
-	const x2 = x ** 3;
-	const z2 = z ** 3;
-	y = y2 > 0.008856 ? y2 : (y - 16 / 116) / 7.787;
-	x = x2 > 0.008856 ? x2 : (x - 16 / 116) / 7.787;
-	z = z2 > 0.008856 ? z2 : (z - 16 / 116) / 7.787;
-
-	x *= 95.047;
-	y *= 100;
-	z *= 108.883;
-
-	return [x, y, z];
-};
-
-convert.lab.lch = function (lab) {
-	const l = lab[0];
-	const a = lab[1];
-	const b = lab[2];
-	let h;
-
-	const hr = Math.atan2(b, a);
-	h = hr * 360 / 2 / Math.PI;
-
-	if (h < 0) {
-		h += 360;
-	}
-
-	const c = Math.sqrt(a * a + b * b);
-
-	return [l, c, h];
-};
-
-convert.lch.lab = function (lch) {
-	const l = lch[0];
-	const c = lch[1];
-	const h = lch[2];
-
-	const hr = h / 360 * 2 * Math.PI;
-	const a = c * Math.cos(hr);
-	const b = c * Math.sin(hr);
-
-	return [l, a, b];
-};
-
-convert.rgb.ansi16 = function (args, saturation = null) {
-	const [r, g, b] = args;
-	let value = saturation === null ? convert.rgb.hsv(args)[2] : saturation; // Hsv -> ansi16 optimization
-
-	value = Math.round(value / 50);
-
-	if (value === 0) {
-		return 30;
-	}
-
-	let ansi = 30
-		+ ((Math.round(b / 255) << 2)
-		| (Math.round(g / 255) << 1)
-		| Math.round(r / 255));
-
-	if (value === 2) {
-		ansi += 60;
-	}
-
-	return ansi;
-};
-
-convert.hsv.ansi16 = function (args) {
-	// Optimization here; we already know the value and don't need to get
-	// it converted for us.
-	return convert.rgb.ansi16(convert.hsv.rgb(args), args[2]);
-};
-
-convert.rgb.ansi256 = function (args) {
-	const r = args[0];
-	const g = args[1];
-	const b = args[2];
-
-	// We use the extended greyscale palette here, with the exception of
-	// black and white. normal palette only has 4 greyscale shades.
-	if (r === g && g === b) {
-		if (r < 8) {
-			return 16;
-		}
-
-		if (r > 248) {
-			return 231;
-		}
-
-		return Math.round(((r - 8) / 247) * 24) + 232;
-	}
-
-	const ansi = 16
-		+ (36 * Math.round(r / 255 * 5))
-		+ (6 * Math.round(g / 255 * 5))
-		+ Math.round(b / 255 * 5);
-
-	return ansi;
-};
-
-convert.ansi16.rgb = function (args) {
-	let color = args % 10;
-
-	// Handle greyscale
-	if (color === 0 || color === 7) {
-		if (args > 50) {
-			color += 3.5;
-		}
-
-		color = color / 10.5 * 255;
-
-		return [color, color, color];
-	}
-
-	const mult = (~~(args > 50) + 1) * 0.5;
-	const r = ((color & 1) * mult) * 255;
-	const g = (((color >> 1) & 1) * mult) * 255;
-	const b = (((color >> 2) & 1) * mult) * 255;
-
-	return [r, g, b];
-};
-
-convert.ansi256.rgb = function (args) {
-	// Handle greyscale
-	if (args >= 232) {
-		const c = (args - 232) * 10 + 8;
-		return [c, c, c];
-	}
-
-	args -= 16;
-
-	let rem;
-	const r = Math.floor(args / 36) / 5 * 255;
-	const g = Math.floor((rem = args % 36) / 6) / 5 * 255;
-	const b = (rem % 6) / 5 * 255;
-
-	return [r, g, b];
-};
-
-convert.rgb.hex = function (args) {
-	const integer = ((Math.round(args[0]) & 0xFF) << 16)
-		+ ((Math.round(args[1]) & 0xFF) << 8)
-		+ (Math.round(args[2]) & 0xFF);
-
-	const string = integer.toString(16).toUpperCase();
-	return '000000'.substring(string.length) + string;
-};
-
-convert.hex.rgb = function (args) {
-	const match = args.toString(16).match(/[a-f0-9]{6}|[a-f0-9]{3}/i);
-	if (!match) {
-		return [0, 0, 0];
-	}
-
-	let colorString = match[0];
-
-	if (match[0].length === 3) {
-		colorString = colorString.split('').map(char => {
-			return char + char;
-		}).join('');
-	}
-
-	const integer = parseInt(colorString, 16);
-	const r = (integer >> 16) & 0xFF;
-	const g = (integer >> 8) & 0xFF;
-	const b = integer & 0xFF;
-
-	return [r, g, b];
-};
-
-convert.rgb.hcg = function (rgb) {
-	const r = rgb[0] / 255;
-	const g = rgb[1] / 255;
-	const b = rgb[2] / 255;
-	const max = Math.max(Math.max(r, g), b);
-	const min = Math.min(Math.min(r, g), b);
-	const chroma = (max - min);
-	let grayscale;
-	let hue;
-
-	if (chroma < 1) {
-		grayscale = min / (1 - chroma);
-	} else {
-		grayscale = 0;
-	}
-
-	if (chroma <= 0) {
-		hue = 0;
-	} else
-	if (max === r) {
-		hue = ((g - b) / chroma) % 6;
-	} else
-	if (max === g) {
-		hue = 2 + (b - r) / chroma;
-	} else {
-		hue = 4 + (r - g) / chroma;
-	}
-
-	hue /= 6;
-	hue %= 1;
-
-	return [hue * 360, chroma * 100, grayscale * 100];
-};
-
-convert.hsl.hcg = function (hsl) {
-	const s = hsl[1] / 100;
-	const l = hsl[2] / 100;
-
-	const c = l < 0.5 ? (2.0 * s * l) : (2.0 * s * (1.0 - l));
-
-	let f = 0;
-	if (c < 1.0) {
-		f = (l - 0.5 * c) / (1.0 - c);
-	}
-
-	return [hsl[0], c * 100, f * 100];
-};
-
-convert.hsv.hcg = function (hsv) {
-	const s = hsv[1] / 100;
-	const v = hsv[2] / 100;
-
-	const c = s * v;
-	let f = 0;
-
-	if (c < 1.0) {
-		f = (v - c) / (1 - c);
-	}
-
-	return [hsv[0], c * 100, f * 100];
-};
-
-convert.hcg.rgb = function (hcg) {
-	const h = hcg[0] / 360;
-	const c = hcg[1] / 100;
-	const g = hcg[2] / 100;
-
-	if (c === 0.0) {
-		return [g * 255, g * 255, g * 255];
-	}
-
-	const pure = [0, 0, 0];
-	const hi = (h % 1) * 6;
-	const v = hi % 1;
-	const w = 1 - v;
-	let mg = 0;
-
-	/* eslint-disable max-statements-per-line */
-	switch (Math.floor(hi)) {
-		case 0:
-			pure[0] = 1; pure[1] = v; pure[2] = 0; break;
-		case 1:
-			pure[0] = w; pure[1] = 1; pure[2] = 0; break;
-		case 2:
-			pure[0] = 0; pure[1] = 1; pure[2] = v; break;
-		case 3:
-			pure[0] = 0; pure[1] = w; pure[2] = 1; break;
-		case 4:
-			pure[0] = v; pure[1] = 0; pure[2] = 1; break;
-		default:
-			pure[0] = 1; pure[1] = 0; pure[2] = w;
-	}
-	/* eslint-enable max-statements-per-line */
-
-	mg = (1.0 - c) * g;
-
-	return [
-		(c * pure[0] + mg) * 255,
-		(c * pure[1] + mg) * 255,
-		(c * pure[2] + mg) * 255
-	];
-};
-
-convert.hcg.hsv = function (hcg) {
-	const c = hcg[1] / 100;
-	const g = hcg[2] / 100;
-
-	const v = c + g * (1.0 - c);
-	let f = 0;
-
-	if (v > 0.0) {
-		f = c / v;
-	}
-
-	return [hcg[0], f * 100, v * 100];
-};
-
-convert.hcg.hsl = function (hcg) {
-	const c = hcg[1] / 100;
-	const g = hcg[2] / 100;
-
-	const l = g * (1.0 - c) + 0.5 * c;
-	let s = 0;
-
-	if (l > 0.0 && l < 0.5) {
-		s = c / (2 * l);
-	} else
-	if (l >= 0.5 && l < 1.0) {
-		s = c / (2 * (1 - l));
-	}
-
-	return [hcg[0], s * 100, l * 100];
-};
-
-convert.hcg.hwb = function (hcg) {
-	const c = hcg[1] / 100;
-	const g = hcg[2] / 100;
-	const v = c + g * (1.0 - c);
-	return [hcg[0], (v - c) * 100, (1 - v) * 100];
-};
-
-convert.hwb.hcg = function (hwb) {
-	const w = hwb[1] / 100;
-	const b = hwb[2] / 100;
-	const v = 1 - b;
-	const c = v - w;
-	let g = 0;
-
-	if (c < 1) {
-		g = (v - c) / (1 - c);
-	}
-
-	return [hwb[0], c * 100, g * 100];
-};
-
-convert.apple.rgb = function (apple) {
-	return [(apple[0] / 65535) * 255, (apple[1] / 65535) * 255, (apple[2] / 65535) * 255];
-};
-
-convert.rgb.apple = function (rgb) {
-	return [(rgb[0] / 255) * 65535, (rgb[1] / 255) * 65535, (rgb[2] / 255) * 65535];
-};
-
-convert.gray.rgb = function (args) {
-	return [args[0] / 100 * 255, args[0] / 100 * 255, args[0] / 100 * 255];
-};
-
-convert.gray.hsl = function (args) {
-	return [0, 0, args[0]];
-};
-
-convert.gray.hsv = convert.gray.hsl;
-
-convert.gray.hwb = function (gray) {
-	return [0, 100, gray[0]];
-};
-
-convert.gray.cmyk = function (gray) {
-	return [0, 0, 0, gray[0]];
-};
-
-convert.gray.lab = function (gray) {
-	return [gray[0], 0, 0];
-};
-
-convert.gray.hex = function (gray) {
-	const val = Math.round(gray[0] / 100 * 255) & 0xFF;
-	const integer = (val << 16) + (val << 8) + val;
-
-	const string = integer.toString(16).toUpperCase();
-	return '000000'.substring(string.length) + string;
-};
-
-convert.rgb.gray = function (rgb) {
-	const val = (rgb[0] + rgb[1] + rgb[2]) / 3;
-	return [val / 255 * 100];
-};
-
-
-/***/ }),
-
-/***/ 6931:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-const conversions = __nccwpck_require__(7391);
-const route = __nccwpck_require__(880);
-
-const convert = {};
-
-const models = Object.keys(conversions);
-
-function wrapRaw(fn) {
-	const wrappedFn = function (...args) {
-		const arg0 = args[0];
-		if (arg0 === undefined || arg0 === null) {
-			return arg0;
-		}
-
-		if (arg0.length > 1) {
-			args = arg0;
-		}
-
-		return fn(args);
-	};
-
-	// Preserve .conversion property if there is one
-	if ('conversion' in fn) {
-		wrappedFn.conversion = fn.conversion;
-	}
-
-	return wrappedFn;
-}
-
-function wrapRounded(fn) {
-	const wrappedFn = function (...args) {
-		const arg0 = args[0];
-
-		if (arg0 === undefined || arg0 === null) {
-			return arg0;
-		}
-
-		if (arg0.length > 1) {
-			args = arg0;
-		}
-
-		const result = fn(args);
-
-		// We're assuming the result is an array here.
-		// see notice in conversions.js; don't use box types
-		// in conversion functions.
-		if (typeof result === 'object') {
-			for (let len = result.length, i = 0; i < len; i++) {
-				result[i] = Math.round(result[i]);
-			}
-		}
-
-		return result;
-	};
-
-	// Preserve .conversion property if there is one
-	if ('conversion' in fn) {
-		wrappedFn.conversion = fn.conversion;
-	}
-
-	return wrappedFn;
-}
-
-models.forEach(fromModel => {
-	convert[fromModel] = {};
-
-	Object.defineProperty(convert[fromModel], 'channels', {value: conversions[fromModel].channels});
-	Object.defineProperty(convert[fromModel], 'labels', {value: conversions[fromModel].labels});
-
-	const routes = route(fromModel);
-	const routeModels = Object.keys(routes);
-
-	routeModels.forEach(toModel => {
-		const fn = routes[toModel];
-
-		convert[fromModel][toModel] = wrapRounded(fn);
-		convert[fromModel][toModel].raw = wrapRaw(fn);
-	});
-});
-
-module.exports = convert;
-
-
-/***/ }),
-
-/***/ 880:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-const conversions = __nccwpck_require__(7391);
-
-/*
-	This function routes a model to all other models.
-
-	all functions that are routed have a property `.conversion` attached
-	to the returned synthetic function. This property is an array
-	of strings, each with the steps in between the 'from' and 'to'
-	color models (inclusive).
-
-	conversions that are not possible simply are not included.
-*/
-
-function buildGraph() {
-	const graph = {};
-	// https://jsperf.com/object-keys-vs-for-in-with-closure/3
-	const models = Object.keys(conversions);
-
-	for (let len = models.length, i = 0; i < len; i++) {
-		graph[models[i]] = {
-			// http://jsperf.com/1-vs-infinity
-			// micro-opt, but this is simple.
-			distance: -1,
-			parent: null
-		};
-	}
-
-	return graph;
-}
-
-// https://en.wikipedia.org/wiki/Breadth-first_search
-function deriveBFS(fromModel) {
-	const graph = buildGraph();
-	const queue = [fromModel]; // Unshift -> queue -> pop
-
-	graph[fromModel].distance = 0;
-
-	while (queue.length) {
-		const current = queue.pop();
-		const adjacents = Object.keys(conversions[current]);
-
-		for (let len = adjacents.length, i = 0; i < len; i++) {
-			const adjacent = adjacents[i];
-			const node = graph[adjacent];
-
-			if (node.distance === -1) {
-				node.distance = graph[current].distance + 1;
-				node.parent = current;
-				queue.unshift(adjacent);
-			}
-		}
-	}
-
-	return graph;
-}
-
-function link(from, to) {
-	return function (args) {
-		return to(from(args));
-	};
-}
-
-function wrapConversion(toModel, graph) {
-	const path = [graph[toModel].parent, toModel];
-	let fn = conversions[graph[toModel].parent][toModel];
-
-	let cur = graph[toModel].parent;
-	while (graph[cur].parent) {
-		path.unshift(graph[cur].parent);
-		fn = link(conversions[graph[cur].parent][cur], fn);
-		cur = graph[cur].parent;
-	}
-
-	fn.conversion = path;
-	return fn;
-}
-
-module.exports = function (fromModel) {
-	const graph = deriveBFS(fromModel);
-	const conversion = {};
-
-	const models = Object.keys(graph);
-	for (let len = models.length, i = 0; i < len; i++) {
-		const toModel = models[i];
-		const node = graph[toModel];
-
-		if (node.parent === null) {
-			// No possible conversion, or this node is the source model.
-			continue;
-		}
-
-		conversion[toModel] = wrapConversion(toModel, graph);
-	}
-
-	return conversion;
-};
-
-
-
-/***/ }),
-
-/***/ 8510:
-/***/ ((module) => {
-
-"use strict";
-
-
-module.exports = {
-	"aliceblue": [240, 248, 255],
-	"antiquewhite": [250, 235, 215],
-	"aqua": [0, 255, 255],
-	"aquamarine": [127, 255, 212],
-	"azure": [240, 255, 255],
-	"beige": [245, 245, 220],
-	"bisque": [255, 228, 196],
-	"black": [0, 0, 0],
-	"blanchedalmond": [255, 235, 205],
-	"blue": [0, 0, 255],
-	"blueviolet": [138, 43, 226],
-	"brown": [165, 42, 42],
-	"burlywood": [222, 184, 135],
-	"cadetblue": [95, 158, 160],
-	"chartreuse": [127, 255, 0],
-	"chocolate": [210, 105, 30],
-	"coral": [255, 127, 80],
-	"cornflowerblue": [100, 149, 237],
-	"cornsilk": [255, 248, 220],
-	"crimson": [220, 20, 60],
-	"cyan": [0, 255, 255],
-	"darkblue": [0, 0, 139],
-	"darkcyan": [0, 139, 139],
-	"darkgoldenrod": [184, 134, 11],
-	"darkgray": [169, 169, 169],
-	"darkgreen": [0, 100, 0],
-	"darkgrey": [169, 169, 169],
-	"darkkhaki": [189, 183, 107],
-	"darkmagenta": [139, 0, 139],
-	"darkolivegreen": [85, 107, 47],
-	"darkorange": [255, 140, 0],
-	"darkorchid": [153, 50, 204],
-	"darkred": [139, 0, 0],
-	"darksalmon": [233, 150, 122],
-	"darkseagreen": [143, 188, 143],
-	"darkslateblue": [72, 61, 139],
-	"darkslategray": [47, 79, 79],
-	"darkslategrey": [47, 79, 79],
-	"darkturquoise": [0, 206, 209],
-	"darkviolet": [148, 0, 211],
-	"deeppink": [255, 20, 147],
-	"deepskyblue": [0, 191, 255],
-	"dimgray": [105, 105, 105],
-	"dimgrey": [105, 105, 105],
-	"dodgerblue": [30, 144, 255],
-	"firebrick": [178, 34, 34],
-	"floralwhite": [255, 250, 240],
-	"forestgreen": [34, 139, 34],
-	"fuchsia": [255, 0, 255],
-	"gainsboro": [220, 220, 220],
-	"ghostwhite": [248, 248, 255],
-	"gold": [255, 215, 0],
-	"goldenrod": [218, 165, 32],
-	"gray": [128, 128, 128],
-	"green": [0, 128, 0],
-	"greenyellow": [173, 255, 47],
-	"grey": [128, 128, 128],
-	"honeydew": [240, 255, 240],
-	"hotpink": [255, 105, 180],
-	"indianred": [205, 92, 92],
-	"indigo": [75, 0, 130],
-	"ivory": [255, 255, 240],
-	"khaki": [240, 230, 140],
-	"lavender": [230, 230, 250],
-	"lavenderblush": [255, 240, 245],
-	"lawngreen": [124, 252, 0],
-	"lemonchiffon": [255, 250, 205],
-	"lightblue": [173, 216, 230],
-	"lightcoral": [240, 128, 128],
-	"lightcyan": [224, 255, 255],
-	"lightgoldenrodyellow": [250, 250, 210],
-	"lightgray": [211, 211, 211],
-	"lightgreen": [144, 238, 144],
-	"lightgrey": [211, 211, 211],
-	"lightpink": [255, 182, 193],
-	"lightsalmon": [255, 160, 122],
-	"lightseagreen": [32, 178, 170],
-	"lightskyblue": [135, 206, 250],
-	"lightslategray": [119, 136, 153],
-	"lightslategrey": [119, 136, 153],
-	"lightsteelblue": [176, 196, 222],
-	"lightyellow": [255, 255, 224],
-	"lime": [0, 255, 0],
-	"limegreen": [50, 205, 50],
-	"linen": [250, 240, 230],
-	"magenta": [255, 0, 255],
-	"maroon": [128, 0, 0],
-	"mediumaquamarine": [102, 205, 170],
-	"mediumblue": [0, 0, 205],
-	"mediumorchid": [186, 85, 211],
-	"mediumpurple": [147, 112, 219],
-	"mediumseagreen": [60, 179, 113],
-	"mediumslateblue": [123, 104, 238],
-	"mediumspringgreen": [0, 250, 154],
-	"mediumturquoise": [72, 209, 204],
-	"mediumvioletred": [199, 21, 133],
-	"midnightblue": [25, 25, 112],
-	"mintcream": [245, 255, 250],
-	"mistyrose": [255, 228, 225],
-	"moccasin": [255, 228, 181],
-	"navajowhite": [255, 222, 173],
-	"navy": [0, 0, 128],
-	"oldlace": [253, 245, 230],
-	"olive": [128, 128, 0],
-	"olivedrab": [107, 142, 35],
-	"orange": [255, 165, 0],
-	"orangered": [255, 69, 0],
-	"orchid": [218, 112, 214],
-	"palegoldenrod": [238, 232, 170],
-	"palegreen": [152, 251, 152],
-	"paleturquoise": [175, 238, 238],
-	"palevioletred": [219, 112, 147],
-	"papayawhip": [255, 239, 213],
-	"peachpuff": [255, 218, 185],
-	"peru": [205, 133, 63],
-	"pink": [255, 192, 203],
-	"plum": [221, 160, 221],
-	"powderblue": [176, 224, 230],
-	"purple": [128, 0, 128],
-	"rebeccapurple": [102, 51, 153],
-	"red": [255, 0, 0],
-	"rosybrown": [188, 143, 143],
-	"royalblue": [65, 105, 225],
-	"saddlebrown": [139, 69, 19],
-	"salmon": [250, 128, 114],
-	"sandybrown": [244, 164, 96],
-	"seagreen": [46, 139, 87],
-	"seashell": [255, 245, 238],
-	"sienna": [160, 82, 45],
-	"silver": [192, 192, 192],
-	"skyblue": [135, 206, 235],
-	"slateblue": [106, 90, 205],
-	"slategray": [112, 128, 144],
-	"slategrey": [112, 128, 144],
-	"snow": [255, 250, 250],
-	"springgreen": [0, 255, 127],
-	"steelblue": [70, 130, 180],
-	"tan": [210, 180, 140],
-	"teal": [0, 128, 128],
-	"thistle": [216, 191, 216],
-	"tomato": [255, 99, 71],
-	"turquoise": [64, 224, 208],
-	"violet": [238, 130, 238],
-	"wheat": [245, 222, 179],
-	"white": [255, 255, 255],
-	"whitesmoke": [245, 245, 245],
-	"yellow": [255, 255, 0],
-	"yellowgreen": [154, 205, 50]
-};
-
-
-/***/ }),
-
 /***/ 6891:
 /***/ ((module) => {
 
@@ -7361,73 +2224,6 @@ module.exports = function (xs, fn) {
 var isArray = Array.isArray || function (xs) {
     return Object.prototype.toString.call(xs) === '[object Array]';
 };
-
-
-/***/ }),
-
-/***/ 8932:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-class Deprecation extends Error {
-  constructor(message) {
-    super(message); // Maintains proper stack trace (only available on V8)
-
-    /* istanbul ignore next */
-
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
-
-    this.name = 'Deprecation';
-  }
-
-}
-
-exports.Deprecation = Deprecation;
-
-
-/***/ }),
-
-/***/ 8212:
-/***/ ((module) => {
-
-"use strict";
-
-
-module.exports = function () {
-  // https://mths.be/emoji
-  return /\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62(?:\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67|\uDB40\uDC73\uDB40\uDC63\uDB40\uDC74|\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73)\uDB40\uDC7F|\uD83D\uDC68(?:\uD83C\uDFFC\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68\uD83C\uDFFB|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFF\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFE])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFE\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFD])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFD\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFC])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\u200D(?:\u2764\uFE0F\u200D(?:\uD83D\uDC8B\u200D)?\uD83D\uDC68|(?:\uD83D[\uDC68\uDC69])\u200D(?:\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67]))|\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67])|(?:\uD83D[\uDC68\uDC69])\u200D(?:\uD83D[\uDC66\uDC67])|[\u2695\u2696\u2708]\uFE0F|\uD83D[\uDC66\uDC67]|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|(?:\uD83C\uDFFB\u200D[\u2695\u2696\u2708]|\uD83C\uDFFF\u200D[\u2695\u2696\u2708]|\uD83C\uDFFE\u200D[\u2695\u2696\u2708]|\uD83C\uDFFD\u200D[\u2695\u2696\u2708]|\uD83C\uDFFC\u200D[\u2695\u2696\u2708])\uFE0F|\uD83C\uDFFB\u200D(?:\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C[\uDFFB-\uDFFF])|(?:\uD83E\uDDD1\uD83C\uDFFB\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFC\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)\uD83C\uDFFB|\uD83E\uDDD1(?:\uD83C\uDFFF\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1(?:\uD83C[\uDFFB-\uDFFF])|\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1)|(?:\uD83E\uDDD1\uD83C\uDFFE\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFF\u200D\uD83E\uDD1D\u200D(?:\uD83D[\uDC68\uDC69]))(?:\uD83C[\uDFFB-\uDFFE])|(?:\uD83E\uDDD1\uD83C\uDFFC\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFD\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)(?:\uD83C[\uDFFB\uDFFC])|\uD83D\uDC69(?:\uD83C\uDFFE\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFD\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFC\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFD-\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFB\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFC-\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFD\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\u200D(?:\u2764\uFE0F\u200D(?:\uD83D\uDC8B\u200D(?:\uD83D[\uDC68\uDC69])|\uD83D[\uDC68\uDC69])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFF\u200D(?:\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD]))|\uD83D\uDC69\u200D\uD83D\uDC69\u200D(?:\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67]))|(?:\uD83E\uDDD1\uD83C\uDFFD\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFE\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)(?:\uD83C[\uDFFB-\uDFFD])|\uD83D\uDC69\u200D\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC69\u200D\uD83D\uDC69\u200D(?:\uD83D[\uDC66\uDC67])|(?:\uD83D\uDC41\uFE0F\u200D\uD83D\uDDE8|\uD83D\uDC69(?:\uD83C\uDFFF\u200D[\u2695\u2696\u2708]|\uD83C\uDFFE\u200D[\u2695\u2696\u2708]|\uD83C\uDFFC\u200D[\u2695\u2696\u2708]|\uD83C\uDFFB\u200D[\u2695\u2696\u2708]|\uD83C\uDFFD\u200D[\u2695\u2696\u2708]|\u200D[\u2695\u2696\u2708])|(?:(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)\uFE0F|\uD83D\uDC6F|\uD83E[\uDD3C\uDDDE\uDDDF])\u200D[\u2640\u2642]|(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)(?:\uD83C[\uDFFB-\uDFFF])\u200D[\u2640\u2642]|(?:\uD83C[\uDFC3\uDFC4\uDFCA]|\uD83D[\uDC6E\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4-\uDEB6]|\uD83E[\uDD26\uDD37-\uDD39\uDD3D\uDD3E\uDDB8\uDDB9\uDDCD-\uDDCF\uDDD6-\uDDDD])(?:(?:\uD83C[\uDFFB-\uDFFF])\u200D[\u2640\u2642]|\u200D[\u2640\u2642])|\uD83C\uDFF4\u200D\u2620)\uFE0F|\uD83D\uDC69\u200D\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67])|\uD83C\uDFF3\uFE0F\u200D\uD83C\uDF08|\uD83D\uDC15\u200D\uD83E\uDDBA|\uD83D\uDC69\u200D\uD83D\uDC66|\uD83D\uDC69\u200D\uD83D\uDC67|\uD83C\uDDFD\uD83C\uDDF0|\uD83C\uDDF4\uD83C\uDDF2|\uD83C\uDDF6\uD83C\uDDE6|[#\*0-9]\uFE0F\u20E3|\uD83C\uDDE7(?:\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEF\uDDF1-\uDDF4\uDDF6-\uDDF9\uDDFB\uDDFC\uDDFE\uDDFF])|\uD83C\uDDF9(?:\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDED\uDDEF-\uDDF4\uDDF7\uDDF9\uDDFB\uDDFC\uDDFF])|\uD83C\uDDEA(?:\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDED\uDDF7-\uDDFA])|\uD83E\uDDD1(?:\uD83C[\uDFFB-\uDFFF])|\uD83C\uDDF7(?:\uD83C[\uDDEA\uDDF4\uDDF8\uDDFA\uDDFC])|\uD83D\uDC69(?:\uD83C[\uDFFB-\uDFFF])|\uD83C\uDDF2(?:\uD83C[\uDDE6\uDDE8-\uDDED\uDDF0-\uDDFF])|\uD83C\uDDE6(?:\uD83C[\uDDE8-\uDDEC\uDDEE\uDDF1\uDDF2\uDDF4\uDDF6-\uDDFA\uDDFC\uDDFD\uDDFF])|\uD83C\uDDF0(?:\uD83C[\uDDEA\uDDEC-\uDDEE\uDDF2\uDDF3\uDDF5\uDDF7\uDDFC\uDDFE\uDDFF])|\uD83C\uDDED(?:\uD83C[\uDDF0\uDDF2\uDDF3\uDDF7\uDDF9\uDDFA])|\uD83C\uDDE9(?:\uD83C[\uDDEA\uDDEC\uDDEF\uDDF0\uDDF2\uDDF4\uDDFF])|\uD83C\uDDFE(?:\uD83C[\uDDEA\uDDF9])|\uD83C\uDDEC(?:\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEE\uDDF1-\uDDF3\uDDF5-\uDDFA\uDDFC\uDDFE])|\uD83C\uDDF8(?:\uD83C[\uDDE6-\uDDEA\uDDEC-\uDDF4\uDDF7-\uDDF9\uDDFB\uDDFD-\uDDFF])|\uD83C\uDDEB(?:\uD83C[\uDDEE-\uDDF0\uDDF2\uDDF4\uDDF7])|\uD83C\uDDF5(?:\uD83C[\uDDE6\uDDEA-\uDDED\uDDF0-\uDDF3\uDDF7-\uDDF9\uDDFC\uDDFE])|\uD83C\uDDFB(?:\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDEE\uDDF3\uDDFA])|\uD83C\uDDF3(?:\uD83C[\uDDE6\uDDE8\uDDEA-\uDDEC\uDDEE\uDDF1\uDDF4\uDDF5\uDDF7\uDDFA\uDDFF])|\uD83C\uDDE8(?:\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDEE\uDDF0-\uDDF5\uDDF7\uDDFA-\uDDFF])|\uD83C\uDDF1(?:\uD83C[\uDDE6-\uDDE8\uDDEE\uDDF0\uDDF7-\uDDFB\uDDFE])|\uD83C\uDDFF(?:\uD83C[\uDDE6\uDDF2\uDDFC])|\uD83C\uDDFC(?:\uD83C[\uDDEB\uDDF8])|\uD83C\uDDFA(?:\uD83C[\uDDE6\uDDEC\uDDF2\uDDF3\uDDF8\uDDFE\uDDFF])|\uD83C\uDDEE(?:\uD83C[\uDDE8-\uDDEA\uDDF1-\uDDF4\uDDF6-\uDDF9])|\uD83C\uDDEF(?:\uD83C[\uDDEA\uDDF2\uDDF4\uDDF5])|(?:\uD83C[\uDFC3\uDFC4\uDFCA]|\uD83D[\uDC6E\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4-\uDEB6]|\uD83E[\uDD26\uDD37-\uDD39\uDD3D\uDD3E\uDDB8\uDDB9\uDDCD-\uDDCF\uDDD6-\uDDDD])(?:\uD83C[\uDFFB-\uDFFF])|(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)(?:\uD83C[\uDFFB-\uDFFF])|(?:[\u261D\u270A-\u270D]|\uD83C[\uDF85\uDFC2\uDFC7]|\uD83D[\uDC42\uDC43\uDC46-\uDC50\uDC66\uDC67\uDC6B-\uDC6D\uDC70\uDC72\uDC74-\uDC76\uDC78\uDC7C\uDC83\uDC85\uDCAA\uDD74\uDD7A\uDD90\uDD95\uDD96\uDE4C\uDE4F\uDEC0\uDECC]|\uD83E[\uDD0F\uDD18-\uDD1C\uDD1E\uDD1F\uDD30-\uDD36\uDDB5\uDDB6\uDDBB\uDDD2-\uDDD5])(?:\uD83C[\uDFFB-\uDFFF])|(?:[\u231A\u231B\u23E9-\u23EC\u23F0\u23F3\u25FD\u25FE\u2614\u2615\u2648-\u2653\u267F\u2693\u26A1\u26AA\u26AB\u26BD\u26BE\u26C4\u26C5\u26CE\u26D4\u26EA\u26F2\u26F3\u26F5\u26FA\u26FD\u2705\u270A\u270B\u2728\u274C\u274E\u2753-\u2755\u2757\u2795-\u2797\u27B0\u27BF\u2B1B\u2B1C\u2B50\u2B55]|\uD83C[\uDC04\uDCCF\uDD8E\uDD91-\uDD9A\uDDE6-\uDDFF\uDE01\uDE1A\uDE2F\uDE32-\uDE36\uDE38-\uDE3A\uDE50\uDE51\uDF00-\uDF20\uDF2D-\uDF35\uDF37-\uDF7C\uDF7E-\uDF93\uDFA0-\uDFCA\uDFCF-\uDFD3\uDFE0-\uDFF0\uDFF4\uDFF8-\uDFFF]|\uD83D[\uDC00-\uDC3E\uDC40\uDC42-\uDCFC\uDCFF-\uDD3D\uDD4B-\uDD4E\uDD50-\uDD67\uDD7A\uDD95\uDD96\uDDA4\uDDFB-\uDE4F\uDE80-\uDEC5\uDECC\uDED0-\uDED2\uDED5\uDEEB\uDEEC\uDEF4-\uDEFA\uDFE0-\uDFEB]|\uD83E[\uDD0D-\uDD3A\uDD3C-\uDD45\uDD47-\uDD71\uDD73-\uDD76\uDD7A-\uDDA2\uDDA5-\uDDAA\uDDAE-\uDDCA\uDDCD-\uDDFF\uDE70-\uDE73\uDE78-\uDE7A\uDE80-\uDE82\uDE90-\uDE95])|(?:[#\*0-9\xA9\xAE\u203C\u2049\u2122\u2139\u2194-\u2199\u21A9\u21AA\u231A\u231B\u2328\u23CF\u23E9-\u23F3\u23F8-\u23FA\u24C2\u25AA\u25AB\u25B6\u25C0\u25FB-\u25FE\u2600-\u2604\u260E\u2611\u2614\u2615\u2618\u261D\u2620\u2622\u2623\u2626\u262A\u262E\u262F\u2638-\u263A\u2640\u2642\u2648-\u2653\u265F\u2660\u2663\u2665\u2666\u2668\u267B\u267E\u267F\u2692-\u2697\u2699\u269B\u269C\u26A0\u26A1\u26AA\u26AB\u26B0\u26B1\u26BD\u26BE\u26C4\u26C5\u26C8\u26CE\u26CF\u26D1\u26D3\u26D4\u26E9\u26EA\u26F0-\u26F5\u26F7-\u26FA\u26FD\u2702\u2705\u2708-\u270D\u270F\u2712\u2714\u2716\u271D\u2721\u2728\u2733\u2734\u2744\u2747\u274C\u274E\u2753-\u2755\u2757\u2763\u2764\u2795-\u2797\u27A1\u27B0\u27BF\u2934\u2935\u2B05-\u2B07\u2B1B\u2B1C\u2B50\u2B55\u3030\u303D\u3297\u3299]|\uD83C[\uDC04\uDCCF\uDD70\uDD71\uDD7E\uDD7F\uDD8E\uDD91-\uDD9A\uDDE6-\uDDFF\uDE01\uDE02\uDE1A\uDE2F\uDE32-\uDE3A\uDE50\uDE51\uDF00-\uDF21\uDF24-\uDF93\uDF96\uDF97\uDF99-\uDF9B\uDF9E-\uDFF0\uDFF3-\uDFF5\uDFF7-\uDFFF]|\uD83D[\uDC00-\uDCFD\uDCFF-\uDD3D\uDD49-\uDD4E\uDD50-\uDD67\uDD6F\uDD70\uDD73-\uDD7A\uDD87\uDD8A-\uDD8D\uDD90\uDD95\uDD96\uDDA4\uDDA5\uDDA8\uDDB1\uDDB2\uDDBC\uDDC2-\uDDC4\uDDD1-\uDDD3\uDDDC-\uDDDE\uDDE1\uDDE3\uDDE8\uDDEF\uDDF3\uDDFA-\uDE4F\uDE80-\uDEC5\uDECB-\uDED2\uDED5\uDEE0-\uDEE5\uDEE9\uDEEB\uDEEC\uDEF0\uDEF3-\uDEFA\uDFE0-\uDFEB]|\uD83E[\uDD0D-\uDD3A\uDD3C-\uDD45\uDD47-\uDD71\uDD73-\uDD76\uDD7A-\uDDA2\uDDA5-\uDDAA\uDDAE-\uDDCA\uDDCD-\uDDFF\uDE70-\uDE73\uDE78-\uDE7A\uDE80-\uDE82\uDE90-\uDE95])\uFE0F|(?:[\u261D\u26F9\u270A-\u270D]|\uD83C[\uDF85\uDFC2-\uDFC4\uDFC7\uDFCA-\uDFCC]|\uD83D[\uDC42\uDC43\uDC46-\uDC50\uDC66-\uDC78\uDC7C\uDC81-\uDC83\uDC85-\uDC87\uDC8F\uDC91\uDCAA\uDD74\uDD75\uDD7A\uDD90\uDD95\uDD96\uDE45-\uDE47\uDE4B-\uDE4F\uDEA3\uDEB4-\uDEB6\uDEC0\uDECC]|\uD83E[\uDD0F\uDD18-\uDD1F\uDD26\uDD30-\uDD39\uDD3C-\uDD3E\uDDB5\uDDB6\uDDB8\uDDB9\uDDBB\uDDCD-\uDDCF\uDDD1-\uDDDD])/g;
-};
-
-
-/***/ }),
-
-/***/ 2644:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-const { dirname, resolve } = __nccwpck_require__(1017);
-const { readdirSync, statSync } = __nccwpck_require__(7147);
-
-module.exports = function (start, callback) {
-	let dir = resolve('.', start);
-	let tmp, stats = statSync(dir);
-
-	if (!stats.isDirectory()) {
-		dir = dirname(dir);
-	}
-
-	while (true) {
-		tmp = callback(dir, readdirSync(dir));
-		if (tmp) return resolve(dir, tmp);
-		dir = dirname(tmp = dir);
-		if (tmp === dir) break;
-	}
-}
 
 
 /***/ }),
@@ -7812,35 +2608,6 @@ exports.realpath = function realpath(p, cache, cb) {
   }
 };
 
-
-/***/ }),
-
-/***/ 351:
-/***/ ((module) => {
-
-"use strict";
-
-// Call this function in a another function to find out the file from
-// which that function was called from. (Inspects the v8 stack trace)
-//
-// Inspired by http://stackoverflow.com/questions/13227489
-module.exports = function getCallerFile(position) {
-    if (position === void 0) { position = 2; }
-    if (position >= Error.stackTraceLimit) {
-        throw new TypeError('getCallerFile(position) requires position be less then Error.stackTraceLimit but position was: `' + position + '` and Error.stackTraceLimit was: `' + Error.stackTraceLimit + '`');
-    }
-    var oldPrepareStackTrace = Error.prepareStackTrace;
-    Error.prepareStackTrace = function (_, stack) { return stack; };
-    var stack = new Error().stack;
-    Error.prepareStackTrace = oldPrepareStackTrace;
-    if (stack !== null && typeof stack === 'object') {
-        // stack[0] holds this file
-        // stack[1] holds where this function was called
-        // stack[2] holds the file we're interested in
-        return stack[position] ? stack[position].getFileName() : undefined;
-    }
-};
-//# sourceMappingURL=index.js.map
 
 /***/ }),
 
@@ -9490,110 +4257,6 @@ if (typeof Object.create === 'function') {
 
 /***/ }),
 
-/***/ 4882:
-/***/ ((module) => {
-
-"use strict";
-/* eslint-disable yoda */
-
-
-const isFullwidthCodePoint = codePoint => {
-	if (Number.isNaN(codePoint)) {
-		return false;
-	}
-
-	// Code points are derived from:
-	// http://www.unix.org/Public/UNIDATA/EastAsianWidth.txt
-	if (
-		codePoint >= 0x1100 && (
-			codePoint <= 0x115F || // Hangul Jamo
-			codePoint === 0x2329 || // LEFT-POINTING ANGLE BRACKET
-			codePoint === 0x232A || // RIGHT-POINTING ANGLE BRACKET
-			// CJK Radicals Supplement .. Enclosed CJK Letters and Months
-			(0x2E80 <= codePoint && codePoint <= 0x3247 && codePoint !== 0x303F) ||
-			// Enclosed CJK Letters and Months .. CJK Unified Ideographs Extension A
-			(0x3250 <= codePoint && codePoint <= 0x4DBF) ||
-			// CJK Unified Ideographs .. Yi Radicals
-			(0x4E00 <= codePoint && codePoint <= 0xA4C6) ||
-			// Hangul Jamo Extended-A
-			(0xA960 <= codePoint && codePoint <= 0xA97C) ||
-			// Hangul Syllables
-			(0xAC00 <= codePoint && codePoint <= 0xD7A3) ||
-			// CJK Compatibility Ideographs
-			(0xF900 <= codePoint && codePoint <= 0xFAFF) ||
-			// Vertical Forms
-			(0xFE10 <= codePoint && codePoint <= 0xFE19) ||
-			// CJK Compatibility Forms .. Small Form Variants
-			(0xFE30 <= codePoint && codePoint <= 0xFE6B) ||
-			// Halfwidth and Fullwidth Forms
-			(0xFF01 <= codePoint && codePoint <= 0xFF60) ||
-			(0xFFE0 <= codePoint && codePoint <= 0xFFE6) ||
-			// Kana Supplement
-			(0x1B000 <= codePoint && codePoint <= 0x1B001) ||
-			// Enclosed Ideographic Supplement
-			(0x1F200 <= codePoint && codePoint <= 0x1F251) ||
-			// CJK Unified Ideographs Extension B .. Tertiary Ideographic Plane
-			(0x20000 <= codePoint && codePoint <= 0x3FFFD)
-		)
-	) {
-		return true;
-	}
-
-	return false;
-};
-
-module.exports = isFullwidthCodePoint;
-module.exports["default"] = isFullwidthCodePoint;
-
-
-/***/ }),
-
-/***/ 3287:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-/*!
- * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-
-function isObject(o) {
-  return Object.prototype.toString.call(o) === '[object Object]';
-}
-
-function isPlainObject(o) {
-  var ctor,prot;
-
-  if (isObject(o) === false) return false;
-
-  // If has modified constructor
-  ctor = o.constructor;
-  if (ctor === undefined) return true;
-
-  // If has modified prototype
-  prot = ctor.prototype;
-  if (isObject(prot) === false) return false;
-
-  // If constructor does not have an Object-specific method
-  if (prot.hasOwnProperty('isPrototypeOf') === false) {
-    return false;
-  }
-
-  // Most likely a plain Object
-  return true;
-}
-
-exports.isPlainObject = isPlainObject;
-
-
-/***/ }),
-
 /***/ 3973:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -10600,7 +5263,6 @@ function onceStrict (fn) {
 /***/ 8714:
 /***/ ((module) => {
 
-"use strict";
 
 
 function posix(path) {
@@ -10621,100 +5283,6 @@ function win32(path) {
 module.exports = process.platform === 'win32' ? win32 : posix;
 module.exports.posix = posix;
 module.exports.win32 = win32;
-
-
-/***/ }),
-
-/***/ 9200:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-var fs = __nccwpck_require__(7147),
-  join = (__nccwpck_require__(1017).join),
-  resolve = (__nccwpck_require__(1017).resolve),
-  dirname = (__nccwpck_require__(1017).dirname),
-  defaultOptions = {
-    extensions: ['js', 'json', 'coffee'],
-    recurse: true,
-    rename: function (name) {
-      return name;
-    },
-    visit: function (obj) {
-      return obj;
-    }
-  };
-
-function checkFileInclusion(path, filename, options) {
-  return (
-    // verify file has valid extension
-    (new RegExp('\\.(' + options.extensions.join('|') + ')$', 'i').test(filename)) &&
-
-    // if options.include is a RegExp, evaluate it and make sure the path passes
-    !(options.include && options.include instanceof RegExp && !options.include.test(path)) &&
-
-    // if options.include is a function, evaluate it and make sure the path passes
-    !(options.include && typeof options.include === 'function' && !options.include(path, filename)) &&
-
-    // if options.exclude is a RegExp, evaluate it and make sure the path doesn't pass
-    !(options.exclude && options.exclude instanceof RegExp && options.exclude.test(path)) &&
-
-    // if options.exclude is a function, evaluate it and make sure the path doesn't pass
-    !(options.exclude && typeof options.exclude === 'function' && options.exclude(path, filename))
-  );
-}
-
-function requireDirectory(m, path, options) {
-  var retval = {};
-
-  // path is optional
-  if (path && !options && typeof path !== 'string') {
-    options = path;
-    path = null;
-  }
-
-  // default options
-  options = options || {};
-  for (var prop in defaultOptions) {
-    if (typeof options[prop] === 'undefined') {
-      options[prop] = defaultOptions[prop];
-    }
-  }
-
-  // if no path was passed in, assume the equivelant of __dirname from caller
-  // otherwise, resolve path relative to the equivalent of __dirname
-  path = !path ? dirname(m.filename) : resolve(dirname(m.filename), path);
-
-  // get the path of each file in specified directory, append to current tree node, recurse
-  fs.readdirSync(path).forEach(function (filename) {
-    var joined = join(path, filename),
-      files,
-      key,
-      obj;
-
-    if (fs.statSync(joined).isDirectory() && options.recurse) {
-      // this node is a directory; recurse
-      files = requireDirectory(m, joined, options);
-      // exclude empty directories
-      if (Object.keys(files).length) {
-        retval[options.rename(filename, joined, filename)] = files;
-      }
-    } else {
-      if (joined !== m.filename && checkFileInclusion(joined, filename, options)) {
-        // hash node key shouldn't include file extension
-        key = filename.substring(0, filename.lastIndexOf('.'));
-        obj = m.require(joined);
-        retval[options.rename(key, joined, filename)] = options.visit(obj, joined, filename) || obj;
-      }
-    }
-  });
-
-  return retval;
-}
-
-module.exports = requireDirectory;
-module.exports.defaults = defaultOptions;
 
 
 /***/ }),
@@ -11307,7 +5875,6 @@ module.exports = _chmod;
 /***/ 3687:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-"use strict";
 // Ignore warning about 'new String()'
 /* eslint no-new-wrappers: 0 */
 
@@ -14602,323 +9169,6 @@ module.exports = _which;
 
 /***/ }),
 
-/***/ 2577:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-const stripAnsi = __nccwpck_require__(5591);
-const isFullwidthCodePoint = __nccwpck_require__(4882);
-const emojiRegex = __nccwpck_require__(8212);
-
-const stringWidth = string => {
-	if (typeof string !== 'string' || string.length === 0) {
-		return 0;
-	}
-
-	string = stripAnsi(string);
-
-	if (string.length === 0) {
-		return 0;
-	}
-
-	string = string.replace(emojiRegex(), '  ');
-
-	let width = 0;
-
-	for (let i = 0; i < string.length; i++) {
-		const code = string.codePointAt(i);
-
-		// Ignore control characters
-		if (code <= 0x1F || (code >= 0x7F && code <= 0x9F)) {
-			continue;
-		}
-
-		// Ignore combining characters
-		if (code >= 0x300 && code <= 0x36F) {
-			continue;
-		}
-
-		// Surrogates
-		if (code > 0xFFFF) {
-			i++;
-		}
-
-		width += isFullwidthCodePoint(code) ? 2 : 1;
-	}
-
-	return width;
-};
-
-module.exports = stringWidth;
-// TODO: remove this in the next major version
-module.exports["default"] = stringWidth;
-
-
-/***/ }),
-
-/***/ 5591:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-const ansiRegex = __nccwpck_require__(5063);
-
-module.exports = string => typeof string === 'string' ? string.replace(ansiRegex(), '') : string;
-
-
-/***/ }),
-
-/***/ 5030:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-function getUserAgent() {
-  if (typeof navigator === "object" && "userAgent" in navigator) {
-    return navigator.userAgent;
-  }
-
-  if (typeof process === "object" && process.version !== undefined) {
-    return `Node.js/${process.version.substr(1)} (${process.platform}; ${process.arch})`;
-  }
-
-  return "<environment undetectable>";
-}
-
-exports.getUserAgent = getUserAgent;
-//# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 9824:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-const stringWidth = __nccwpck_require__(2577);
-const stripAnsi = __nccwpck_require__(5591);
-const ansiStyles = __nccwpck_require__(2068);
-
-const ESCAPES = new Set([
-	'\u001B',
-	'\u009B'
-]);
-
-const END_CODE = 39;
-
-const ANSI_ESCAPE_BELL = '\u0007';
-const ANSI_CSI = '[';
-const ANSI_OSC = ']';
-const ANSI_SGR_TERMINATOR = 'm';
-const ANSI_ESCAPE_LINK = `${ANSI_OSC}8;;`;
-
-const wrapAnsi = code => `${ESCAPES.values().next().value}${ANSI_CSI}${code}${ANSI_SGR_TERMINATOR}`;
-const wrapAnsiHyperlink = uri => `${ESCAPES.values().next().value}${ANSI_ESCAPE_LINK}${uri}${ANSI_ESCAPE_BELL}`;
-
-// Calculate the length of words split on ' ', ignoring
-// the extra characters added by ansi escape codes
-const wordLengths = string => string.split(' ').map(character => stringWidth(character));
-
-// Wrap a long word across multiple rows
-// Ansi escape codes do not count towards length
-const wrapWord = (rows, word, columns) => {
-	const characters = [...word];
-
-	let isInsideEscape = false;
-	let isInsideLinkEscape = false;
-	let visible = stringWidth(stripAnsi(rows[rows.length - 1]));
-
-	for (const [index, character] of characters.entries()) {
-		const characterLength = stringWidth(character);
-
-		if (visible + characterLength <= columns) {
-			rows[rows.length - 1] += character;
-		} else {
-			rows.push(character);
-			visible = 0;
-		}
-
-		if (ESCAPES.has(character)) {
-			isInsideEscape = true;
-			isInsideLinkEscape = characters.slice(index + 1).join('').startsWith(ANSI_ESCAPE_LINK);
-		}
-
-		if (isInsideEscape) {
-			if (isInsideLinkEscape) {
-				if (character === ANSI_ESCAPE_BELL) {
-					isInsideEscape = false;
-					isInsideLinkEscape = false;
-				}
-			} else if (character === ANSI_SGR_TERMINATOR) {
-				isInsideEscape = false;
-			}
-
-			continue;
-		}
-
-		visible += characterLength;
-
-		if (visible === columns && index < characters.length - 1) {
-			rows.push('');
-			visible = 0;
-		}
-	}
-
-	// It's possible that the last row we copy over is only
-	// ansi escape characters, handle this edge-case
-	if (!visible && rows[rows.length - 1].length > 0 && rows.length > 1) {
-		rows[rows.length - 2] += rows.pop();
-	}
-};
-
-// Trims spaces from a string ignoring invisible sequences
-const stringVisibleTrimSpacesRight = string => {
-	const words = string.split(' ');
-	let last = words.length;
-
-	while (last > 0) {
-		if (stringWidth(words[last - 1]) > 0) {
-			break;
-		}
-
-		last--;
-	}
-
-	if (last === words.length) {
-		return string;
-	}
-
-	return words.slice(0, last).join(' ') + words.slice(last).join('');
-};
-
-// The wrap-ansi module can be invoked in either 'hard' or 'soft' wrap mode
-//
-// 'hard' will never allow a string to take up more than columns characters
-//
-// 'soft' allows long words to expand past the column length
-const exec = (string, columns, options = {}) => {
-	if (options.trim !== false && string.trim() === '') {
-		return '';
-	}
-
-	let returnValue = '';
-	let escapeCode;
-	let escapeUrl;
-
-	const lengths = wordLengths(string);
-	let rows = [''];
-
-	for (const [index, word] of string.split(' ').entries()) {
-		if (options.trim !== false) {
-			rows[rows.length - 1] = rows[rows.length - 1].trimStart();
-		}
-
-		let rowLength = stringWidth(rows[rows.length - 1]);
-
-		if (index !== 0) {
-			if (rowLength >= columns && (options.wordWrap === false || options.trim === false)) {
-				// If we start with a new word but the current row length equals the length of the columns, add a new row
-				rows.push('');
-				rowLength = 0;
-			}
-
-			if (rowLength > 0 || options.trim === false) {
-				rows[rows.length - 1] += ' ';
-				rowLength++;
-			}
-		}
-
-		// In 'hard' wrap mode, the length of a line is never allowed to extend past 'columns'
-		if (options.hard && lengths[index] > columns) {
-			const remainingColumns = (columns - rowLength);
-			const breaksStartingThisLine = 1 + Math.floor((lengths[index] - remainingColumns - 1) / columns);
-			const breaksStartingNextLine = Math.floor((lengths[index] - 1) / columns);
-			if (breaksStartingNextLine < breaksStartingThisLine) {
-				rows.push('');
-			}
-
-			wrapWord(rows, word, columns);
-			continue;
-		}
-
-		if (rowLength + lengths[index] > columns && rowLength > 0 && lengths[index] > 0) {
-			if (options.wordWrap === false && rowLength < columns) {
-				wrapWord(rows, word, columns);
-				continue;
-			}
-
-			rows.push('');
-		}
-
-		if (rowLength + lengths[index] > columns && options.wordWrap === false) {
-			wrapWord(rows, word, columns);
-			continue;
-		}
-
-		rows[rows.length - 1] += word;
-	}
-
-	if (options.trim !== false) {
-		rows = rows.map(stringVisibleTrimSpacesRight);
-	}
-
-	const pre = [...rows.join('\n')];
-
-	for (const [index, character] of pre.entries()) {
-		returnValue += character;
-
-		if (ESCAPES.has(character)) {
-			const {groups} = new RegExp(`(?:\\${ANSI_CSI}(?<code>\\d+)m|\\${ANSI_ESCAPE_LINK}(?<uri>.*)${ANSI_ESCAPE_BELL})`).exec(pre.slice(index).join('')) || {groups: {}};
-			if (groups.code !== undefined) {
-				const code = Number.parseFloat(groups.code);
-				escapeCode = code === END_CODE ? undefined : code;
-			} else if (groups.uri !== undefined) {
-				escapeUrl = groups.uri.length === 0 ? undefined : groups.uri;
-			}
-		}
-
-		const code = ansiStyles.codes.get(Number(escapeCode));
-
-		if (pre[index + 1] === '\n') {
-			if (escapeUrl) {
-				returnValue += wrapAnsiHyperlink('');
-			}
-
-			if (escapeCode && code) {
-				returnValue += wrapAnsi(code);
-			}
-		} else if (character === '\n') {
-			if (escapeCode && code) {
-				returnValue += wrapAnsi(escapeCode);
-			}
-
-			if (escapeUrl) {
-				returnValue += wrapAnsiHyperlink(escapeUrl);
-			}
-		}
-	}
-
-	return returnValue;
-};
-
-// For each newline, invoke the method separately
-module.exports = (string, columns, options) => {
-	return String(string)
-		.normalize()
-		.replace(/\r\n/g, '\n')
-		.split('\n')
-		.map(line => exec(line, columns, options))
-		.join('\n');
-};
-
-
-/***/ }),
-
 /***/ 2940:
 /***/ ((module) => {
 
@@ -14959,452 +9209,1406 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 5584:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-const { throttling } = __nccwpck_require__(9968);
-const { Octokit } = __nccwpck_require__(5375);
-const shell = __nccwpck_require__(3516)
-const yargs = __nccwpck_require__(8822)
-const util = __nccwpck_require__(3837)
-
-const MyOctokit = Octokit.plugin(throttling);
-
-async function main() {
-
-    const argv = yargs
-        .option("token", {
-            alias: "t",
-            description: "personal access token with which to authenticate",
-            global: true,
-            demandOption: true,
-        })
-        .option("org", {
-            alias: "o",
-            description: "org",
-            global: true,
-            demandOption: true
-        })
-        .option("nag-number", {
-            alias: "n",
-            description: "Number of issues to create to warn users of non compliance",
-            global: true,
-            demandOption: false,
-            default: 3
-        })
-        .count("verbose")
-        .option("verbose", {
-            alias: "v",
-            description: "set verbose logging",
-            global: true,
-            demandOption: false,
-            type: "boolean",
-            dfeault: false
-        })
-        .argv;
-
-    const VERBOSITY_LEVEL = argv.verbose
-    const NAG_NUMBER = argv.nagNumber
-
-    const logger = {
-        error: (message) => { console.error(message) },
-        warn: (message) => { if (VERBOSITY_LEVEL >= 0) { console.warn(message) } },
-        info: (message) => { if (VERBOSITY_LEVEL >= 1) { console.info(message) } },
-        debug: (message) => { if (VERBOSITY_LEVEL >= 2) { console.debug(message) } },
-        log: (message) => { console.log(message) }
-    }
-
-
-    try {
-        // const ACTION_SEARCH_STRING = "/^action.yml$/"  // Code search api doesn't support regexes via the API yet
-        const ACTION_SEARCH_STRING = "filename:action.yml path:/"
-        const SECURITY_SCANNING_SEARCH_STRING = "github/codeql-action/analyze@v2 in:file"
-        const client = new MyOctokit({
-            auth: `token ${argv.token}`,
-            previews: ["luke-cage"],
-            throttle: {
-                onRateLimit: (retryAfter, options, octokit, retryCount) => {
-                    octokit.log.warn(
-                        `Request quota exhausted for request ${options.method} ${options.url}`,
-                    );
-
-                    if (retryCount < 1) {
-                        // only retries once
-                        octokit.log.info(`Retrying after ${retryAfter} seconds!`);
-                        return true;
-                    }
-                },
-                onSecondaryRateLimit: (retryAfter, options, octokit) => {
-                    // does not retry, only logs a warning
-                    octokit.log.warn(
-                        `SecondaryRateLimit detected for request ${options.method} ${options.url}`,
-                    );
-                },
-            },
-        });
-
-        // search for code in org
-        let search_results = await client.request(`GET /search/code`, {
-            q: `org:${argv.org} ${ACTION_SEARCH_STRING}`,
-            headers: {
-                'X-GitHub-Api-Version': '2022-11-28'
-            }
-        })
-
-        logger.debug(search_results)
-        // print search results
-        logger.debug(`Search Results: ${util.inspect(search_results.data.items, { depth: null })}`)
-
-
-        let actions_repositories = [];
-        for (let i = 0; i < search_results.data.items.length; i++) {
-            let item = search_results.data.items[i]
-            actions_repositories.push({
-                name: item.repository.name,
-                url: item.repository.html_url,
-                scanning_enabled: false,
-                scanning_workflow: false,
-                all_alerts_closed: false,
-                visibility: undefined
-            });
-
-        }
-
-        // loop through results
-        for (const repository of actions_repositories) {
-            let repository_configuration = await client.request(`GET /repos/{owner}/{repo}`, {
-                owner: argv.org,
-                repo: repository.name,
-                headers: {
-                    'X-GitHub-Api-Version': '2022-11-28'
-                }
-            })
-
-            repository.visibility = repository_configuration.data.visibility // kind of nasty but this should set the value in the actions_repositories object which we can use later
-
-            logger.debug(`${util.inspect(repository_configuration, { depth: null })}`)
-
-            repository['description'] = repository_configuration.data.description ?? ''
-            repository['default_branch'] = repository_configuration.data.default_branch
-            repository['scanning_enabled'] = repository_configuration.data.security_and_analysis?.advanced_security?.status === 'enabled'
-
-            // search for code in org
-            let search_code_scanning_results = await client.request(`GET /search/code`, {
-                q: `repo:${argv.org}/${repository.name} ${SECURITY_SCANNING_SEARCH_STRING}`,
-                headers: {
-                    'X-GitHub-Api-Version': '2022-11-28'
-                }
-
-            })
-
-            logger.debug(`${util.inspect(search_code_scanning_results, { depth: null })}`)
-
-            repository['scanning_workflow'] = search_code_scanning_results.data?.total_count > 0
-
-            if (repository.scanning_enabled && repository.scanning_workflow) {
-
-                let code_scanning_alerts
-                try {
-                    code_scanning_alerts = await client.request(`GET /repos/{owner}/{repo}/code-scanning/alerts`, {
-                        owner: argv.org,
-                        repo: repository.name,
-                        headers: {
-                            'X-GitHub-Api-Version': '2022-11-28'
-                        }
-                    })
-                } catch (error) {
-                    // ignore 404 errors
-                    if (error.status !== 404) {
-                        throw error
-                    } else {
-                        logger.info(`No scanning results: ${error}`)
-                    }
-                }
-                
-                // if ther are no results then all alerts are closed remains false
-                if (code_scanning_alerts) {
-                    logger.debug(code_scanning_alerts)
-                    const open_alerts = code_scanning_alerts.data.filter(alert => alert.state === 'open')
-
-                    // if there are no alerts, print a message
-                    if (open_alerts.length == 0) {
-                        logger.info("No alerts found")
-                        repository['all_alerts_closed'] = true
-                    } else {
-                        repository['all_alerts_closed'] = false
-                        // print code scanning alerts
-                        for (let i = 0; i < code_scanning_alerts.data.length; i++) {
-                            logger.info(code_scanning_alerts.data[i].rule.name);
-                        }
-                    }
-                }
-            }
-        }
-
-        // print results
-        logger.debug(`${JSON.stringify(actions_repositories)}`)
-
-        // loop through repositories
-        for (const repo of actions_repositories) {
-            logger.debug(`Repo ${repo.name} scanning enabled: ${repo.scanning_enabled} scanning workflow: ${repo.scanning_workflow} all alerts closed: ${repo.all_alerts_closed}`)
-            // if scanning is enabled, and there are alerts, and there are open alerts, nag
-            if (!repo.scanning_enabled || !repo.scanning_workflow || !repo.all_alerts_closed) {
-                if (repo.description === '') {
-                    logger.info(`Description is empty, can't sync upstream to ${repo.name}`)
-                } else {
-                    try {
-                        const verbosity = logger.VERBOSITY_LEVEL >= 2 == true ? 'GIT_CURL_VERBOSE=1 ' : ''
-                        if (shell.exec(`${verbosity}git clone https://${argv.token}@github.com/${argv.org}/${repo.name}.git`, { silent: logger.VERBOSITY_LEVEL < 2 }).code === 0) {
-                            shell.exec(`cd ${repo.name} && curl https://raw.githubusercontent.com/repo-sync/github-sync/3832fe8e2be32372e1b3970bbae8e7079edeec88/github-sync.sh > github-sync.sh`)
-                            shell.exec(`pwd && cd ${repo.name} && GITHUB_TOKEN="${argv.token}" GITHUB_REPOSITORY="${argv.org}/${repo.name}" bash github-sync.sh ${repo.description} "${repo.default_branch}:${repo.default_branch}-sync"`)
-                            // Get common ancestor
-                            const common_ancestor = shell.exec(`cd ${repo.name} && git merge-base remotes/origin/${repo.default_branch}-sync HEAD`, { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
-                            // Get head of sync branch
-                            const sync_head = shell.exec(`cd ${repo.name} && git show-ref remotes/origin/${repo.default_branch}-sync -s`, { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
-                            // Open a PR if there is stuff to merge
-                            if (common_ancestor != sync_head) {
-                                // Find Admin Team
-                                const teams_with_members = []
-                                const admin_teams = await client.paginate(`GET /repos/${argv.org}/${repo.name}/teams`, {
-                                    headers: {
-                                        'X-GitHub-Api-Version': '2022-11-28'
-                                    }
-                                })
-
-                                logger.debug(`Admin Teams: ${util.inspect(admin_teams, { depth: null })}`)
-
-                                for (const team of admin_teams) {
-                                    const current_team_members = await client.paginate(`GET ${team.members_url.replace(/{\/member}/, '')}`, {
-                                        headers: {
-                                            'X-GitHub-Api-Version': '2022-11-28'
-                                        }
-
-                                    })
-                                    logger.debug(`Team Members: ${util.inspect(current_team_members, { depth: null })}`)
-
-                                    if (current_team_members.length > 0) {
-                                        teams_with_members.push(team)
-                                    }
-                                }
-
-                                logger.debug(`Teams with Members: ${util.inspect(teams_with_members, { depth: null })}`)
-
-                                let reviewers = ''
-                                // If teams with members empty, find org admins
-                                if (teams_with_members.length === 0) {
-                                    const org_admins = await client.paginate(`GET /orgs/{org}/members`, {
-                                        org: argv.org,
-                                        role: "admin",
-                                        headers: {
-                                            'X-GitHub-Api-Version': '2022-11-28'
-                                        }
-                                    })
-
-                                    logger.debug(`Org Admins: ${util.inspect(org_admins, { depth: null })}`)
-                                    for (const member of org_admins) {
-                                        logger.debug(`${util.inspect(member, { depth: null })}`)
-                                        reviewers += ` --reviewer ${member.login}`
-                                    }
-                                } else {
-                                    for (const team of teams_with_members) {
-                                        logger.debug(`${util.inspect(team, { depth: null })}`)
-                                        reviewers += ` --reviewer @${argv.org}/${team.name}`
-                                    }
-                                }
-
-                                logger.debug(`Reviewers: ${util.inspect(reviewers, { depth: null })}`)
-                                shell.exec(`gh pr --repo ${argv.org}/${repo.name} create --title "Merge Upstream" --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" --base ${repo.default_branch} --head "${repo.default_branch}-sync" ${reviewers}`)
-
-                            } else {
-                                logger.info('Common Ancestor matches upstream so nothing to merge')
-                            }
-                        } else {
-                            logger.warn(`Failed to clone ${repo.name}`)
-                        }
-                    } catch (error) {
-                        logger.error(error)
-                    }
-                    finally {
-                        shell.exec(`rm -rf ${repo.name}`)
-                    }
-                }
-
-                // check if nagged 3 times
-                const issues = await client.paginate(`GET /repos/{owner}/{repo}/issues`, {
-                    owner: argv.org,
-                    repo: repo.name,
-                    state: "all",
-                    labels: "non-compliant",
-                    headers: {
-                        'X-GitHub-Api-Version': '2022-11-28'
-                    }
-                })
-
-                if (issues.length > NAG_NUMBER) {
-                    if (repo.visibility !== 'public') {
-                        await client.request(`PUT /repos/{owner}/{repo}/actions/permissions/access`, {
-                            owner: argv.org,
-                            repo: repo.name,
-                            access_level: "none",
-                            headers: {
-                                'X-GitHub-Api-Version': '2022-11-28'
-                            }
-                        })
-                    }
-
-                    await client.request(`POST /repos/{owner}/{repo}/issues`, {
-                        owner: argv.org,
-                        repo: repo.name,
-                        title: 'Repository Disabled for Actions',
-                        body: 'This repository has been disabled for use within actions due to non-compliance.  Please remediate by enabling code scanning and resolving all alerts before contacting the GitHub Organization Admins to re-enable this Action.',
-                        labels: ['non-compliant'],
-                        headers: {
-                            'X-GitHub-Api-Version': '2022-11-28'
-                        }
-                    })
-                } else {
-                    // nag
-                    await client.request(`POST /repos/{owner}/{repo}/issues`, {
-                        owner: argv.org,
-                        repo: repo.name,
-                        title: 'Repository Non-Compliant for use with GitHub Actions',
-                        body: 'This repository is non-compliant for use with GitHub Actions.  To remediate this please make sure Dependabot and code-scanning are enabled and all alerts are resolved. If applicable, a PR has been opened to merge upstream into this repository in hopes that it helps this repository come back in to compliance.  This repository will be disabled for use within actions after the 3rd notification.',
-                        labels: ['non-compliant'],
-                        headers: {
-                            'X-GitHub-Api-Version': '2022-11-28'
-                        }
-                    })
-                }
-            }
-        }
-    } catch (error) {
-        logger.error(error);
-        process.exit(1)
-    }
-}
-
-
-if (require.main == require.cache[eval('__filename')]) {
-    main();
-}
-
-module.exports = main;
-
-
-/***/ }),
-
-/***/ 5670:
-/***/ ((module) => {
-
-function webpackEmptyContext(req) {
-	var e = new Error("Cannot find module '" + req + "'");
-	e.code = 'MODULE_NOT_FOUND';
-	throw e;
-}
-webpackEmptyContext.keys = () => ([]);
-webpackEmptyContext.resolve = webpackEmptyContext;
-webpackEmptyContext.id = 5670;
-module.exports = webpackEmptyContext;
-
-/***/ }),
-
-/***/ 9167:
-/***/ ((module) => {
-
-function webpackEmptyContext(req) {
-	var e = new Error("Cannot find module '" + req + "'");
-	e.code = 'MODULE_NOT_FOUND';
-	throw e;
-}
-webpackEmptyContext.keys = () => ([]);
-webpackEmptyContext.resolve = webpackEmptyContext;
-webpackEmptyContext.id = 9167;
-module.exports = webpackEmptyContext;
-
-/***/ }),
-
-/***/ 4907:
-/***/ ((module) => {
-
-function webpackEmptyContext(req) {
-	var e = new Error("Cannot find module '" + req + "'");
-	e.code = 'MODULE_NOT_FOUND';
-	throw e;
-}
-webpackEmptyContext.keys = () => ([]);
-webpackEmptyContext.resolve = webpackEmptyContext;
-webpackEmptyContext.id = 4907;
-module.exports = webpackEmptyContext;
-
-/***/ }),
-
 /***/ 9491:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("assert");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("assert");
 
 /***/ }),
 
 /***/ 2081:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("child_process");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("child_process");
 
 /***/ }),
 
 /***/ 2361:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("events");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("events");
 
 /***/ }),
 
 /***/ 7147:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("fs");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("fs");
 
 /***/ }),
 
 /***/ 2037:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("os");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("os");
 
 /***/ }),
 
 /***/ 1017:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("path");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("path");
 
 /***/ }),
 
 /***/ 3837:
 /***/ ((module) => {
 
-"use strict";
-module.exports = require("util");
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("util");
 
-/***/ }),
+/***/ })
 
-/***/ 7059:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/******/ });
+/************************************************************************/
+/******/ // The module cache
+/******/ var __webpack_module_cache__ = {};
+/******/ 
+/******/ // The require function
+/******/ function __nccwpck_require__(moduleId) {
+/******/ 	// Check if module is in cache
+/******/ 	var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 	if (cachedModule !== undefined) {
+/******/ 		return cachedModule.exports;
+/******/ 	}
+/******/ 	// Create a new module (and put it into the cache)
+/******/ 	var module = __webpack_module_cache__[moduleId] = {
+/******/ 		id: moduleId,
+/******/ 		loaded: false,
+/******/ 		exports: {}
+/******/ 	};
+/******/ 
+/******/ 	// Execute the module function
+/******/ 	var threw = true;
+/******/ 	try {
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __nccwpck_require__);
+/******/ 		threw = false;
+/******/ 	} finally {
+/******/ 		if(threw) delete __webpack_module_cache__[moduleId];
+/******/ 	}
+/******/ 
+/******/ 	// Flag the module as loaded
+/******/ 	module.loaded = true;
+/******/ 
+/******/ 	// Return the exports of the module
+/******/ 	return module.exports;
+/******/ }
+/******/ 
+/************************************************************************/
+/******/ /* webpack/runtime/node module decorator */
+/******/ (() => {
+/******/ 	__nccwpck_require__.nmd = (module) => {
+/******/ 		module.paths = [];
+/******/ 		if (!module.children) module.children = [];
+/******/ 		return module;
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/compat */
+/******/ 
+/******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
+/******/ 
+/************************************************************************/
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+(() => {
 
-"use strict";
+// EXTERNAL MODULE: ./node_modules/bottleneck/light.js
+var light = __nccwpck_require__(1174);
+;// CONCATENATED MODULE: ./node_modules/@octokit/plugin-throttling/dist-bundle/index.js
+// pkg/dist-src/index.js
 
+
+
+// pkg/dist-src/version.js
+var VERSION = "0.0.0-development";
+
+// pkg/dist-src/wrap-request.js
+var noop = () => Promise.resolve();
+function wrapRequest(state, request, options) {
+  return state.retryLimiter.schedule(doRequest, state, request, options);
+}
+async function doRequest(state, request, options) {
+  const isWrite = options.method !== "GET" && options.method !== "HEAD";
+  const { pathname } = new URL(options.url, "http://github.test");
+  const isSearch = options.method === "GET" && pathname.startsWith("/search/");
+  const isGraphQL = pathname.startsWith("/graphql");
+  const retryCount = ~~request.retryCount;
+  const jobOptions = retryCount > 0 ? { priority: 0, weight: 0 } : {};
+  if (state.clustering) {
+    jobOptions.expiration = 1e3 * 60;
+  }
+  if (isWrite || isGraphQL) {
+    await state.write.key(state.id).schedule(jobOptions, noop);
+  }
+  if (isWrite && state.triggersNotification(pathname)) {
+    await state.notifications.key(state.id).schedule(jobOptions, noop);
+  }
+  if (isSearch) {
+    await state.search.key(state.id).schedule(jobOptions, noop);
+  }
+  const req = state.global.key(state.id).schedule(jobOptions, request, options);
+  if (isGraphQL) {
+    const res = await req;
+    if (res.data.errors != null && res.data.errors.some((error) => error.type === "RATE_LIMITED")) {
+      const error = Object.assign(new Error("GraphQL Rate Limit Exceeded"), {
+        response: res,
+        data: res.data
+      });
+      throw error;
+    }
+  }
+  return req;
+}
+
+// pkg/dist-src/generated/triggers-notification-paths.js
+var triggers_notification_paths_default = [
+  "/orgs/{org}/invitations",
+  "/orgs/{org}/invitations/{invitation_id}",
+  "/orgs/{org}/teams/{team_slug}/discussions",
+  "/orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments",
+  "/repos/{owner}/{repo}/collaborators/{username}",
+  "/repos/{owner}/{repo}/commits/{commit_sha}/comments",
+  "/repos/{owner}/{repo}/issues",
+  "/repos/{owner}/{repo}/issues/{issue_number}/comments",
+  "/repos/{owner}/{repo}/pulls",
+  "/repos/{owner}/{repo}/pulls/{pull_number}/comments",
+  "/repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies",
+  "/repos/{owner}/{repo}/pulls/{pull_number}/merge",
+  "/repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers",
+  "/repos/{owner}/{repo}/pulls/{pull_number}/reviews",
+  "/repos/{owner}/{repo}/releases",
+  "/teams/{team_id}/discussions",
+  "/teams/{team_id}/discussions/{discussion_number}/comments"
+];
+
+// pkg/dist-src/route-matcher.js
+function routeMatcher(paths) {
+  const regexes = paths.map(
+    (path) => path.split("/").map((c) => c.startsWith("{") ? "(?:.+?)" : c).join("/")
+  );
+  const regex2 = `^(?:${regexes.map((r) => `(?:${r})`).join("|")})[^/]*$`;
+  return new RegExp(regex2, "i");
+}
+
+// pkg/dist-src/index.js
+var regex = routeMatcher(triggers_notification_paths_default);
+var triggersNotification = regex.test.bind(regex);
+var groups = {};
+var createGroups = function(Bottleneck, common) {
+  groups.global = new Bottleneck.Group({
+    id: "octokit-global",
+    maxConcurrent: 10,
+    ...common
+  });
+  groups.search = new Bottleneck.Group({
+    id: "octokit-search",
+    maxConcurrent: 1,
+    minTime: 2e3,
+    ...common
+  });
+  groups.write = new Bottleneck.Group({
+    id: "octokit-write",
+    maxConcurrent: 1,
+    minTime: 1e3,
+    ...common
+  });
+  groups.notifications = new Bottleneck.Group({
+    id: "octokit-notifications",
+    maxConcurrent: 1,
+    minTime: 3e3,
+    ...common
+  });
+};
+function throttling(octokit, octokitOptions) {
+  const {
+    enabled = true,
+    Bottleneck = light,
+    id = "no-id",
+    timeout = 1e3 * 60 * 2,
+    // Redis TTL: 2 minutes
+    connection
+  } = octokitOptions.throttle || {};
+  if (!enabled) {
+    return {};
+  }
+  const common = { connection, timeout };
+  if (groups.global == null) {
+    createGroups(Bottleneck, common);
+  }
+  const state = Object.assign(
+    {
+      clustering: connection != null,
+      triggersNotification,
+      fallbackSecondaryRateRetryAfter: 60,
+      retryAfterBaseValue: 1e3,
+      retryLimiter: new Bottleneck(),
+      id,
+      ...groups
+    },
+    octokitOptions.throttle
+  );
+  if (typeof state.onSecondaryRateLimit !== "function" || typeof state.onRateLimit !== "function") {
+    throw new Error(`octokit/plugin-throttling error:
+        You must pass the onSecondaryRateLimit and onRateLimit error handlers.
+        See https://octokit.github.io/rest.js/#throttling
+
+        const octokit = new Octokit({
+          throttle: {
+            onSecondaryRateLimit: (retryAfter, options) => {/* ... */},
+            onRateLimit: (retryAfter, options) => {/* ... */}
+          }
+        })
+    `);
+  }
+  const events = {};
+  const emitter = new Bottleneck.Events(events);
+  events.on("secondary-limit", state.onSecondaryRateLimit);
+  events.on("rate-limit", state.onRateLimit);
+  events.on(
+    "error",
+    (e) => octokit.log.warn("Error in throttling-plugin limit handler", e)
+  );
+  state.retryLimiter.on("failed", async function(error, info) {
+    const [state2, request, options] = info.args;
+    const { pathname } = new URL(options.url, "http://github.test");
+    const shouldRetryGraphQL = pathname.startsWith("/graphql") && error.status !== 401;
+    if (!(shouldRetryGraphQL || error.status === 403)) {
+      return;
+    }
+    const retryCount = ~~request.retryCount;
+    request.retryCount = retryCount;
+    options.request.retryCount = retryCount;
+    const { wantRetry, retryAfter = 0 } = await async function() {
+      if (/\bsecondary rate\b/i.test(error.message)) {
+        const retryAfter2 = Number(error.response.headers["retry-after"]) || state2.fallbackSecondaryRateRetryAfter;
+        const wantRetry2 = await emitter.trigger(
+          "secondary-limit",
+          retryAfter2,
+          options,
+          octokit,
+          retryCount
+        );
+        return { wantRetry: wantRetry2, retryAfter: retryAfter2 };
+      }
+      if (error.response.headers != null && error.response.headers["x-ratelimit-remaining"] === "0" || (error.response.data?.errors ?? []).some(
+        (error2) => error2.type === "RATE_LIMITED"
+      )) {
+        const rateLimitReset = new Date(
+          ~~error.response.headers["x-ratelimit-reset"] * 1e3
+        ).getTime();
+        const retryAfter2 = Math.max(
+          // Add one second so we retry _after_ the reset time
+          // https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#exceeding-the-rate-limit
+          Math.ceil((rateLimitReset - Date.now()) / 1e3) + 1,
+          0
+        );
+        const wantRetry2 = await emitter.trigger(
+          "rate-limit",
+          retryAfter2,
+          options,
+          octokit,
+          retryCount
+        );
+        return { wantRetry: wantRetry2, retryAfter: retryAfter2 };
+      }
+      return {};
+    }();
+    if (wantRetry) {
+      request.retryCount++;
+      return retryAfter * state2.retryAfterBaseValue;
+    }
+  });
+  octokit.hook.wrap("request", wrapRequest.bind(null, state));
+  return {};
+}
+throttling.VERSION = VERSION;
+throttling.triggersNotification = triggersNotification;
+
+
+// EXTERNAL MODULE: ./node_modules/@octokit/plugin-paginate-rest/dist-node/index.js
+var dist_node = __nccwpck_require__(4193);
+;// CONCATENATED MODULE: ./node_modules/universal-user-agent/index.js
+function getUserAgent() {
+  if (typeof navigator === "object" && "userAgent" in navigator) {
+    return navigator.userAgent;
+  }
+
+  if (typeof process === "object" && process.version !== undefined) {
+    return `Node.js/${process.version.substr(1)} (${process.platform}; ${
+      process.arch
+    })`;
+  }
+
+  return "<environment undetectable>";
+}
+
+;// CONCATENATED MODULE: ./node_modules/before-after-hook/lib/register.js
+// @ts-check
+
+function register(state, name, method, options) {
+  if (typeof method !== "function") {
+    throw new Error("method for before hook must be a function");
+  }
+
+  if (!options) {
+    options = {};
+  }
+
+  if (Array.isArray(name)) {
+    return name.reverse().reduce((callback, name) => {
+      return register.bind(null, state, name, callback, options);
+    }, method)();
+  }
+
+  return Promise.resolve().then(() => {
+    if (!state.registry[name]) {
+      return method(options);
+    }
+
+    return state.registry[name].reduce((method, registered) => {
+      return registered.hook.bind(null, method, options);
+    }, method)();
+  });
+}
+
+;// CONCATENATED MODULE: ./node_modules/before-after-hook/lib/add.js
+// @ts-check
+
+function addHook(state, kind, name, hook) {
+  const orig = hook;
+  if (!state.registry[name]) {
+    state.registry[name] = [];
+  }
+
+  if (kind === "before") {
+    hook = (method, options) => {
+      return Promise.resolve()
+        .then(orig.bind(null, options))
+        .then(method.bind(null, options));
+    };
+  }
+
+  if (kind === "after") {
+    hook = (method, options) => {
+      let result;
+      return Promise.resolve()
+        .then(method.bind(null, options))
+        .then((result_) => {
+          result = result_;
+          return orig(result, options);
+        })
+        .then(() => {
+          return result;
+        });
+    };
+  }
+
+  if (kind === "error") {
+    hook = (method, options) => {
+      return Promise.resolve()
+        .then(method.bind(null, options))
+        .catch((error) => {
+          return orig(error, options);
+        });
+    };
+  }
+
+  state.registry[name].push({
+    hook: hook,
+    orig: orig,
+  });
+}
+
+;// CONCATENATED MODULE: ./node_modules/before-after-hook/lib/remove.js
+// @ts-check
+
+function removeHook(state, name, method) {
+  if (!state.registry[name]) {
+    return;
+  }
+
+  const index = state.registry[name]
+    .map((registered) => {
+      return registered.orig;
+    })
+    .indexOf(method);
+
+  if (index === -1) {
+    return;
+  }
+
+  state.registry[name].splice(index, 1);
+}
+
+;// CONCATENATED MODULE: ./node_modules/before-after-hook/index.js
+// @ts-check
+
+
+
+
+
+// bind with array of arguments: https://stackoverflow.com/a/21792913
+const bind = Function.bind;
+const bindable = bind.bind(bind);
+
+function bindApi(hook, state, name) {
+  const removeHookRef = bindable(removeHook, null).apply(
+    null,
+    name ? [state, name] : [state]
+  );
+  hook.api = { remove: removeHookRef };
+  hook.remove = removeHookRef;
+  ["before", "error", "after", "wrap"].forEach((kind) => {
+    const args = name ? [state, kind, name] : [state, kind];
+    hook[kind] = hook.api[kind] = bindable(addHook, null).apply(null, args);
+  });
+}
+
+function Singular() {
+  const singularHookName = Symbol("Singular");
+  const singularHookState = {
+    registry: {},
+  };
+  const singularHook = register.bind(null, singularHookState, singularHookName);
+  bindApi(singularHook, singularHookState, singularHookName);
+  return singularHook;
+}
+
+function Collection() {
+  const state = {
+    registry: {},
+  };
+
+  const hook = register.bind(null, state);
+  bindApi(hook, state);
+
+  return hook;
+}
+
+/* harmony default export */ const before_after_hook = ({ Singular, Collection });
+
+;// CONCATENATED MODULE: ./node_modules/@octokit/endpoint/dist-bundle/index.js
+// pkg/dist-src/defaults.js
+
+
+// pkg/dist-src/version.js
+var dist_bundle_VERSION = "0.0.0-development";
+
+// pkg/dist-src/defaults.js
+var userAgent = `octokit-endpoint.js/${dist_bundle_VERSION} ${getUserAgent()}`;
+var DEFAULTS = {
+  method: "GET",
+  baseUrl: "https://api.github.com",
+  headers: {
+    accept: "application/vnd.github.v3+json",
+    "user-agent": userAgent
+  },
+  mediaType: {
+    format: ""
+  }
+};
+
+// pkg/dist-src/util/lowercase-keys.js
+function lowercaseKeys(object) {
+  if (!object) {
+    return {};
+  }
+  return Object.keys(object).reduce((newObj, key) => {
+    newObj[key.toLowerCase()] = object[key];
+    return newObj;
+  }, {});
+}
+
+// pkg/dist-src/util/is-plain-object.js
+function isPlainObject(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  if (Object.prototype.toString.call(value) !== "[object Object]")
+    return false;
+  const proto = Object.getPrototypeOf(value);
+  if (proto === null)
+    return true;
+  const Ctor = Object.prototype.hasOwnProperty.call(proto, "constructor") && proto.constructor;
+  return typeof Ctor === "function" && Ctor instanceof Ctor && Function.prototype.call(Ctor) === Function.prototype.call(value);
+}
+
+// pkg/dist-src/util/merge-deep.js
+function mergeDeep(defaults, options) {
+  const result = Object.assign({}, defaults);
+  Object.keys(options).forEach((key) => {
+    if (isPlainObject(options[key])) {
+      if (!(key in defaults))
+        Object.assign(result, { [key]: options[key] });
+      else
+        result[key] = mergeDeep(defaults[key], options[key]);
+    } else {
+      Object.assign(result, { [key]: options[key] });
+    }
+  });
+  return result;
+}
+
+// pkg/dist-src/util/remove-undefined-properties.js
+function removeUndefinedProperties(obj) {
+  for (const key in obj) {
+    if (obj[key] === void 0) {
+      delete obj[key];
+    }
+  }
+  return obj;
+}
+
+// pkg/dist-src/merge.js
+function merge(defaults, route, options) {
+  if (typeof route === "string") {
+    let [method, url] = route.split(" ");
+    options = Object.assign(url ? { method, url } : { url: method }, options);
+  } else {
+    options = Object.assign({}, route);
+  }
+  options.headers = lowercaseKeys(options.headers);
+  removeUndefinedProperties(options);
+  removeUndefinedProperties(options.headers);
+  const mergedOptions = mergeDeep(defaults || {}, options);
+  if (options.url === "/graphql") {
+    if (defaults && defaults.mediaType.previews?.length) {
+      mergedOptions.mediaType.previews = defaults.mediaType.previews.filter(
+        (preview) => !mergedOptions.mediaType.previews.includes(preview)
+      ).concat(mergedOptions.mediaType.previews);
+    }
+    mergedOptions.mediaType.previews = (mergedOptions.mediaType.previews || []).map((preview) => preview.replace(/-preview/, ""));
+  }
+  return mergedOptions;
+}
+
+// pkg/dist-src/util/add-query-parameters.js
+function addQueryParameters(url, parameters) {
+  const separator = /\?/.test(url) ? "&" : "?";
+  const names = Object.keys(parameters);
+  if (names.length === 0) {
+    return url;
+  }
+  return url + separator + names.map((name) => {
+    if (name === "q") {
+      return "q=" + parameters.q.split("+").map(encodeURIComponent).join("+");
+    }
+    return `${name}=${encodeURIComponent(parameters[name])}`;
+  }).join("&");
+}
+
+// pkg/dist-src/util/extract-url-variable-names.js
+var urlVariableRegex = /\{[^}]+\}/g;
+function removeNonChars(variableName) {
+  return variableName.replace(/^\W+|\W+$/g, "").split(/,/);
+}
+function extractUrlVariableNames(url) {
+  const matches = url.match(urlVariableRegex);
+  if (!matches) {
+    return [];
+  }
+  return matches.map(removeNonChars).reduce((a, b) => a.concat(b), []);
+}
+
+// pkg/dist-src/util/omit.js
+function omit(object, keysToOmit) {
+  const result = { __proto__: null };
+  for (const key of Object.keys(object)) {
+    if (keysToOmit.indexOf(key) === -1) {
+      result[key] = object[key];
+    }
+  }
+  return result;
+}
+
+// pkg/dist-src/util/url-template.js
+function encodeReserved(str) {
+  return str.split(/(%[0-9A-Fa-f]{2})/g).map(function(part) {
+    if (!/%[0-9A-Fa-f]/.test(part)) {
+      part = encodeURI(part).replace(/%5B/g, "[").replace(/%5D/g, "]");
+    }
+    return part;
+  }).join("");
+}
+function encodeUnreserved(str) {
+  return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
+    return "%" + c.charCodeAt(0).toString(16).toUpperCase();
+  });
+}
+function encodeValue(operator, value, key) {
+  value = operator === "+" || operator === "#" ? encodeReserved(value) : encodeUnreserved(value);
+  if (key) {
+    return encodeUnreserved(key) + "=" + value;
+  } else {
+    return value;
+  }
+}
+function isDefined(value) {
+  return value !== void 0 && value !== null;
+}
+function isKeyOperator(operator) {
+  return operator === ";" || operator === "&" || operator === "?";
+}
+function getValues(context, operator, key, modifier) {
+  var value = context[key], result = [];
+  if (isDefined(value) && value !== "") {
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+      value = value.toString();
+      if (modifier && modifier !== "*") {
+        value = value.substring(0, parseInt(modifier, 10));
+      }
+      result.push(
+        encodeValue(operator, value, isKeyOperator(operator) ? key : "")
+      );
+    } else {
+      if (modifier === "*") {
+        if (Array.isArray(value)) {
+          value.filter(isDefined).forEach(function(value2) {
+            result.push(
+              encodeValue(operator, value2, isKeyOperator(operator) ? key : "")
+            );
+          });
+        } else {
+          Object.keys(value).forEach(function(k) {
+            if (isDefined(value[k])) {
+              result.push(encodeValue(operator, value[k], k));
+            }
+          });
+        }
+      } else {
+        const tmp = [];
+        if (Array.isArray(value)) {
+          value.filter(isDefined).forEach(function(value2) {
+            tmp.push(encodeValue(operator, value2));
+          });
+        } else {
+          Object.keys(value).forEach(function(k) {
+            if (isDefined(value[k])) {
+              tmp.push(encodeUnreserved(k));
+              tmp.push(encodeValue(operator, value[k].toString()));
+            }
+          });
+        }
+        if (isKeyOperator(operator)) {
+          result.push(encodeUnreserved(key) + "=" + tmp.join(","));
+        } else if (tmp.length !== 0) {
+          result.push(tmp.join(","));
+        }
+      }
+    }
+  } else {
+    if (operator === ";") {
+      if (isDefined(value)) {
+        result.push(encodeUnreserved(key));
+      }
+    } else if (value === "" && (operator === "&" || operator === "?")) {
+      result.push(encodeUnreserved(key) + "=");
+    } else if (value === "") {
+      result.push("");
+    }
+  }
+  return result;
+}
+function parseUrl(template) {
+  return {
+    expand: expand.bind(null, template)
+  };
+}
+function expand(template, context) {
+  var operators = ["+", "#", ".", "/", ";", "?", "&"];
+  template = template.replace(
+    /\{([^\{\}]+)\}|([^\{\}]+)/g,
+    function(_, expression, literal) {
+      if (expression) {
+        let operator = "";
+        const values = [];
+        if (operators.indexOf(expression.charAt(0)) !== -1) {
+          operator = expression.charAt(0);
+          expression = expression.substr(1);
+        }
+        expression.split(/,/g).forEach(function(variable) {
+          var tmp = /([^:\*]*)(?::(\d+)|(\*))?/.exec(variable);
+          values.push(getValues(context, operator, tmp[1], tmp[2] || tmp[3]));
+        });
+        if (operator && operator !== "+") {
+          var separator = ",";
+          if (operator === "?") {
+            separator = "&";
+          } else if (operator !== "#") {
+            separator = operator;
+          }
+          return (values.length !== 0 ? operator : "") + values.join(separator);
+        } else {
+          return values.join(",");
+        }
+      } else {
+        return encodeReserved(literal);
+      }
+    }
+  );
+  if (template === "/") {
+    return template;
+  } else {
+    return template.replace(/\/$/, "");
+  }
+}
+
+// pkg/dist-src/parse.js
+function parse(options) {
+  let method = options.method.toUpperCase();
+  let url = (options.url || "/").replace(/:([a-z]\w+)/g, "{$1}");
+  let headers = Object.assign({}, options.headers);
+  let body;
+  let parameters = omit(options, [
+    "method",
+    "baseUrl",
+    "url",
+    "headers",
+    "request",
+    "mediaType"
+  ]);
+  const urlVariableNames = extractUrlVariableNames(url);
+  url = parseUrl(url).expand(parameters);
+  if (!/^http/.test(url)) {
+    url = options.baseUrl + url;
+  }
+  const omittedParameters = Object.keys(options).filter((option) => urlVariableNames.includes(option)).concat("baseUrl");
+  const remainingParameters = omit(parameters, omittedParameters);
+  const isBinaryRequest = /application\/octet-stream/i.test(headers.accept);
+  if (!isBinaryRequest) {
+    if (options.mediaType.format) {
+      headers.accept = headers.accept.split(/,/).map(
+        (format) => format.replace(
+          /application\/vnd(\.\w+)(\.v3)?(\.\w+)?(\+json)?$/,
+          `application/vnd$1$2.${options.mediaType.format}`
+        )
+      ).join(",");
+    }
+    if (url.endsWith("/graphql")) {
+      if (options.mediaType.previews?.length) {
+        const previewsFromAcceptHeader = headers.accept.match(/[\w-]+(?=-preview)/g) || [];
+        headers.accept = previewsFromAcceptHeader.concat(options.mediaType.previews).map((preview) => {
+          const format = options.mediaType.format ? `.${options.mediaType.format}` : "+json";
+          return `application/vnd.github.${preview}-preview${format}`;
+        }).join(",");
+      }
+    }
+  }
+  if (["GET", "HEAD"].includes(method)) {
+    url = addQueryParameters(url, remainingParameters);
+  } else {
+    if ("data" in remainingParameters) {
+      body = remainingParameters.data;
+    } else {
+      if (Object.keys(remainingParameters).length) {
+        body = remainingParameters;
+      }
+    }
+  }
+  if (!headers["content-type"] && typeof body !== "undefined") {
+    headers["content-type"] = "application/json; charset=utf-8";
+  }
+  if (["PATCH", "PUT"].includes(method) && typeof body === "undefined") {
+    body = "";
+  }
+  return Object.assign(
+    { method, url, headers },
+    typeof body !== "undefined" ? { body } : null,
+    options.request ? { request: options.request } : null
+  );
+}
+
+// pkg/dist-src/endpoint-with-defaults.js
+function endpointWithDefaults(defaults, route, options) {
+  return parse(merge(defaults, route, options));
+}
+
+// pkg/dist-src/with-defaults.js
+function withDefaults(oldDefaults, newDefaults) {
+  const DEFAULTS2 = merge(oldDefaults, newDefaults);
+  const endpoint2 = endpointWithDefaults.bind(null, DEFAULTS2);
+  return Object.assign(endpoint2, {
+    DEFAULTS: DEFAULTS2,
+    defaults: withDefaults.bind(null, DEFAULTS2),
+    merge: merge.bind(null, DEFAULTS2),
+    parse
+  });
+}
+
+// pkg/dist-src/index.js
+var endpoint = withDefaults(null, DEFAULTS);
+
+
+;// CONCATENATED MODULE: ./node_modules/@octokit/request-error/dist-src/index.js
+class RequestError extends Error {
+  name;
+  /**
+   * http status code
+   */
+  status;
+  /**
+   * Request options that lead to the error.
+   */
+  request;
+  /**
+   * Response object if a response was received
+   */
+  response;
+  constructor(message, statusCode, options) {
+    super(message);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+    this.name = "HttpError";
+    this.status = statusCode;
+    if ("response" in options) {
+      this.response = options.response;
+    }
+    const requestCopy = Object.assign({}, options.request);
+    if (options.request.headers.authorization) {
+      requestCopy.headers = Object.assign({}, options.request.headers, {
+        authorization: options.request.headers.authorization.replace(
+          / .*$/,
+          " [REDACTED]"
+        )
+      });
+    }
+    requestCopy.url = requestCopy.url.replace(/\bclient_secret=\w+/g, "client_secret=[REDACTED]").replace(/\baccess_token=\w+/g, "access_token=[REDACTED]");
+    this.request = requestCopy;
+  }
+}
+
+
+;// CONCATENATED MODULE: ./node_modules/@octokit/request/dist-bundle/index.js
+// pkg/dist-src/index.js
+
+
+
+// pkg/dist-src/version.js
+var request_dist_bundle_VERSION = "0.0.0-development";
+
+// pkg/dist-src/is-plain-object.js
+function dist_bundle_isPlainObject(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  if (Object.prototype.toString.call(value) !== "[object Object]")
+    return false;
+  const proto = Object.getPrototypeOf(value);
+  if (proto === null)
+    return true;
+  const Ctor = Object.prototype.hasOwnProperty.call(proto, "constructor") && proto.constructor;
+  return typeof Ctor === "function" && Ctor instanceof Ctor && Function.prototype.call(Ctor) === Function.prototype.call(value);
+}
+
+// pkg/dist-src/fetch-wrapper.js
+
+
+// pkg/dist-src/get-buffer-response.js
+function getBufferResponse(response) {
+  return response.arrayBuffer();
+}
+
+// pkg/dist-src/fetch-wrapper.js
+function fetchWrapper(requestOptions) {
+  const log = requestOptions.request && requestOptions.request.log ? requestOptions.request.log : console;
+  const parseSuccessResponseBody = requestOptions.request?.parseSuccessResponseBody !== false;
+  if (dist_bundle_isPlainObject(requestOptions.body) || Array.isArray(requestOptions.body)) {
+    requestOptions.body = JSON.stringify(requestOptions.body);
+  }
+  let headers = {};
+  let status;
+  let url;
+  let { fetch } = globalThis;
+  if (requestOptions.request?.fetch) {
+    fetch = requestOptions.request.fetch;
+  }
+  if (!fetch) {
+    throw new Error(
+      "fetch is not set. Please pass a fetch implementation as new Octokit({ request: { fetch }}). Learn more at https://github.com/octokit/octokit.js/#fetch-missing"
+    );
+  }
+  return fetch(requestOptions.url, {
+    method: requestOptions.method,
+    body: requestOptions.body,
+    // Header values must be `string`
+    headers: Object.fromEntries(
+      Object.entries(requestOptions.headers).map(([name, value]) => [
+        name,
+        String(value)
+      ])
+    ),
+    signal: requestOptions.request?.signal,
+    // duplex must be set if request.body is ReadableStream or Async Iterables.
+    // See https://fetch.spec.whatwg.org/#dom-requestinit-duplex.
+    ...requestOptions.body && { duplex: "half" }
+  }).then(async (response) => {
+    url = response.url;
+    status = response.status;
+    for (const keyAndValue of response.headers) {
+      headers[keyAndValue[0]] = keyAndValue[1];
+    }
+    if ("deprecation" in headers) {
+      const matches = headers.link && headers.link.match(/<([^>]+)>; rel="deprecation"/);
+      const deprecationLink = matches && matches.pop();
+      log.warn(
+        `[@octokit/request] "${requestOptions.method} ${requestOptions.url}" is deprecated. It is scheduled to be removed on ${headers.sunset}${deprecationLink ? `. See ${deprecationLink}` : ""}`
+      );
+    }
+    if (status === 204 || status === 205) {
+      return;
+    }
+    if (requestOptions.method === "HEAD") {
+      if (status < 400) {
+        return;
+      }
+      throw new RequestError(response.statusText, status, {
+        response: {
+          url,
+          status,
+          headers,
+          data: void 0
+        },
+        request: requestOptions
+      });
+    }
+    if (status === 304) {
+      throw new RequestError("Not modified", status, {
+        response: {
+          url,
+          status,
+          headers,
+          data: await getResponseData(response)
+        },
+        request: requestOptions
+      });
+    }
+    if (status >= 400) {
+      const data = await getResponseData(response);
+      const error = new RequestError(toErrorMessage(data), status, {
+        response: {
+          url,
+          status,
+          headers,
+          data
+        },
+        request: requestOptions
+      });
+      throw error;
+    }
+    return parseSuccessResponseBody ? await getResponseData(response) : response.body;
+  }).then((data) => {
+    return {
+      status,
+      url,
+      headers,
+      data
+    };
+  }).catch((error) => {
+    if (error instanceof RequestError)
+      throw error;
+    else if (error.name === "AbortError")
+      throw error;
+    let message = error.message;
+    if (error.name === "TypeError" && "cause" in error) {
+      if (error.cause instanceof Error) {
+        message = error.cause.message;
+      } else if (typeof error.cause === "string") {
+        message = error.cause;
+      }
+    }
+    throw new RequestError(message, 500, {
+      request: requestOptions
+    });
+  });
+}
+async function getResponseData(response) {
+  const contentType = response.headers.get("content-type");
+  if (/application\/json/.test(contentType)) {
+    return response.json().catch(() => response.text()).catch(() => "");
+  }
+  if (!contentType || /^text\/|charset=utf-8$/.test(contentType)) {
+    return response.text();
+  }
+  return getBufferResponse(response);
+}
+function toErrorMessage(data) {
+  if (typeof data === "string")
+    return data;
+  let suffix;
+  if ("documentation_url" in data) {
+    suffix = ` - ${data.documentation_url}`;
+  } else {
+    suffix = "";
+  }
+  if ("message" in data) {
+    if (Array.isArray(data.errors)) {
+      return `${data.message}: ${data.errors.map(JSON.stringify).join(", ")}${suffix}`;
+    }
+    return `${data.message}${suffix}`;
+  }
+  return `Unknown error: ${JSON.stringify(data)}`;
+}
+
+// pkg/dist-src/with-defaults.js
+function dist_bundle_withDefaults(oldEndpoint, newDefaults) {
+  const endpoint2 = oldEndpoint.defaults(newDefaults);
+  const newApi = function(route, parameters) {
+    const endpointOptions = endpoint2.merge(route, parameters);
+    if (!endpointOptions.request || !endpointOptions.request.hook) {
+      return fetchWrapper(endpoint2.parse(endpointOptions));
+    }
+    const request2 = (route2, parameters2) => {
+      return fetchWrapper(
+        endpoint2.parse(endpoint2.merge(route2, parameters2))
+      );
+    };
+    Object.assign(request2, {
+      endpoint: endpoint2,
+      defaults: dist_bundle_withDefaults.bind(null, endpoint2)
+    });
+    return endpointOptions.request.hook(request2, endpointOptions);
+  };
+  return Object.assign(newApi, {
+    endpoint: endpoint2,
+    defaults: dist_bundle_withDefaults.bind(null, endpoint2)
+  });
+}
+
+// pkg/dist-src/index.js
+var request = dist_bundle_withDefaults(endpoint, {
+  headers: {
+    "user-agent": `octokit-request.js/${request_dist_bundle_VERSION} ${getUserAgent()}`
+  }
+});
+
+
+;// CONCATENATED MODULE: ./node_modules/@octokit/graphql/dist-bundle/index.js
+// pkg/dist-src/index.js
+
+
+
+// pkg/dist-src/version.js
+var graphql_dist_bundle_VERSION = "0.0.0-development";
+
+// pkg/dist-src/with-defaults.js
+
+
+// pkg/dist-src/graphql.js
+
+
+// pkg/dist-src/error.js
+function _buildMessageForResponseErrors(data) {
+  return `Request failed due to following response errors:
+` + data.errors.map((e) => ` - ${e.message}`).join("\n");
+}
+var GraphqlResponseError = class extends Error {
+  constructor(request2, headers, response) {
+    super(_buildMessageForResponseErrors(response));
+    this.request = request2;
+    this.headers = headers;
+    this.response = response;
+    this.errors = response.errors;
+    this.data = response.data;
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+  }
+  name = "GraphqlResponseError";
+  errors;
+  data;
+};
+
+// pkg/dist-src/graphql.js
+var NON_VARIABLE_OPTIONS = [
+  "method",
+  "baseUrl",
+  "url",
+  "headers",
+  "request",
+  "query",
+  "mediaType"
+];
+var FORBIDDEN_VARIABLE_OPTIONS = ["query", "method", "url"];
+var GHES_V3_SUFFIX_REGEX = /\/api\/v3\/?$/;
+function graphql(request2, query, options) {
+  if (options) {
+    if (typeof query === "string" && "query" in options) {
+      return Promise.reject(
+        new Error(`[@octokit/graphql] "query" cannot be used as variable name`)
+      );
+    }
+    for (const key in options) {
+      if (!FORBIDDEN_VARIABLE_OPTIONS.includes(key))
+        continue;
+      return Promise.reject(
+        new Error(
+          `[@octokit/graphql] "${key}" cannot be used as variable name`
+        )
+      );
+    }
+  }
+  const parsedOptions = typeof query === "string" ? Object.assign({ query }, options) : query;
+  const requestOptions = Object.keys(
+    parsedOptions
+  ).reduce((result, key) => {
+    if (NON_VARIABLE_OPTIONS.includes(key)) {
+      result[key] = parsedOptions[key];
+      return result;
+    }
+    if (!result.variables) {
+      result.variables = {};
+    }
+    result.variables[key] = parsedOptions[key];
+    return result;
+  }, {});
+  const baseUrl = parsedOptions.baseUrl || request2.endpoint.DEFAULTS.baseUrl;
+  if (GHES_V3_SUFFIX_REGEX.test(baseUrl)) {
+    requestOptions.url = baseUrl.replace(GHES_V3_SUFFIX_REGEX, "/api/graphql");
+  }
+  return request2(requestOptions).then((response) => {
+    if (response.data.errors) {
+      const headers = {};
+      for (const key of Object.keys(response.headers)) {
+        headers[key] = response.headers[key];
+      }
+      throw new GraphqlResponseError(
+        requestOptions,
+        headers,
+        response.data
+      );
+    }
+    return response.data.data;
+  });
+}
+
+// pkg/dist-src/with-defaults.js
+function graphql_dist_bundle_withDefaults(request2, newDefaults) {
+  const newRequest = request2.defaults(newDefaults);
+  const newApi = (query, options) => {
+    return graphql(newRequest, query, options);
+  };
+  return Object.assign(newApi, {
+    defaults: graphql_dist_bundle_withDefaults.bind(null, newRequest),
+    endpoint: newRequest.endpoint
+  });
+}
+
+// pkg/dist-src/index.js
+var graphql2 = graphql_dist_bundle_withDefaults(request, {
+  headers: {
+    "user-agent": `octokit-graphql.js/${graphql_dist_bundle_VERSION} ${getUserAgent()}`
+  },
+  method: "POST",
+  url: "/graphql"
+});
+function withCustomRequest(customRequest) {
+  return graphql_dist_bundle_withDefaults(customRequest, {
+    method: "POST",
+    url: "/graphql"
+  });
+}
+
+
+;// CONCATENATED MODULE: ./node_modules/@octokit/auth-token/dist-bundle/index.js
+// pkg/dist-src/auth.js
+var REGEX_IS_INSTALLATION_LEGACY = /^v1\./;
+var REGEX_IS_INSTALLATION = /^ghs_/;
+var REGEX_IS_USER_TO_SERVER = /^ghu_/;
+async function auth(token) {
+  const isApp = token.split(/\./).length === 3;
+  const isInstallation = REGEX_IS_INSTALLATION_LEGACY.test(token) || REGEX_IS_INSTALLATION.test(token);
+  const isUserToServer = REGEX_IS_USER_TO_SERVER.test(token);
+  const tokenType = isApp ? "app" : isInstallation ? "installation" : isUserToServer ? "user-to-server" : "oauth";
+  return {
+    type: "token",
+    token,
+    tokenType
+  };
+}
+
+// pkg/dist-src/with-authorization-prefix.js
+function withAuthorizationPrefix(token) {
+  if (token.split(/\./).length === 3) {
+    return `bearer ${token}`;
+  }
+  return `token ${token}`;
+}
+
+// pkg/dist-src/hook.js
+async function hook(token, request, route, parameters) {
+  const endpoint = request.endpoint.merge(
+    route,
+    parameters
+  );
+  endpoint.headers.authorization = withAuthorizationPrefix(token);
+  return request(endpoint);
+}
+
+// pkg/dist-src/index.js
+var createTokenAuth = function createTokenAuth2(token) {
+  if (!token) {
+    throw new Error("[@octokit/auth-token] No token passed to createTokenAuth");
+  }
+  if (typeof token !== "string") {
+    throw new Error(
+      "[@octokit/auth-token] Token passed to createTokenAuth is not a string"
+    );
+  }
+  token = token.replace(/^(token|bearer) +/i, "");
+  return Object.assign(auth.bind(null, token), {
+    hook: hook.bind(null, token)
+  });
+};
+
+
+;// CONCATENATED MODULE: ./node_modules/@octokit/core/dist-src/version.js
+const version_VERSION = "6.0.1";
+
+
+;// CONCATENATED MODULE: ./node_modules/@octokit/core/dist-src/index.js
+
+
+
+
+
+
+const dist_src_noop = () => {
+};
+const consoleWarn = console.warn.bind(console);
+const consoleError = console.error.bind(console);
+const userAgentTrail = `octokit-core.js/${version_VERSION} ${getUserAgent()}`;
+class Octokit {
+  static VERSION = version_VERSION;
+  static defaults(defaults) {
+    const OctokitWithDefaults = class extends this {
+      constructor(...args) {
+        const options = args[0] || {};
+        if (typeof defaults === "function") {
+          super(defaults(options));
+          return;
+        }
+        super(
+          Object.assign(
+            {},
+            defaults,
+            options,
+            options.userAgent && defaults.userAgent ? {
+              userAgent: `${options.userAgent} ${defaults.userAgent}`
+            } : null
+          )
+        );
+      }
+    };
+    return OctokitWithDefaults;
+  }
+  static plugins = [];
+  /**
+   * Attach a plugin (or many) to your Octokit instance.
+   *
+   * @example
+   * const API = Octokit.plugin(plugin1, plugin2, plugin3, ...)
+   */
+  static plugin(...newPlugins) {
+    const currentPlugins = this.plugins;
+    const NewOctokit = class extends this {
+      static plugins = currentPlugins.concat(
+        newPlugins.filter((plugin) => !currentPlugins.includes(plugin))
+      );
+    };
+    return NewOctokit;
+  }
+  constructor(options = {}) {
+    const hook = new before_after_hook.Collection();
+    const requestDefaults = {
+      baseUrl: request.endpoint.DEFAULTS.baseUrl,
+      headers: {},
+      request: Object.assign({}, options.request, {
+        // @ts-ignore internal usage only, no need to type
+        hook: hook.bind(null, "request")
+      }),
+      mediaType: {
+        previews: [],
+        format: ""
+      }
+    };
+    requestDefaults.headers["user-agent"] = options.userAgent ? `${options.userAgent} ${userAgentTrail}` : userAgentTrail;
+    if (options.baseUrl) {
+      requestDefaults.baseUrl = options.baseUrl;
+    }
+    if (options.previews) {
+      requestDefaults.mediaType.previews = options.previews;
+    }
+    if (options.timeZone) {
+      requestDefaults.headers["time-zone"] = options.timeZone;
+    }
+    this.request = request.defaults(requestDefaults);
+    this.graphql = withCustomRequest(this.request).defaults(requestDefaults);
+    this.log = Object.assign(
+      {
+        debug: dist_src_noop,
+        info: dist_src_noop,
+        warn: consoleWarn,
+        error: consoleError
+      },
+      options.log
+    );
+    this.hook = hook;
+    if (!options.authStrategy) {
+      if (!options.auth) {
+        this.auth = async () => ({
+          type: "unauthenticated"
+        });
+      } else {
+        const auth = createTokenAuth(options.auth);
+        hook.wrap("request", auth.hook);
+        this.auth = auth;
+      }
+    } else {
+      const { authStrategy, ...otherOptions } = options;
+      const auth = authStrategy(
+        Object.assign(
+          {
+            request: this.request,
+            log: this.log,
+            // we pass the current octokit instance as well as its constructor options
+            // to allow for authentication strategies that return a new octokit instance
+            // that shares the same internal state as the current one. The original
+            // requirement for this was the "event-octokit" authentication strategy
+            // of https://github.com/probot/octokit-auth-probot.
+            octokit: this,
+            octokitOptions: otherOptions
+          },
+          options.auth
+        )
+      );
+      hook.wrap("request", auth.hook);
+      this.auth = auth;
+    }
+    const classConstructor = this.constructor;
+    for (let i = 0; i < classConstructor.plugins.length; ++i) {
+      Object.assign(this, classConstructor.plugins[i](this, options));
+    }
+  }
+  // assigned during constructor
+  request;
+  graphql;
+  log;
+  hook;
+  // TODO: type `octokit.auth` based on passed options.authStrategy
+  auth;
+}
+
+
+// EXTERNAL MODULE: ./node_modules/shelljs/shell.js
+var shell = __nccwpck_require__(3516);
+// EXTERNAL MODULE: external "assert"
+var external_assert_ = __nccwpck_require__(9491);
+;// CONCATENATED MODULE: ./node_modules/cliui/build/lib/index.js
 
 const align = {
     right: alignRight,
     center: alignCenter
 };
-const top = 0;
+const lib_top = 0;
 const right = 1;
 const bottom = 2;
 const left = 3;
@@ -15577,7 +10781,7 @@ class UI {
             }
             // add top and bottom padding.
             if (col.padding) {
-                wrapped.unshift(...new Array(col.padding[top] || 0).fill(''));
+                wrapped.unshift(...new Array(col.padding[lib_top] || 0).fill(''));
                 wrapped.push(...new Array(col.padding[bottom] || 0).fill(''));
             }
             wrapped.forEach((str, r) => {
@@ -15687,33 +10891,1364 @@ function cliui(opts, _mixin) {
     });
 }
 
-// Bootstrap cliui with CommonJS dependencies:
-const stringWidth = __nccwpck_require__(2577);
-const stripAnsi = __nccwpck_require__(5591);
-const wrap = __nccwpck_require__(9824);
-function ui(opts) {
-    return cliui(opts, {
-        stringWidth,
-        stripAnsi,
-        wrap
-    });
+;// CONCATENATED MODULE: ./node_modules/cliui/build/lib/string-utils.js
+// Minimal replacement for ansi string helpers "wrap-ansi" and "strip-ansi".
+// to facilitate ESM and Deno modules.
+// TODO: look at porting https://www.npmjs.com/package/wrap-ansi to ESM.
+// The npm application
+// Copyright (c) npm, Inc. and Contributors
+// Licensed on the terms of The Artistic License 2.0
+// See: https://github.com/npm/cli/blob/4c65cd952bc8627811735bea76b9b110cc4fc80e/lib/utils/ansi-trim.js
+const ansi = new RegExp('\x1b(?:\\[(?:\\d+[ABCDEFGJKSTm]|\\d+;\\d+[Hfm]|' +
+    '\\d+;\\d+;\\d+m|6n|s|u|\\?25[lh])|\\w)', 'g');
+function stripAnsi(str) {
+    return str.replace(ansi, '');
+}
+function wrap(str, width) {
+    const [start, end] = str.match(ansi) || ['', ''];
+    str = stripAnsi(str);
+    let wrapped = '';
+    for (let i = 0; i < str.length; i++) {
+        if (i !== 0 && (i % width) === 0) {
+            wrapped += '\n';
+        }
+        wrapped += str.charAt(i);
+    }
+    if (start && end) {
+        wrapped = `${start}${wrapped}${end}`;
+    }
+    return wrapped;
 }
 
-module.exports = ui;
+;// CONCATENATED MODULE: ./node_modules/cliui/index.mjs
+// Bootstrap cliui with CommonJS dependencies:
 
 
-/***/ }),
 
-/***/ 452:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+function ui (opts) {
+  return cliui(opts, {
+    stringWidth: (str) => {
+      return [...str].length
+    },
+    stripAnsi: stripAnsi,
+    wrap: wrap
+  })
+}
 
-"use strict";
+// EXTERNAL MODULE: external "path"
+var external_path_ = __nccwpck_require__(1017);
+// EXTERNAL MODULE: external "fs"
+var external_fs_ = __nccwpck_require__(7147);
+;// CONCATENATED MODULE: ./node_modules/escalade/sync/index.mjs
 
 
-var fs = __nccwpck_require__(7147);
-var util = __nccwpck_require__(3837);
-var path = __nccwpck_require__(1017);
 
+/* harmony default export */ function sync(start, callback) {
+	let dir = (0,external_path_.resolve)('.', start);
+	let tmp, stats = (0,external_fs_.statSync)(dir);
+
+	if (!stats.isDirectory()) {
+		dir = (0,external_path_.dirname)(dir);
+	}
+
+	while (true) {
+		tmp = callback(dir, (0,external_fs_.readdirSync)(dir));
+		if (tmp) return (0,external_path_.resolve)(dir, tmp);
+		dir = (0,external_path_.dirname)(tmp = dir);
+		if (tmp === dir) break;
+	}
+}
+
+// EXTERNAL MODULE: external "util"
+var external_util_ = __nccwpck_require__(3837);
+;// CONCATENATED MODULE: external "url"
+const external_url_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("url");
+;// CONCATENATED MODULE: ./node_modules/yargs-parser/build/lib/string-utils.js
+/**
+ * @license
+ * Copyright (c) 2016, Contributors
+ * SPDX-License-Identifier: ISC
+ */
+function camelCase(str) {
+    // Handle the case where an argument is provided as camel case, e.g., fooBar.
+    // by ensuring that the string isn't already mixed case:
+    const isCamelCase = str !== str.toLowerCase() && str !== str.toUpperCase();
+    if (!isCamelCase) {
+        str = str.toLowerCase();
+    }
+    if (str.indexOf('-') === -1 && str.indexOf('_') === -1) {
+        return str;
+    }
+    else {
+        let camelcase = '';
+        let nextChrUpper = false;
+        const leadingHyphens = str.match(/^-+/);
+        for (let i = leadingHyphens ? leadingHyphens[0].length : 0; i < str.length; i++) {
+            let chr = str.charAt(i);
+            if (nextChrUpper) {
+                nextChrUpper = false;
+                chr = chr.toUpperCase();
+            }
+            if (i !== 0 && (chr === '-' || chr === '_')) {
+                nextChrUpper = true;
+            }
+            else if (chr !== '-' && chr !== '_') {
+                camelcase += chr;
+            }
+        }
+        return camelcase;
+    }
+}
+function decamelize(str, joinString) {
+    const lowercase = str.toLowerCase();
+    joinString = joinString || '-';
+    let notCamelcase = '';
+    for (let i = 0; i < str.length; i++) {
+        const chrLower = lowercase.charAt(i);
+        const chrString = str.charAt(i);
+        if (chrLower !== chrString && i > 0) {
+            notCamelcase += `${joinString}${lowercase.charAt(i)}`;
+        }
+        else {
+            notCamelcase += chrString;
+        }
+    }
+    return notCamelcase;
+}
+function looksLikeNumber(x) {
+    if (x === null || x === undefined)
+        return false;
+    // if loaded from config, may already be a number.
+    if (typeof x === 'number')
+        return true;
+    // hexadecimal.
+    if (/^0x[0-9a-f]+$/i.test(x))
+        return true;
+    // don't treat 0123 as a number; as it drops the leading '0'.
+    if (/^0[^.]/.test(x))
+        return false;
+    return /^[-]?(?:\d+(?:\.\d*)?|\.\d+)(e[-+]?\d+)?$/.test(x);
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs-parser/build/lib/tokenize-arg-string.js
+/**
+ * @license
+ * Copyright (c) 2016, Contributors
+ * SPDX-License-Identifier: ISC
+ */
+// take an un-split argv string and tokenize it.
+function tokenizeArgString(argString) {
+    if (Array.isArray(argString)) {
+        return argString.map(e => typeof e !== 'string' ? e + '' : e);
+    }
+    argString = argString.trim();
+    let i = 0;
+    let prevC = null;
+    let c = null;
+    let opening = null;
+    const args = [];
+    for (let ii = 0; ii < argString.length; ii++) {
+        prevC = c;
+        c = argString.charAt(ii);
+        // split on spaces unless we're in quotes.
+        if (c === ' ' && !opening) {
+            if (!(prevC === ' ')) {
+                i++;
+            }
+            continue;
+        }
+        // don't split the string if we're in matching
+        // opening or closing single and double quotes.
+        if (c === opening) {
+            opening = null;
+        }
+        else if ((c === "'" || c === '"') && !opening) {
+            opening = c;
+        }
+        if (!args[i])
+            args[i] = '';
+        args[i] += c;
+    }
+    return args;
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs-parser/build/lib/yargs-parser-types.js
+/**
+ * @license
+ * Copyright (c) 2016, Contributors
+ * SPDX-License-Identifier: ISC
+ */
+var DefaultValuesForTypeKey;
+(function (DefaultValuesForTypeKey) {
+    DefaultValuesForTypeKey["BOOLEAN"] = "boolean";
+    DefaultValuesForTypeKey["STRING"] = "string";
+    DefaultValuesForTypeKey["NUMBER"] = "number";
+    DefaultValuesForTypeKey["ARRAY"] = "array";
+})(DefaultValuesForTypeKey || (DefaultValuesForTypeKey = {}));
+
+;// CONCATENATED MODULE: ./node_modules/yargs-parser/build/lib/yargs-parser.js
+/**
+ * @license
+ * Copyright (c) 2016, Contributors
+ * SPDX-License-Identifier: ISC
+ */
+
+
+
+let yargs_parser_mixin;
+class YargsParser {
+    constructor(_mixin) {
+        yargs_parser_mixin = _mixin;
+    }
+    parse(argsInput, options) {
+        const opts = Object.assign({
+            alias: undefined,
+            array: undefined,
+            boolean: undefined,
+            config: undefined,
+            configObjects: undefined,
+            configuration: undefined,
+            coerce: undefined,
+            count: undefined,
+            default: undefined,
+            envPrefix: undefined,
+            narg: undefined,
+            normalize: undefined,
+            string: undefined,
+            number: undefined,
+            __: undefined,
+            key: undefined
+        }, options);
+        // allow a string argument to be passed in rather
+        // than an argv array.
+        const args = tokenizeArgString(argsInput);
+        // tokenizeArgString adds extra quotes to args if argsInput is a string
+        // only strip those extra quotes in processValue if argsInput is a string
+        const inputIsString = typeof argsInput === 'string';
+        // aliases might have transitive relationships, normalize this.
+        const aliases = combineAliases(Object.assign(Object.create(null), opts.alias));
+        const configuration = Object.assign({
+            'boolean-negation': true,
+            'camel-case-expansion': true,
+            'combine-arrays': false,
+            'dot-notation': true,
+            'duplicate-arguments-array': true,
+            'flatten-duplicate-arrays': true,
+            'greedy-arrays': true,
+            'halt-at-non-option': false,
+            'nargs-eats-options': false,
+            'negation-prefix': 'no-',
+            'parse-numbers': true,
+            'parse-positional-numbers': true,
+            'populate--': false,
+            'set-placeholder-key': false,
+            'short-option-groups': true,
+            'strip-aliased': false,
+            'strip-dashed': false,
+            'unknown-options-as-args': false
+        }, opts.configuration);
+        const defaults = Object.assign(Object.create(null), opts.default);
+        const configObjects = opts.configObjects || [];
+        const envPrefix = opts.envPrefix;
+        const notFlagsOption = configuration['populate--'];
+        const notFlagsArgv = notFlagsOption ? '--' : '_';
+        const newAliases = Object.create(null);
+        const defaulted = Object.create(null);
+        // allow a i18n handler to be passed in, default to a fake one (util.format).
+        const __ = opts.__ || yargs_parser_mixin.format;
+        const flags = {
+            aliases: Object.create(null),
+            arrays: Object.create(null),
+            bools: Object.create(null),
+            strings: Object.create(null),
+            numbers: Object.create(null),
+            counts: Object.create(null),
+            normalize: Object.create(null),
+            configs: Object.create(null),
+            nargs: Object.create(null),
+            coercions: Object.create(null),
+            keys: []
+        };
+        const negative = /^-([0-9]+(\.[0-9]+)?|\.[0-9]+)$/;
+        const negatedBoolean = new RegExp('^--' + configuration['negation-prefix'] + '(.+)');
+        [].concat(opts.array || []).filter(Boolean).forEach(function (opt) {
+            const key = typeof opt === 'object' ? opt.key : opt;
+            // assign to flags[bools|strings|numbers]
+            const assignment = Object.keys(opt).map(function (key) {
+                const arrayFlagKeys = {
+                    boolean: 'bools',
+                    string: 'strings',
+                    number: 'numbers'
+                };
+                return arrayFlagKeys[key];
+            }).filter(Boolean).pop();
+            // assign key to be coerced
+            if (assignment) {
+                flags[assignment][key] = true;
+            }
+            flags.arrays[key] = true;
+            flags.keys.push(key);
+        });
+        [].concat(opts.boolean || []).filter(Boolean).forEach(function (key) {
+            flags.bools[key] = true;
+            flags.keys.push(key);
+        });
+        [].concat(opts.string || []).filter(Boolean).forEach(function (key) {
+            flags.strings[key] = true;
+            flags.keys.push(key);
+        });
+        [].concat(opts.number || []).filter(Boolean).forEach(function (key) {
+            flags.numbers[key] = true;
+            flags.keys.push(key);
+        });
+        [].concat(opts.count || []).filter(Boolean).forEach(function (key) {
+            flags.counts[key] = true;
+            flags.keys.push(key);
+        });
+        [].concat(opts.normalize || []).filter(Boolean).forEach(function (key) {
+            flags.normalize[key] = true;
+            flags.keys.push(key);
+        });
+        if (typeof opts.narg === 'object') {
+            Object.entries(opts.narg).forEach(([key, value]) => {
+                if (typeof value === 'number') {
+                    flags.nargs[key] = value;
+                    flags.keys.push(key);
+                }
+            });
+        }
+        if (typeof opts.coerce === 'object') {
+            Object.entries(opts.coerce).forEach(([key, value]) => {
+                if (typeof value === 'function') {
+                    flags.coercions[key] = value;
+                    flags.keys.push(key);
+                }
+            });
+        }
+        if (typeof opts.config !== 'undefined') {
+            if (Array.isArray(opts.config) || typeof opts.config === 'string') {
+                ;
+                [].concat(opts.config).filter(Boolean).forEach(function (key) {
+                    flags.configs[key] = true;
+                });
+            }
+            else if (typeof opts.config === 'object') {
+                Object.entries(opts.config).forEach(([key, value]) => {
+                    if (typeof value === 'boolean' || typeof value === 'function') {
+                        flags.configs[key] = value;
+                    }
+                });
+            }
+        }
+        // create a lookup table that takes into account all
+        // combinations of aliases: {f: ['foo'], foo: ['f']}
+        extendAliases(opts.key, aliases, opts.default, flags.arrays);
+        // apply default values to all aliases.
+        Object.keys(defaults).forEach(function (key) {
+            (flags.aliases[key] || []).forEach(function (alias) {
+                defaults[alias] = defaults[key];
+            });
+        });
+        let error = null;
+        checkConfiguration();
+        let notFlags = [];
+        const argv = Object.assign(Object.create(null), { _: [] });
+        // TODO(bcoe): for the first pass at removing object prototype  we didn't
+        // remove all prototypes from objects returned by this API, we might want
+        // to gradually move towards doing so.
+        const argvReturn = {};
+        for (let i = 0; i < args.length; i++) {
+            const arg = args[i];
+            const truncatedArg = arg.replace(/^-{3,}/, '---');
+            let broken;
+            let key;
+            let letters;
+            let m;
+            let next;
+            let value;
+            // any unknown option (except for end-of-options, "--")
+            if (arg !== '--' && /^-/.test(arg) && isUnknownOptionAsArg(arg)) {
+                pushPositional(arg);
+                // ---, ---=, ----, etc,
+            }
+            else if (truncatedArg.match(/^---+(=|$)/)) {
+                // options without key name are invalid.
+                pushPositional(arg);
+                continue;
+                // -- separated by =
+            }
+            else if (arg.match(/^--.+=/) || (!configuration['short-option-groups'] && arg.match(/^-.+=/))) {
+                // Using [\s\S] instead of . because js doesn't support the
+                // 'dotall' regex modifier. See:
+                // http://stackoverflow.com/a/1068308/13216
+                m = arg.match(/^--?([^=]+)=([\s\S]*)$/);
+                // arrays format = '--f=a b c'
+                if (m !== null && Array.isArray(m) && m.length >= 3) {
+                    if (checkAllAliases(m[1], flags.arrays)) {
+                        i = eatArray(i, m[1], args, m[2]);
+                    }
+                    else if (checkAllAliases(m[1], flags.nargs) !== false) {
+                        // nargs format = '--f=monkey washing cat'
+                        i = eatNargs(i, m[1], args, m[2]);
+                    }
+                    else {
+                        setArg(m[1], m[2], true);
+                    }
+                }
+            }
+            else if (arg.match(negatedBoolean) && configuration['boolean-negation']) {
+                m = arg.match(negatedBoolean);
+                if (m !== null && Array.isArray(m) && m.length >= 2) {
+                    key = m[1];
+                    setArg(key, checkAllAliases(key, flags.arrays) ? [false] : false);
+                }
+                // -- separated by space.
+            }
+            else if (arg.match(/^--.+/) || (!configuration['short-option-groups'] && arg.match(/^-[^-]+/))) {
+                m = arg.match(/^--?(.+)/);
+                if (m !== null && Array.isArray(m) && m.length >= 2) {
+                    key = m[1];
+                    if (checkAllAliases(key, flags.arrays)) {
+                        // array format = '--foo a b c'
+                        i = eatArray(i, key, args);
+                    }
+                    else if (checkAllAliases(key, flags.nargs) !== false) {
+                        // nargs format = '--foo a b c'
+                        // should be truthy even if: flags.nargs[key] === 0
+                        i = eatNargs(i, key, args);
+                    }
+                    else {
+                        next = args[i + 1];
+                        if (next !== undefined && (!next.match(/^-/) ||
+                            next.match(negative)) &&
+                            !checkAllAliases(key, flags.bools) &&
+                            !checkAllAliases(key, flags.counts)) {
+                            setArg(key, next);
+                            i++;
+                        }
+                        else if (/^(true|false)$/.test(next)) {
+                            setArg(key, next);
+                            i++;
+                        }
+                        else {
+                            setArg(key, defaultValue(key));
+                        }
+                    }
+                }
+                // dot-notation flag separated by '='.
+            }
+            else if (arg.match(/^-.\..+=/)) {
+                m = arg.match(/^-([^=]+)=([\s\S]*)$/);
+                if (m !== null && Array.isArray(m) && m.length >= 3) {
+                    setArg(m[1], m[2]);
+                }
+                // dot-notation flag separated by space.
+            }
+            else if (arg.match(/^-.\..+/) && !arg.match(negative)) {
+                next = args[i + 1];
+                m = arg.match(/^-(.\..+)/);
+                if (m !== null && Array.isArray(m) && m.length >= 2) {
+                    key = m[1];
+                    if (next !== undefined && !next.match(/^-/) &&
+                        !checkAllAliases(key, flags.bools) &&
+                        !checkAllAliases(key, flags.counts)) {
+                        setArg(key, next);
+                        i++;
+                    }
+                    else {
+                        setArg(key, defaultValue(key));
+                    }
+                }
+            }
+            else if (arg.match(/^-[^-]+/) && !arg.match(negative)) {
+                letters = arg.slice(1, -1).split('');
+                broken = false;
+                for (let j = 0; j < letters.length; j++) {
+                    next = arg.slice(j + 2);
+                    if (letters[j + 1] && letters[j + 1] === '=') {
+                        value = arg.slice(j + 3);
+                        key = letters[j];
+                        if (checkAllAliases(key, flags.arrays)) {
+                            // array format = '-f=a b c'
+                            i = eatArray(i, key, args, value);
+                        }
+                        else if (checkAllAliases(key, flags.nargs) !== false) {
+                            // nargs format = '-f=monkey washing cat'
+                            i = eatNargs(i, key, args, value);
+                        }
+                        else {
+                            setArg(key, value);
+                        }
+                        broken = true;
+                        break;
+                    }
+                    if (next === '-') {
+                        setArg(letters[j], next);
+                        continue;
+                    }
+                    // current letter is an alphabetic character and next value is a number
+                    if (/[A-Za-z]/.test(letters[j]) &&
+                        /^-?\d+(\.\d*)?(e-?\d+)?$/.test(next) &&
+                        checkAllAliases(next, flags.bools) === false) {
+                        setArg(letters[j], next);
+                        broken = true;
+                        break;
+                    }
+                    if (letters[j + 1] && letters[j + 1].match(/\W/)) {
+                        setArg(letters[j], next);
+                        broken = true;
+                        break;
+                    }
+                    else {
+                        setArg(letters[j], defaultValue(letters[j]));
+                    }
+                }
+                key = arg.slice(-1)[0];
+                if (!broken && key !== '-') {
+                    if (checkAllAliases(key, flags.arrays)) {
+                        // array format = '-f a b c'
+                        i = eatArray(i, key, args);
+                    }
+                    else if (checkAllAliases(key, flags.nargs) !== false) {
+                        // nargs format = '-f a b c'
+                        // should be truthy even if: flags.nargs[key] === 0
+                        i = eatNargs(i, key, args);
+                    }
+                    else {
+                        next = args[i + 1];
+                        if (next !== undefined && (!/^(-|--)[^-]/.test(next) ||
+                            next.match(negative)) &&
+                            !checkAllAliases(key, flags.bools) &&
+                            !checkAllAliases(key, flags.counts)) {
+                            setArg(key, next);
+                            i++;
+                        }
+                        else if (/^(true|false)$/.test(next)) {
+                            setArg(key, next);
+                            i++;
+                        }
+                        else {
+                            setArg(key, defaultValue(key));
+                        }
+                    }
+                }
+            }
+            else if (arg.match(/^-[0-9]$/) &&
+                arg.match(negative) &&
+                checkAllAliases(arg.slice(1), flags.bools)) {
+                // single-digit boolean alias, e.g: xargs -0
+                key = arg.slice(1);
+                setArg(key, defaultValue(key));
+            }
+            else if (arg === '--') {
+                notFlags = args.slice(i + 1);
+                break;
+            }
+            else if (configuration['halt-at-non-option']) {
+                notFlags = args.slice(i);
+                break;
+            }
+            else {
+                pushPositional(arg);
+            }
+        }
+        // order of precedence:
+        // 1. command line arg
+        // 2. value from env var
+        // 3. value from config file
+        // 4. value from config objects
+        // 5. configured default value
+        applyEnvVars(argv, true); // special case: check env vars that point to config file
+        applyEnvVars(argv, false);
+        setConfig(argv);
+        setConfigObjects();
+        applyDefaultsAndAliases(argv, flags.aliases, defaults, true);
+        applyCoercions(argv);
+        if (configuration['set-placeholder-key'])
+            setPlaceholderKeys(argv);
+        // for any counts either not in args or without an explicit default, set to 0
+        Object.keys(flags.counts).forEach(function (key) {
+            if (!hasKey(argv, key.split('.')))
+                setArg(key, 0);
+        });
+        // '--' defaults to undefined.
+        if (notFlagsOption && notFlags.length)
+            argv[notFlagsArgv] = [];
+        notFlags.forEach(function (key) {
+            argv[notFlagsArgv].push(key);
+        });
+        if (configuration['camel-case-expansion'] && configuration['strip-dashed']) {
+            Object.keys(argv).filter(key => key !== '--' && key.includes('-')).forEach(key => {
+                delete argv[key];
+            });
+        }
+        if (configuration['strip-aliased']) {
+            ;
+            [].concat(...Object.keys(aliases).map(k => aliases[k])).forEach(alias => {
+                if (configuration['camel-case-expansion'] && alias.includes('-')) {
+                    delete argv[alias.split('.').map(prop => camelCase(prop)).join('.')];
+                }
+                delete argv[alias];
+            });
+        }
+        // Push argument into positional array, applying numeric coercion:
+        function pushPositional(arg) {
+            const maybeCoercedNumber = maybeCoerceNumber('_', arg);
+            if (typeof maybeCoercedNumber === 'string' || typeof maybeCoercedNumber === 'number') {
+                argv._.push(maybeCoercedNumber);
+            }
+        }
+        // how many arguments should we consume, based
+        // on the nargs option?
+        function eatNargs(i, key, args, argAfterEqualSign) {
+            let ii;
+            let toEat = checkAllAliases(key, flags.nargs);
+            // NaN has a special meaning for the array type, indicating that one or
+            // more values are expected.
+            toEat = typeof toEat !== 'number' || isNaN(toEat) ? 1 : toEat;
+            if (toEat === 0) {
+                if (!isUndefined(argAfterEqualSign)) {
+                    error = Error(__('Argument unexpected for: %s', key));
+                }
+                setArg(key, defaultValue(key));
+                return i;
+            }
+            let available = isUndefined(argAfterEqualSign) ? 0 : 1;
+            if (configuration['nargs-eats-options']) {
+                // classic behavior, yargs eats positional and dash arguments.
+                if (args.length - (i + 1) + available < toEat) {
+                    error = Error(__('Not enough arguments following: %s', key));
+                }
+                available = toEat;
+            }
+            else {
+                // nargs will not consume flag arguments, e.g., -abc, --foo,
+                // and terminates when one is observed.
+                for (ii = i + 1; ii < args.length; ii++) {
+                    if (!args[ii].match(/^-[^0-9]/) || args[ii].match(negative) || isUnknownOptionAsArg(args[ii]))
+                        available++;
+                    else
+                        break;
+                }
+                if (available < toEat)
+                    error = Error(__('Not enough arguments following: %s', key));
+            }
+            let consumed = Math.min(available, toEat);
+            if (!isUndefined(argAfterEqualSign) && consumed > 0) {
+                setArg(key, argAfterEqualSign);
+                consumed--;
+            }
+            for (ii = i + 1; ii < (consumed + i + 1); ii++) {
+                setArg(key, args[ii]);
+            }
+            return (i + consumed);
+        }
+        // if an option is an array, eat all non-hyphenated arguments
+        // following it... YUM!
+        // e.g., --foo apple banana cat becomes ["apple", "banana", "cat"]
+        function eatArray(i, key, args, argAfterEqualSign) {
+            let argsToSet = [];
+            let next = argAfterEqualSign || args[i + 1];
+            // If both array and nargs are configured, enforce the nargs count:
+            const nargsCount = checkAllAliases(key, flags.nargs);
+            if (checkAllAliases(key, flags.bools) && !(/^(true|false)$/.test(next))) {
+                argsToSet.push(true);
+            }
+            else if (isUndefined(next) ||
+                (isUndefined(argAfterEqualSign) && /^-/.test(next) && !negative.test(next) && !isUnknownOptionAsArg(next))) {
+                // for keys without value ==> argsToSet remains an empty []
+                // set user default value, if available
+                if (defaults[key] !== undefined) {
+                    const defVal = defaults[key];
+                    argsToSet = Array.isArray(defVal) ? defVal : [defVal];
+                }
+            }
+            else {
+                // value in --option=value is eaten as is
+                if (!isUndefined(argAfterEqualSign)) {
+                    argsToSet.push(processValue(key, argAfterEqualSign, true));
+                }
+                for (let ii = i + 1; ii < args.length; ii++) {
+                    if ((!configuration['greedy-arrays'] && argsToSet.length > 0) ||
+                        (nargsCount && typeof nargsCount === 'number' && argsToSet.length >= nargsCount))
+                        break;
+                    next = args[ii];
+                    if (/^-/.test(next) && !negative.test(next) && !isUnknownOptionAsArg(next))
+                        break;
+                    i = ii;
+                    argsToSet.push(processValue(key, next, inputIsString));
+                }
+            }
+            // If both array and nargs are configured, create an error if less than
+            // nargs positionals were found. NaN has special meaning, indicating
+            // that at least one value is required (more are okay).
+            if (typeof nargsCount === 'number' && ((nargsCount && argsToSet.length < nargsCount) ||
+                (isNaN(nargsCount) && argsToSet.length === 0))) {
+                error = Error(__('Not enough arguments following: %s', key));
+            }
+            setArg(key, argsToSet);
+            return i;
+        }
+        function setArg(key, val, shouldStripQuotes = inputIsString) {
+            if (/-/.test(key) && configuration['camel-case-expansion']) {
+                const alias = key.split('.').map(function (prop) {
+                    return camelCase(prop);
+                }).join('.');
+                addNewAlias(key, alias);
+            }
+            const value = processValue(key, val, shouldStripQuotes);
+            const splitKey = key.split('.');
+            setKey(argv, splitKey, value);
+            // handle populating aliases of the full key
+            if (flags.aliases[key]) {
+                flags.aliases[key].forEach(function (x) {
+                    const keyProperties = x.split('.');
+                    setKey(argv, keyProperties, value);
+                });
+            }
+            // handle populating aliases of the first element of the dot-notation key
+            if (splitKey.length > 1 && configuration['dot-notation']) {
+                ;
+                (flags.aliases[splitKey[0]] || []).forEach(function (x) {
+                    let keyProperties = x.split('.');
+                    // expand alias with nested objects in key
+                    const a = [].concat(splitKey);
+                    a.shift(); // nuke the old key.
+                    keyProperties = keyProperties.concat(a);
+                    // populate alias only if is not already an alias of the full key
+                    // (already populated above)
+                    if (!(flags.aliases[key] || []).includes(keyProperties.join('.'))) {
+                        setKey(argv, keyProperties, value);
+                    }
+                });
+            }
+            // Set normalize getter and setter when key is in 'normalize' but isn't an array
+            if (checkAllAliases(key, flags.normalize) && !checkAllAliases(key, flags.arrays)) {
+                const keys = [key].concat(flags.aliases[key] || []);
+                keys.forEach(function (key) {
+                    Object.defineProperty(argvReturn, key, {
+                        enumerable: true,
+                        get() {
+                            return val;
+                        },
+                        set(value) {
+                            val = typeof value === 'string' ? yargs_parser_mixin.normalize(value) : value;
+                        }
+                    });
+                });
+            }
+        }
+        function addNewAlias(key, alias) {
+            if (!(flags.aliases[key] && flags.aliases[key].length)) {
+                flags.aliases[key] = [alias];
+                newAliases[alias] = true;
+            }
+            if (!(flags.aliases[alias] && flags.aliases[alias].length)) {
+                addNewAlias(alias, key);
+            }
+        }
+        function processValue(key, val, shouldStripQuotes) {
+            // strings may be quoted, clean this up as we assign values.
+            if (shouldStripQuotes) {
+                val = stripQuotes(val);
+            }
+            // handle parsing boolean arguments --foo=true --bar false.
+            if (checkAllAliases(key, flags.bools) || checkAllAliases(key, flags.counts)) {
+                if (typeof val === 'string')
+                    val = val === 'true';
+            }
+            let value = Array.isArray(val)
+                ? val.map(function (v) { return maybeCoerceNumber(key, v); })
+                : maybeCoerceNumber(key, val);
+            // increment a count given as arg (either no value or value parsed as boolean)
+            if (checkAllAliases(key, flags.counts) && (isUndefined(value) || typeof value === 'boolean')) {
+                value = increment();
+            }
+            // Set normalized value when key is in 'normalize' and in 'arrays'
+            if (checkAllAliases(key, flags.normalize) && checkAllAliases(key, flags.arrays)) {
+                if (Array.isArray(val))
+                    value = val.map((val) => { return yargs_parser_mixin.normalize(val); });
+                else
+                    value = yargs_parser_mixin.normalize(val);
+            }
+            return value;
+        }
+        function maybeCoerceNumber(key, value) {
+            if (!configuration['parse-positional-numbers'] && key === '_')
+                return value;
+            if (!checkAllAliases(key, flags.strings) && !checkAllAliases(key, flags.bools) && !Array.isArray(value)) {
+                const shouldCoerceNumber = looksLikeNumber(value) && configuration['parse-numbers'] && (Number.isSafeInteger(Math.floor(parseFloat(`${value}`))));
+                if (shouldCoerceNumber || (!isUndefined(value) && checkAllAliases(key, flags.numbers))) {
+                    value = Number(value);
+                }
+            }
+            return value;
+        }
+        // set args from config.json file, this should be
+        // applied last so that defaults can be applied.
+        function setConfig(argv) {
+            const configLookup = Object.create(null);
+            // expand defaults/aliases, in-case any happen to reference
+            // the config.json file.
+            applyDefaultsAndAliases(configLookup, flags.aliases, defaults);
+            Object.keys(flags.configs).forEach(function (configKey) {
+                const configPath = argv[configKey] || configLookup[configKey];
+                if (configPath) {
+                    try {
+                        let config = null;
+                        const resolvedConfigPath = yargs_parser_mixin.resolve(yargs_parser_mixin.cwd(), configPath);
+                        const resolveConfig = flags.configs[configKey];
+                        if (typeof resolveConfig === 'function') {
+                            try {
+                                config = resolveConfig(resolvedConfigPath);
+                            }
+                            catch (e) {
+                                config = e;
+                            }
+                            if (config instanceof Error) {
+                                error = config;
+                                return;
+                            }
+                        }
+                        else {
+                            config = yargs_parser_mixin.require(resolvedConfigPath);
+                        }
+                        setConfigObject(config);
+                    }
+                    catch (ex) {
+                        // Deno will receive a PermissionDenied error if an attempt is
+                        // made to load config without the --allow-read flag:
+                        if (ex.name === 'PermissionDenied')
+                            error = ex;
+                        else if (argv[configKey])
+                            error = Error(__('Invalid JSON config file: %s', configPath));
+                    }
+                }
+            });
+        }
+        // set args from config object.
+        // it recursively checks nested objects.
+        function setConfigObject(config, prev) {
+            Object.keys(config).forEach(function (key) {
+                const value = config[key];
+                const fullKey = prev ? prev + '.' + key : key;
+                // if the value is an inner object and we have dot-notation
+                // enabled, treat inner objects in config the same as
+                // heavily nested dot notations (foo.bar.apple).
+                if (typeof value === 'object' && value !== null && !Array.isArray(value) && configuration['dot-notation']) {
+                    // if the value is an object but not an array, check nested object
+                    setConfigObject(value, fullKey);
+                }
+                else {
+                    // setting arguments via CLI takes precedence over
+                    // values within the config file.
+                    if (!hasKey(argv, fullKey.split('.')) || (checkAllAliases(fullKey, flags.arrays) && configuration['combine-arrays'])) {
+                        setArg(fullKey, value);
+                    }
+                }
+            });
+        }
+        // set all config objects passed in opts
+        function setConfigObjects() {
+            if (typeof configObjects !== 'undefined') {
+                configObjects.forEach(function (configObject) {
+                    setConfigObject(configObject);
+                });
+            }
+        }
+        function applyEnvVars(argv, configOnly) {
+            if (typeof envPrefix === 'undefined')
+                return;
+            const prefix = typeof envPrefix === 'string' ? envPrefix : '';
+            const env = yargs_parser_mixin.env();
+            Object.keys(env).forEach(function (envVar) {
+                if (prefix === '' || envVar.lastIndexOf(prefix, 0) === 0) {
+                    // get array of nested keys and convert them to camel case
+                    const keys = envVar.split('__').map(function (key, i) {
+                        if (i === 0) {
+                            key = key.substring(prefix.length);
+                        }
+                        return camelCase(key);
+                    });
+                    if (((configOnly && flags.configs[keys.join('.')]) || !configOnly) && !hasKey(argv, keys)) {
+                        setArg(keys.join('.'), env[envVar]);
+                    }
+                }
+            });
+        }
+        function applyCoercions(argv) {
+            let coerce;
+            const applied = new Set();
+            Object.keys(argv).forEach(function (key) {
+                if (!applied.has(key)) { // If we haven't already coerced this option via one of its aliases
+                    coerce = checkAllAliases(key, flags.coercions);
+                    if (typeof coerce === 'function') {
+                        try {
+                            const value = maybeCoerceNumber(key, coerce(argv[key]));
+                            ([].concat(flags.aliases[key] || [], key)).forEach(ali => {
+                                applied.add(ali);
+                                argv[ali] = value;
+                            });
+                        }
+                        catch (err) {
+                            error = err;
+                        }
+                    }
+                }
+            });
+        }
+        function setPlaceholderKeys(argv) {
+            flags.keys.forEach((key) => {
+                // don't set placeholder keys for dot notation options 'foo.bar'.
+                if (~key.indexOf('.'))
+                    return;
+                if (typeof argv[key] === 'undefined')
+                    argv[key] = undefined;
+            });
+            return argv;
+        }
+        function applyDefaultsAndAliases(obj, aliases, defaults, canLog = false) {
+            Object.keys(defaults).forEach(function (key) {
+                if (!hasKey(obj, key.split('.'))) {
+                    setKey(obj, key.split('.'), defaults[key]);
+                    if (canLog)
+                        defaulted[key] = true;
+                    (aliases[key] || []).forEach(function (x) {
+                        if (hasKey(obj, x.split('.')))
+                            return;
+                        setKey(obj, x.split('.'), defaults[key]);
+                    });
+                }
+            });
+        }
+        function hasKey(obj, keys) {
+            let o = obj;
+            if (!configuration['dot-notation'])
+                keys = [keys.join('.')];
+            keys.slice(0, -1).forEach(function (key) {
+                o = (o[key] || {});
+            });
+            const key = keys[keys.length - 1];
+            if (typeof o !== 'object')
+                return false;
+            else
+                return key in o;
+        }
+        function setKey(obj, keys, value) {
+            let o = obj;
+            if (!configuration['dot-notation'])
+                keys = [keys.join('.')];
+            keys.slice(0, -1).forEach(function (key) {
+                // TODO(bcoe): in the next major version of yargs, switch to
+                // Object.create(null) for dot notation:
+                key = sanitizeKey(key);
+                if (typeof o === 'object' && o[key] === undefined) {
+                    o[key] = {};
+                }
+                if (typeof o[key] !== 'object' || Array.isArray(o[key])) {
+                    // ensure that o[key] is an array, and that the last item is an empty object.
+                    if (Array.isArray(o[key])) {
+                        o[key].push({});
+                    }
+                    else {
+                        o[key] = [o[key], {}];
+                    }
+                    // we want to update the empty object at the end of the o[key] array, so set o to that object
+                    o = o[key][o[key].length - 1];
+                }
+                else {
+                    o = o[key];
+                }
+            });
+            // TODO(bcoe): in the next major version of yargs, switch to
+            // Object.create(null) for dot notation:
+            const key = sanitizeKey(keys[keys.length - 1]);
+            const isTypeArray = checkAllAliases(keys.join('.'), flags.arrays);
+            const isValueArray = Array.isArray(value);
+            let duplicate = configuration['duplicate-arguments-array'];
+            // nargs has higher priority than duplicate
+            if (!duplicate && checkAllAliases(key, flags.nargs)) {
+                duplicate = true;
+                if ((!isUndefined(o[key]) && flags.nargs[key] === 1) || (Array.isArray(o[key]) && o[key].length === flags.nargs[key])) {
+                    o[key] = undefined;
+                }
+            }
+            if (value === increment()) {
+                o[key] = increment(o[key]);
+            }
+            else if (Array.isArray(o[key])) {
+                if (duplicate && isTypeArray && isValueArray) {
+                    o[key] = configuration['flatten-duplicate-arrays'] ? o[key].concat(value) : (Array.isArray(o[key][0]) ? o[key] : [o[key]]).concat([value]);
+                }
+                else if (!duplicate && Boolean(isTypeArray) === Boolean(isValueArray)) {
+                    o[key] = value;
+                }
+                else {
+                    o[key] = o[key].concat([value]);
+                }
+            }
+            else if (o[key] === undefined && isTypeArray) {
+                o[key] = isValueArray ? value : [value];
+            }
+            else if (duplicate && !(o[key] === undefined ||
+                checkAllAliases(key, flags.counts) ||
+                checkAllAliases(key, flags.bools))) {
+                o[key] = [o[key], value];
+            }
+            else {
+                o[key] = value;
+            }
+        }
+        // extend the aliases list with inferred aliases.
+        function extendAliases(...args) {
+            args.forEach(function (obj) {
+                Object.keys(obj || {}).forEach(function (key) {
+                    // short-circuit if we've already added a key
+                    // to the aliases array, for example it might
+                    // exist in both 'opts.default' and 'opts.key'.
+                    if (flags.aliases[key])
+                        return;
+                    flags.aliases[key] = [].concat(aliases[key] || []);
+                    // For "--option-name", also set argv.optionName
+                    flags.aliases[key].concat(key).forEach(function (x) {
+                        if (/-/.test(x) && configuration['camel-case-expansion']) {
+                            const c = camelCase(x);
+                            if (c !== key && flags.aliases[key].indexOf(c) === -1) {
+                                flags.aliases[key].push(c);
+                                newAliases[c] = true;
+                            }
+                        }
+                    });
+                    // For "--optionName", also set argv['option-name']
+                    flags.aliases[key].concat(key).forEach(function (x) {
+                        if (x.length > 1 && /[A-Z]/.test(x) && configuration['camel-case-expansion']) {
+                            const c = decamelize(x, '-');
+                            if (c !== key && flags.aliases[key].indexOf(c) === -1) {
+                                flags.aliases[key].push(c);
+                                newAliases[c] = true;
+                            }
+                        }
+                    });
+                    flags.aliases[key].forEach(function (x) {
+                        flags.aliases[x] = [key].concat(flags.aliases[key].filter(function (y) {
+                            return x !== y;
+                        }));
+                    });
+                });
+            });
+        }
+        function checkAllAliases(key, flag) {
+            const toCheck = [].concat(flags.aliases[key] || [], key);
+            const keys = Object.keys(flag);
+            const setAlias = toCheck.find(key => keys.includes(key));
+            return setAlias ? flag[setAlias] : false;
+        }
+        function hasAnyFlag(key) {
+            const flagsKeys = Object.keys(flags);
+            const toCheck = [].concat(flagsKeys.map(k => flags[k]));
+            return toCheck.some(function (flag) {
+                return Array.isArray(flag) ? flag.includes(key) : flag[key];
+            });
+        }
+        function hasFlagsMatching(arg, ...patterns) {
+            const toCheck = [].concat(...patterns);
+            return toCheck.some(function (pattern) {
+                const match = arg.match(pattern);
+                return match && hasAnyFlag(match[1]);
+            });
+        }
+        // based on a simplified version of the short flag group parsing logic
+        function hasAllShortFlags(arg) {
+            // if this is a negative number, or doesn't start with a single hyphen, it's not a short flag group
+            if (arg.match(negative) || !arg.match(/^-[^-]+/)) {
+                return false;
+            }
+            let hasAllFlags = true;
+            let next;
+            const letters = arg.slice(1).split('');
+            for (let j = 0; j < letters.length; j++) {
+                next = arg.slice(j + 2);
+                if (!hasAnyFlag(letters[j])) {
+                    hasAllFlags = false;
+                    break;
+                }
+                if ((letters[j + 1] && letters[j + 1] === '=') ||
+                    next === '-' ||
+                    (/[A-Za-z]/.test(letters[j]) && /^-?\d+(\.\d*)?(e-?\d+)?$/.test(next)) ||
+                    (letters[j + 1] && letters[j + 1].match(/\W/))) {
+                    break;
+                }
+            }
+            return hasAllFlags;
+        }
+        function isUnknownOptionAsArg(arg) {
+            return configuration['unknown-options-as-args'] && isUnknownOption(arg);
+        }
+        function isUnknownOption(arg) {
+            arg = arg.replace(/^-{3,}/, '--');
+            // ignore negative numbers
+            if (arg.match(negative)) {
+                return false;
+            }
+            // if this is a short option group and all of them are configured, it isn't unknown
+            if (hasAllShortFlags(arg)) {
+                return false;
+            }
+            // e.g. '--count=2'
+            const flagWithEquals = /^-+([^=]+?)=[\s\S]*$/;
+            // e.g. '-a' or '--arg'
+            const normalFlag = /^-+([^=]+?)$/;
+            // e.g. '-a-'
+            const flagEndingInHyphen = /^-+([^=]+?)-$/;
+            // e.g. '-abc123'
+            const flagEndingInDigits = /^-+([^=]+?\d+)$/;
+            // e.g. '-a/usr/local'
+            const flagEndingInNonWordCharacters = /^-+([^=]+?)\W+.*$/;
+            // check the different types of flag styles, including negatedBoolean, a pattern defined near the start of the parse method
+            return !hasFlagsMatching(arg, flagWithEquals, negatedBoolean, normalFlag, flagEndingInHyphen, flagEndingInDigits, flagEndingInNonWordCharacters);
+        }
+        // make a best effort to pick a default value
+        // for an option based on name and type.
+        function defaultValue(key) {
+            if (!checkAllAliases(key, flags.bools) &&
+                !checkAllAliases(key, flags.counts) &&
+                `${key}` in defaults) {
+                return defaults[key];
+            }
+            else {
+                return defaultForType(guessType(key));
+            }
+        }
+        // return a default value, given the type of a flag.,
+        function defaultForType(type) {
+            const def = {
+                [DefaultValuesForTypeKey.BOOLEAN]: true,
+                [DefaultValuesForTypeKey.STRING]: '',
+                [DefaultValuesForTypeKey.NUMBER]: undefined,
+                [DefaultValuesForTypeKey.ARRAY]: []
+            };
+            return def[type];
+        }
+        // given a flag, enforce a default type.
+        function guessType(key) {
+            let type = DefaultValuesForTypeKey.BOOLEAN;
+            if (checkAllAliases(key, flags.strings))
+                type = DefaultValuesForTypeKey.STRING;
+            else if (checkAllAliases(key, flags.numbers))
+                type = DefaultValuesForTypeKey.NUMBER;
+            else if (checkAllAliases(key, flags.bools))
+                type = DefaultValuesForTypeKey.BOOLEAN;
+            else if (checkAllAliases(key, flags.arrays))
+                type = DefaultValuesForTypeKey.ARRAY;
+            return type;
+        }
+        function isUndefined(num) {
+            return num === undefined;
+        }
+        // check user configuration settings for inconsistencies
+        function checkConfiguration() {
+            // count keys should not be set as array/narg
+            Object.keys(flags.counts).find(key => {
+                if (checkAllAliases(key, flags.arrays)) {
+                    error = Error(__('Invalid configuration: %s, opts.count excludes opts.array.', key));
+                    return true;
+                }
+                else if (checkAllAliases(key, flags.nargs)) {
+                    error = Error(__('Invalid configuration: %s, opts.count excludes opts.narg.', key));
+                    return true;
+                }
+                return false;
+            });
+        }
+        return {
+            aliases: Object.assign({}, flags.aliases),
+            argv: Object.assign(argvReturn, argv),
+            configuration: configuration,
+            defaulted: Object.assign({}, defaulted),
+            error: error,
+            newAliases: Object.assign({}, newAliases)
+        };
+    }
+}
+// if any aliases reference each other, we should
+// merge them together.
+function combineAliases(aliases) {
+    const aliasArrays = [];
+    const combined = Object.create(null);
+    let change = true;
+    // turn alias lookup hash {key: ['alias1', 'alias2']} into
+    // a simple array ['key', 'alias1', 'alias2']
+    Object.keys(aliases).forEach(function (key) {
+        aliasArrays.push([].concat(aliases[key], key));
+    });
+    // combine arrays until zero changes are
+    // made in an iteration.
+    while (change) {
+        change = false;
+        for (let i = 0; i < aliasArrays.length; i++) {
+            for (let ii = i + 1; ii < aliasArrays.length; ii++) {
+                const intersect = aliasArrays[i].filter(function (v) {
+                    return aliasArrays[ii].indexOf(v) !== -1;
+                });
+                if (intersect.length) {
+                    aliasArrays[i] = aliasArrays[i].concat(aliasArrays[ii]);
+                    aliasArrays.splice(ii, 1);
+                    change = true;
+                    break;
+                }
+            }
+        }
+    }
+    // map arrays back to the hash-lookup (de-dupe while
+    // we're at it).
+    aliasArrays.forEach(function (aliasArray) {
+        aliasArray = aliasArray.filter(function (v, i, self) {
+            return self.indexOf(v) === i;
+        });
+        const lastAlias = aliasArray.pop();
+        if (lastAlias !== undefined && typeof lastAlias === 'string') {
+            combined[lastAlias] = aliasArray;
+        }
+    });
+    return combined;
+}
+// this function should only be called when a count is given as an arg
+// it is NOT called to set a default value
+// thus we can start the count at 1 instead of 0
+function increment(orig) {
+    return orig !== undefined ? orig + 1 : 1;
+}
+// TODO(bcoe): in the next major version of yargs, switch to
+// Object.create(null) for dot notation:
+function sanitizeKey(key) {
+    if (key === '__proto__')
+        return '___proto___';
+    return key;
+}
+function stripQuotes(val) {
+    return (typeof val === 'string' &&
+        (val[0] === "'" || val[0] === '"') &&
+        val[val.length - 1] === val[0])
+        ? val.substring(1, val.length - 1)
+        : val;
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs-parser/build/lib/index.js
+/**
+ * @fileoverview Main entrypoint for libraries using yargs-parser in Node.js
+ * CJS and ESM environments.
+ *
+ * @license
+ * Copyright (c) 2016, Contributors
+ * SPDX-License-Identifier: ISC
+ */
+var _a, _b, _c;
+
+
+
+
+
+// See https://github.com/yargs/yargs-parser#supported-nodejs-versions for our
+// version support policy. The YARGS_MIN_NODE_VERSION is used for testing only.
+const minNodeVersion = (process && process.env && process.env.YARGS_MIN_NODE_VERSION)
+    ? Number(process.env.YARGS_MIN_NODE_VERSION)
+    : 12;
+const nodeVersion = (_b = (_a = process === null || process === void 0 ? void 0 : process.versions) === null || _a === void 0 ? void 0 : _a.node) !== null && _b !== void 0 ? _b : (_c = process === null || process === void 0 ? void 0 : process.version) === null || _c === void 0 ? void 0 : _c.slice(1);
+if (nodeVersion) {
+    const major = Number(nodeVersion.match(/^([^.]+)/)[1]);
+    if (major < minNodeVersion) {
+        throw Error(`yargs parser supports a minimum Node.js version of ${minNodeVersion}. Read our version support policy: https://github.com/yargs/yargs-parser#supported-nodejs-versions`);
+    }
+}
+// Creates a yargs-parser instance using Node.js standard libraries:
+const env = process ? process.env : {};
+const parser = new YargsParser({
+    cwd: process.cwd,
+    env: () => {
+        return env;
+    },
+    format: external_util_.format,
+    normalize: external_path_.normalize,
+    resolve: external_path_.resolve,
+    // TODO: figure  out a  way to combine ESM and CJS coverage, such  that
+    // we can exercise all the lines below:
+    require: (path) => {
+        if (typeof require !== 'undefined') {
+            return require(path);
+        }
+        else if (path.match(/\.json$/)) {
+            // Addresses: https://github.com/yargs/yargs/issues/2040
+            return JSON.parse((0,external_fs_.readFileSync)(path, 'utf8'));
+        }
+        else {
+            throw Error('only .json config files are supported in ESM');
+        }
+    }
+});
+const yargsParser = function Parser(args, opts) {
+    const result = parser.parse(args.slice(), opts);
+    return result.argv;
+};
+yargsParser.detailed = function (args, opts) {
+    return parser.parse(args.slice(), opts);
+};
+yargsParser.camelCase = camelCase;
+yargsParser.decamelize = decamelize;
+yargsParser.looksLikeNumber = looksLikeNumber;
+/* harmony default export */ const lib = (yargsParser);
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/utils/process-argv.js
+function getProcessArgvBinIndex() {
+    if (isBundledElectronApp())
+        return 0;
+    return 1;
+}
+function isBundledElectronApp() {
+    return isElectronApp() && !process.defaultApp;
+}
+function isElectronApp() {
+    return !!process.versions.electron;
+}
+function hideBin(argv) {
+    return argv.slice(getProcessArgvBinIndex() + 1);
+}
+function getProcessArgvBin() {
+    return process.argv[getProcessArgvBinIndex()];
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/yerror.js
+class YError extends Error {
+    constructor(msg) {
+        super(msg || 'yargs error');
+        this.name = 'YError';
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, YError);
+        }
+    }
+}
+
+;// CONCATENATED MODULE: ./node_modules/y18n/build/lib/platform-shims/node.js
+
+
+
+/* harmony default export */ const node = ({
+    fs: {
+        readFileSync: external_fs_.readFileSync,
+        writeFile: external_fs_.writeFile
+    },
+    format: external_util_.format,
+    resolve: external_path_.resolve,
+    exists: (file) => {
+        try {
+            return (0,external_fs_.statSync)(file).isFile();
+        }
+        catch (err) {
+            return false;
+        }
+    }
+});
+
+;// CONCATENATED MODULE: ./node_modules/y18n/build/lib/index.js
 let shim;
 class Y18N {
     constructor(opts) {
@@ -15876,7 +12411,7 @@ class Y18N {
         return shim.exists(file);
     }
 }
-function y18n$1(opts, _shim) {
+function y18n(opts, _shim) {
     shim = _shim;
     const y18n = new Y18N(opts);
     return {
@@ -15889,1219 +12424,3979 @@ function y18n$1(opts, _shim) {
     };
 }
 
-var nodePlatformShim = {
-    fs: {
-        readFileSync: fs.readFileSync,
-        writeFile: fs.writeFile
-    },
-    format: util.format,
-    resolve: path.resolve,
-    exists: (file) => {
-        try {
-            return fs.statSync(file).isFile();
-        }
-        catch (err) {
-            return false;
-        }
-    }
-};
-
-const y18n = (opts) => {
-    return y18n$1(opts, nodePlatformShim);
-};
-
-module.exports = y18n;
+;// CONCATENATED MODULE: ./node_modules/y18n/index.mjs
 
 
-/***/ }),
 
-/***/ 1970:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-var util = __nccwpck_require__(3837);
-var path = __nccwpck_require__(1017);
-var fs = __nccwpck_require__(7147);
-
-function camelCase(str) {
-    const isCamelCase = str !== str.toLowerCase() && str !== str.toUpperCase();
-    if (!isCamelCase) {
-        str = str.toLowerCase();
-    }
-    if (str.indexOf('-') === -1 && str.indexOf('_') === -1) {
-        return str;
-    }
-    else {
-        let camelcase = '';
-        let nextChrUpper = false;
-        const leadingHyphens = str.match(/^-+/);
-        for (let i = leadingHyphens ? leadingHyphens[0].length : 0; i < str.length; i++) {
-            let chr = str.charAt(i);
-            if (nextChrUpper) {
-                nextChrUpper = false;
-                chr = chr.toUpperCase();
-            }
-            if (i !== 0 && (chr === '-' || chr === '_')) {
-                nextChrUpper = true;
-            }
-            else if (chr !== '-' && chr !== '_') {
-                camelcase += chr;
-            }
-        }
-        return camelcase;
-    }
+const y18n_y18n = (opts) => {
+  return y18n(opts, node)
 }
-function decamelize(str, joinString) {
-    const lowercase = str.toLowerCase();
-    joinString = joinString || '-';
-    let notCamelcase = '';
-    for (let i = 0; i < str.length; i++) {
-        const chrLower = lowercase.charAt(i);
-        const chrString = str.charAt(i);
-        if (chrLower !== chrString && i > 0) {
-            notCamelcase += `${joinString}${lowercase.charAt(i)}`;
+
+/* harmony default export */ const node_modules_y18n = (y18n_y18n);
+
+;// CONCATENATED MODULE: ./node_modules/yargs/lib/platform-shims/esm.mjs
+
+
+;
+
+
+
+
+
+
+
+
+
+
+
+const REQUIRE_ERROR = 'require is not supported by ESM'
+const REQUIRE_DIRECTORY_ERROR = 'loading a directory of commands is not supported yet for ESM'
+
+let esm_dirname;
+try {
+  esm_dirname = (0,external_url_namespaceObject.fileURLToPath)(import.meta.url);
+} catch (e) {
+  esm_dirname = process.cwd();
+}
+const mainFilename = esm_dirname.substring(0, esm_dirname.lastIndexOf('node_modules'));
+
+/* harmony default export */ const esm = ({
+  assert: {
+    notStrictEqual: external_assert_.notStrictEqual,
+    strictEqual: external_assert_.strictEqual
+  },
+  cliui: ui,
+  findUp: sync,
+  getEnv: (key) => {
+    return process.env[key]
+  },
+  inspect: external_util_.inspect,
+  getCallerFile: () => {
+    throw new YError(REQUIRE_DIRECTORY_ERROR)
+  },
+  getProcessArgvBin: getProcessArgvBin,
+  mainFilename: mainFilename || process.cwd(),
+  Parser: lib,
+  path: {
+    basename: external_path_.basename,
+    dirname: external_path_.dirname,
+    extname: external_path_.extname,
+    relative: external_path_.relative,
+    resolve: external_path_.resolve
+  },
+  process: {
+    argv: () => process.argv,
+    cwd: process.cwd,
+    emitWarning: (warning, type) => process.emitWarning(warning, type),
+    execPath: () => process.execPath,
+    exit: process.exit,
+    nextTick: process.nextTick,
+    stdColumns: typeof process.stdout.columns !== 'undefined' ? process.stdout.columns : null
+  },
+  readFileSync: external_fs_.readFileSync,
+  require: () => {
+    throw new YError(REQUIRE_ERROR)
+  },
+  requireDirectory: () => {
+    throw new YError(REQUIRE_DIRECTORY_ERROR)
+  },
+  stringWidth: (str) => {
+    return [...str].length
+  },
+  y18n: node_modules_y18n({
+    directory: (0,external_path_.resolve)(esm_dirname, '../../../locales'),
+    updateFiles: false
+  })
+});
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/typings/common-types.js
+function assertNotStrictEqual(actual, expected, shim, message) {
+    shim.assert.notStrictEqual(actual, expected, message);
+}
+function assertSingleKey(actual, shim) {
+    shim.assert.strictEqual(typeof actual, 'string');
+}
+function objectKeys(object) {
+    return Object.keys(object);
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/utils/is-promise.js
+function isPromise(maybePromise) {
+    return (!!maybePromise &&
+        !!maybePromise.then &&
+        typeof maybePromise.then === 'function');
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/parse-command.js
+function parseCommand(cmd) {
+    const extraSpacesStrippedCommand = cmd.replace(/\s{2,}/g, ' ');
+    const splitCommand = extraSpacesStrippedCommand.split(/\s+(?![^[]*]|[^<]*>)/);
+    const bregex = /\.*[\][<>]/g;
+    const firstCommand = splitCommand.shift();
+    if (!firstCommand)
+        throw new Error(`No command found in: ${cmd}`);
+    const parsedCommand = {
+        cmd: firstCommand.replace(bregex, ''),
+        demanded: [],
+        optional: [],
+    };
+    splitCommand.forEach((cmd, i) => {
+        let variadic = false;
+        cmd = cmd.replace(/\s/g, '');
+        if (/\.+[\]>]/.test(cmd) && i === splitCommand.length - 1)
+            variadic = true;
+        if (/^\[/.test(cmd)) {
+            parsedCommand.optional.push({
+                cmd: cmd.replace(bregex, '').split('|'),
+                variadic,
+            });
         }
         else {
-            notCamelcase += chrString;
+            parsedCommand.demanded.push({
+                cmd: cmd.replace(bregex, '').split('|'),
+                variadic,
+            });
         }
-    }
-    return notCamelcase;
-}
-function looksLikeNumber(x) {
-    if (x === null || x === undefined)
-        return false;
-    if (typeof x === 'number')
-        return true;
-    if (/^0x[0-9a-f]+$/i.test(x))
-        return true;
-    if (/^0[^.]/.test(x))
-        return false;
-    return /^[-]?(?:\d+(?:\.\d*)?|\.\d+)(e[-+]?\d+)?$/.test(x);
+    });
+    return parsedCommand;
 }
 
-function tokenizeArgString(argString) {
-    if (Array.isArray(argString)) {
-        return argString.map(e => typeof e !== 'string' ? e + '' : e);
-    }
-    argString = argString.trim();
-    let i = 0;
-    let prevC = null;
-    let c = null;
-    let opening = null;
-    const args = [];
-    for (let ii = 0; ii < argString.length; ii++) {
-        prevC = c;
-        c = argString.charAt(ii);
-        if (c === ' ' && !opening) {
-            if (!(prevC === ' ')) {
-                i++;
-            }
-            continue;
-        }
-        if (c === opening) {
-            opening = null;
-        }
-        else if ((c === "'" || c === '"') && !opening) {
-            opening = c;
-        }
-        if (!args[i])
-            args[i] = '';
-        args[i] += c;
-    }
-    return args;
-}
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/argsert.js
 
-var DefaultValuesForTypeKey;
-(function (DefaultValuesForTypeKey) {
-    DefaultValuesForTypeKey["BOOLEAN"] = "boolean";
-    DefaultValuesForTypeKey["STRING"] = "string";
-    DefaultValuesForTypeKey["NUMBER"] = "number";
-    DefaultValuesForTypeKey["ARRAY"] = "array";
-})(DefaultValuesForTypeKey || (DefaultValuesForTypeKey = {}));
 
-let mixin;
-class YargsParser {
-    constructor(_mixin) {
-        mixin = _mixin;
+const positionName = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
+function argsert(arg1, arg2, arg3) {
+    function parseArgs() {
+        return typeof arg1 === 'object'
+            ? [{ demanded: [], optional: [] }, arg1, arg2]
+            : [
+                parseCommand(`cmd ${arg1}`),
+                arg2,
+                arg3,
+            ];
     }
-    parse(argsInput, options) {
-        const opts = Object.assign({
-            alias: undefined,
-            array: undefined,
-            boolean: undefined,
-            config: undefined,
-            configObjects: undefined,
-            configuration: undefined,
-            coerce: undefined,
-            count: undefined,
-            default: undefined,
-            envPrefix: undefined,
-            narg: undefined,
-            normalize: undefined,
-            string: undefined,
-            number: undefined,
-            __: undefined,
-            key: undefined
-        }, options);
-        const args = tokenizeArgString(argsInput);
-        const inputIsString = typeof argsInput === 'string';
-        const aliases = combineAliases(Object.assign(Object.create(null), opts.alias));
-        const configuration = Object.assign({
-            'boolean-negation': true,
-            'camel-case-expansion': true,
-            'combine-arrays': false,
-            'dot-notation': true,
-            'duplicate-arguments-array': true,
-            'flatten-duplicate-arrays': true,
-            'greedy-arrays': true,
-            'halt-at-non-option': false,
-            'nargs-eats-options': false,
-            'negation-prefix': 'no-',
-            'parse-numbers': true,
-            'parse-positional-numbers': true,
-            'populate--': false,
-            'set-placeholder-key': false,
-            'short-option-groups': true,
-            'strip-aliased': false,
-            'strip-dashed': false,
-            'unknown-options-as-args': false
-        }, opts.configuration);
-        const defaults = Object.assign(Object.create(null), opts.default);
-        const configObjects = opts.configObjects || [];
-        const envPrefix = opts.envPrefix;
-        const notFlagsOption = configuration['populate--'];
-        const notFlagsArgv = notFlagsOption ? '--' : '_';
-        const newAliases = Object.create(null);
-        const defaulted = Object.create(null);
-        const __ = opts.__ || mixin.format;
-        const flags = {
-            aliases: Object.create(null),
-            arrays: Object.create(null),
-            bools: Object.create(null),
-            strings: Object.create(null),
-            numbers: Object.create(null),
-            counts: Object.create(null),
-            normalize: Object.create(null),
-            configs: Object.create(null),
-            nargs: Object.create(null),
-            coercions: Object.create(null),
-            keys: []
-        };
-        const negative = /^-([0-9]+(\.[0-9]+)?|\.[0-9]+)$/;
-        const negatedBoolean = new RegExp('^--' + configuration['negation-prefix'] + '(.+)');
-        [].concat(opts.array || []).filter(Boolean).forEach(function (opt) {
-            const key = typeof opt === 'object' ? opt.key : opt;
-            const assignment = Object.keys(opt).map(function (key) {
-                const arrayFlagKeys = {
-                    boolean: 'bools',
-                    string: 'strings',
-                    number: 'numbers'
-                };
-                return arrayFlagKeys[key];
-            }).filter(Boolean).pop();
-            if (assignment) {
-                flags[assignment][key] = true;
-            }
-            flags.arrays[key] = true;
-            flags.keys.push(key);
+    try {
+        let position = 0;
+        const [parsed, callerArguments, _length] = parseArgs();
+        const args = [].slice.call(callerArguments);
+        while (args.length && args[args.length - 1] === undefined)
+            args.pop();
+        const length = _length || args.length;
+        if (length < parsed.demanded.length) {
+            throw new YError(`Not enough arguments provided. Expected ${parsed.demanded.length} but received ${args.length}.`);
+        }
+        const totalCommands = parsed.demanded.length + parsed.optional.length;
+        if (length > totalCommands) {
+            throw new YError(`Too many arguments provided. Expected max ${totalCommands} but received ${length}.`);
+        }
+        parsed.demanded.forEach(demanded => {
+            const arg = args.shift();
+            const observedType = guessType(arg);
+            const matchingTypes = demanded.cmd.filter(type => type === observedType || type === '*');
+            if (matchingTypes.length === 0)
+                argumentTypeError(observedType, demanded.cmd, position);
+            position += 1;
         });
-        [].concat(opts.boolean || []).filter(Boolean).forEach(function (key) {
-            flags.bools[key] = true;
-            flags.keys.push(key);
-        });
-        [].concat(opts.string || []).filter(Boolean).forEach(function (key) {
-            flags.strings[key] = true;
-            flags.keys.push(key);
-        });
-        [].concat(opts.number || []).filter(Boolean).forEach(function (key) {
-            flags.numbers[key] = true;
-            flags.keys.push(key);
-        });
-        [].concat(opts.count || []).filter(Boolean).forEach(function (key) {
-            flags.counts[key] = true;
-            flags.keys.push(key);
-        });
-        [].concat(opts.normalize || []).filter(Boolean).forEach(function (key) {
-            flags.normalize[key] = true;
-            flags.keys.push(key);
-        });
-        if (typeof opts.narg === 'object') {
-            Object.entries(opts.narg).forEach(([key, value]) => {
-                if (typeof value === 'number') {
-                    flags.nargs[key] = value;
-                    flags.keys.push(key);
-                }
-            });
-        }
-        if (typeof opts.coerce === 'object') {
-            Object.entries(opts.coerce).forEach(([key, value]) => {
-                if (typeof value === 'function') {
-                    flags.coercions[key] = value;
-                    flags.keys.push(key);
-                }
-            });
-        }
-        if (typeof opts.config !== 'undefined') {
-            if (Array.isArray(opts.config) || typeof opts.config === 'string') {
-                [].concat(opts.config).filter(Boolean).forEach(function (key) {
-                    flags.configs[key] = true;
-                });
-            }
-            else if (typeof opts.config === 'object') {
-                Object.entries(opts.config).forEach(([key, value]) => {
-                    if (typeof value === 'boolean' || typeof value === 'function') {
-                        flags.configs[key] = value;
-                    }
-                });
-            }
-        }
-        extendAliases(opts.key, aliases, opts.default, flags.arrays);
-        Object.keys(defaults).forEach(function (key) {
-            (flags.aliases[key] || []).forEach(function (alias) {
-                defaults[alias] = defaults[key];
-            });
-        });
-        let error = null;
-        checkConfiguration();
-        let notFlags = [];
-        const argv = Object.assign(Object.create(null), { _: [] });
-        const argvReturn = {};
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
-            const truncatedArg = arg.replace(/^-{3,}/, '---');
-            let broken;
-            let key;
-            let letters;
-            let m;
-            let next;
-            let value;
-            if (arg !== '--' && /^-/.test(arg) && isUnknownOptionAsArg(arg)) {
-                pushPositional(arg);
-            }
-            else if (truncatedArg.match(/^---+(=|$)/)) {
-                pushPositional(arg);
-                continue;
-            }
-            else if (arg.match(/^--.+=/) || (!configuration['short-option-groups'] && arg.match(/^-.+=/))) {
-                m = arg.match(/^--?([^=]+)=([\s\S]*)$/);
-                if (m !== null && Array.isArray(m) && m.length >= 3) {
-                    if (checkAllAliases(m[1], flags.arrays)) {
-                        i = eatArray(i, m[1], args, m[2]);
-                    }
-                    else if (checkAllAliases(m[1], flags.nargs) !== false) {
-                        i = eatNargs(i, m[1], args, m[2]);
-                    }
-                    else {
-                        setArg(m[1], m[2], true);
-                    }
-                }
-            }
-            else if (arg.match(negatedBoolean) && configuration['boolean-negation']) {
-                m = arg.match(negatedBoolean);
-                if (m !== null && Array.isArray(m) && m.length >= 2) {
-                    key = m[1];
-                    setArg(key, checkAllAliases(key, flags.arrays) ? [false] : false);
-                }
-            }
-            else if (arg.match(/^--.+/) || (!configuration['short-option-groups'] && arg.match(/^-[^-]+/))) {
-                m = arg.match(/^--?(.+)/);
-                if (m !== null && Array.isArray(m) && m.length >= 2) {
-                    key = m[1];
-                    if (checkAllAliases(key, flags.arrays)) {
-                        i = eatArray(i, key, args);
-                    }
-                    else if (checkAllAliases(key, flags.nargs) !== false) {
-                        i = eatNargs(i, key, args);
-                    }
-                    else {
-                        next = args[i + 1];
-                        if (next !== undefined && (!next.match(/^-/) ||
-                            next.match(negative)) &&
-                            !checkAllAliases(key, flags.bools) &&
-                            !checkAllAliases(key, flags.counts)) {
-                            setArg(key, next);
-                            i++;
-                        }
-                        else if (/^(true|false)$/.test(next)) {
-                            setArg(key, next);
-                            i++;
-                        }
-                        else {
-                            setArg(key, defaultValue(key));
-                        }
-                    }
-                }
-            }
-            else if (arg.match(/^-.\..+=/)) {
-                m = arg.match(/^-([^=]+)=([\s\S]*)$/);
-                if (m !== null && Array.isArray(m) && m.length >= 3) {
-                    setArg(m[1], m[2]);
-                }
-            }
-            else if (arg.match(/^-.\..+/) && !arg.match(negative)) {
-                next = args[i + 1];
-                m = arg.match(/^-(.\..+)/);
-                if (m !== null && Array.isArray(m) && m.length >= 2) {
-                    key = m[1];
-                    if (next !== undefined && !next.match(/^-/) &&
-                        !checkAllAliases(key, flags.bools) &&
-                        !checkAllAliases(key, flags.counts)) {
-                        setArg(key, next);
-                        i++;
-                    }
-                    else {
-                        setArg(key, defaultValue(key));
-                    }
-                }
-            }
-            else if (arg.match(/^-[^-]+/) && !arg.match(negative)) {
-                letters = arg.slice(1, -1).split('');
-                broken = false;
-                for (let j = 0; j < letters.length; j++) {
-                    next = arg.slice(j + 2);
-                    if (letters[j + 1] && letters[j + 1] === '=') {
-                        value = arg.slice(j + 3);
-                        key = letters[j];
-                        if (checkAllAliases(key, flags.arrays)) {
-                            i = eatArray(i, key, args, value);
-                        }
-                        else if (checkAllAliases(key, flags.nargs) !== false) {
-                            i = eatNargs(i, key, args, value);
-                        }
-                        else {
-                            setArg(key, value);
-                        }
-                        broken = true;
-                        break;
-                    }
-                    if (next === '-') {
-                        setArg(letters[j], next);
-                        continue;
-                    }
-                    if (/[A-Za-z]/.test(letters[j]) &&
-                        /^-?\d+(\.\d*)?(e-?\d+)?$/.test(next) &&
-                        checkAllAliases(next, flags.bools) === false) {
-                        setArg(letters[j], next);
-                        broken = true;
-                        break;
-                    }
-                    if (letters[j + 1] && letters[j + 1].match(/\W/)) {
-                        setArg(letters[j], next);
-                        broken = true;
-                        break;
-                    }
-                    else {
-                        setArg(letters[j], defaultValue(letters[j]));
-                    }
-                }
-                key = arg.slice(-1)[0];
-                if (!broken && key !== '-') {
-                    if (checkAllAliases(key, flags.arrays)) {
-                        i = eatArray(i, key, args);
-                    }
-                    else if (checkAllAliases(key, flags.nargs) !== false) {
-                        i = eatNargs(i, key, args);
-                    }
-                    else {
-                        next = args[i + 1];
-                        if (next !== undefined && (!/^(-|--)[^-]/.test(next) ||
-                            next.match(negative)) &&
-                            !checkAllAliases(key, flags.bools) &&
-                            !checkAllAliases(key, flags.counts)) {
-                            setArg(key, next);
-                            i++;
-                        }
-                        else if (/^(true|false)$/.test(next)) {
-                            setArg(key, next);
-                            i++;
-                        }
-                        else {
-                            setArg(key, defaultValue(key));
-                        }
-                    }
-                }
-            }
-            else if (arg.match(/^-[0-9]$/) &&
-                arg.match(negative) &&
-                checkAllAliases(arg.slice(1), flags.bools)) {
-                key = arg.slice(1);
-                setArg(key, defaultValue(key));
-            }
-            else if (arg === '--') {
-                notFlags = args.slice(i + 1);
-                break;
-            }
-            else if (configuration['halt-at-non-option']) {
-                notFlags = args.slice(i);
-                break;
-            }
-            else {
-                pushPositional(arg);
-            }
-        }
-        applyEnvVars(argv, true);
-        applyEnvVars(argv, false);
-        setConfig(argv);
-        setConfigObjects();
-        applyDefaultsAndAliases(argv, flags.aliases, defaults, true);
-        applyCoercions(argv);
-        if (configuration['set-placeholder-key'])
-            setPlaceholderKeys(argv);
-        Object.keys(flags.counts).forEach(function (key) {
-            if (!hasKey(argv, key.split('.')))
-                setArg(key, 0);
-        });
-        if (notFlagsOption && notFlags.length)
-            argv[notFlagsArgv] = [];
-        notFlags.forEach(function (key) {
-            argv[notFlagsArgv].push(key);
-        });
-        if (configuration['camel-case-expansion'] && configuration['strip-dashed']) {
-            Object.keys(argv).filter(key => key !== '--' && key.includes('-')).forEach(key => {
-                delete argv[key];
-            });
-        }
-        if (configuration['strip-aliased']) {
-            [].concat(...Object.keys(aliases).map(k => aliases[k])).forEach(alias => {
-                if (configuration['camel-case-expansion'] && alias.includes('-')) {
-                    delete argv[alias.split('.').map(prop => camelCase(prop)).join('.')];
-                }
-                delete argv[alias];
-            });
-        }
-        function pushPositional(arg) {
-            const maybeCoercedNumber = maybeCoerceNumber('_', arg);
-            if (typeof maybeCoercedNumber === 'string' || typeof maybeCoercedNumber === 'number') {
-                argv._.push(maybeCoercedNumber);
-            }
-        }
-        function eatNargs(i, key, args, argAfterEqualSign) {
-            let ii;
-            let toEat = checkAllAliases(key, flags.nargs);
-            toEat = typeof toEat !== 'number' || isNaN(toEat) ? 1 : toEat;
-            if (toEat === 0) {
-                if (!isUndefined(argAfterEqualSign)) {
-                    error = Error(__('Argument unexpected for: %s', key));
-                }
-                setArg(key, defaultValue(key));
-                return i;
-            }
-            let available = isUndefined(argAfterEqualSign) ? 0 : 1;
-            if (configuration['nargs-eats-options']) {
-                if (args.length - (i + 1) + available < toEat) {
-                    error = Error(__('Not enough arguments following: %s', key));
-                }
-                available = toEat;
-            }
-            else {
-                for (ii = i + 1; ii < args.length; ii++) {
-                    if (!args[ii].match(/^-[^0-9]/) || args[ii].match(negative) || isUnknownOptionAsArg(args[ii]))
-                        available++;
-                    else
-                        break;
-                }
-                if (available < toEat)
-                    error = Error(__('Not enough arguments following: %s', key));
-            }
-            let consumed = Math.min(available, toEat);
-            if (!isUndefined(argAfterEqualSign) && consumed > 0) {
-                setArg(key, argAfterEqualSign);
-                consumed--;
-            }
-            for (ii = i + 1; ii < (consumed + i + 1); ii++) {
-                setArg(key, args[ii]);
-            }
-            return (i + consumed);
-        }
-        function eatArray(i, key, args, argAfterEqualSign) {
-            let argsToSet = [];
-            let next = argAfterEqualSign || args[i + 1];
-            const nargsCount = checkAllAliases(key, flags.nargs);
-            if (checkAllAliases(key, flags.bools) && !(/^(true|false)$/.test(next))) {
-                argsToSet.push(true);
-            }
-            else if (isUndefined(next) ||
-                (isUndefined(argAfterEqualSign) && /^-/.test(next) && !negative.test(next) && !isUnknownOptionAsArg(next))) {
-                if (defaults[key] !== undefined) {
-                    const defVal = defaults[key];
-                    argsToSet = Array.isArray(defVal) ? defVal : [defVal];
-                }
-            }
-            else {
-                if (!isUndefined(argAfterEqualSign)) {
-                    argsToSet.push(processValue(key, argAfterEqualSign, true));
-                }
-                for (let ii = i + 1; ii < args.length; ii++) {
-                    if ((!configuration['greedy-arrays'] && argsToSet.length > 0) ||
-                        (nargsCount && typeof nargsCount === 'number' && argsToSet.length >= nargsCount))
-                        break;
-                    next = args[ii];
-                    if (/^-/.test(next) && !negative.test(next) && !isUnknownOptionAsArg(next))
-                        break;
-                    i = ii;
-                    argsToSet.push(processValue(key, next, inputIsString));
-                }
-            }
-            if (typeof nargsCount === 'number' && ((nargsCount && argsToSet.length < nargsCount) ||
-                (isNaN(nargsCount) && argsToSet.length === 0))) {
-                error = Error(__('Not enough arguments following: %s', key));
-            }
-            setArg(key, argsToSet);
-            return i;
-        }
-        function setArg(key, val, shouldStripQuotes = inputIsString) {
-            if (/-/.test(key) && configuration['camel-case-expansion']) {
-                const alias = key.split('.').map(function (prop) {
-                    return camelCase(prop);
-                }).join('.');
-                addNewAlias(key, alias);
-            }
-            const value = processValue(key, val, shouldStripQuotes);
-            const splitKey = key.split('.');
-            setKey(argv, splitKey, value);
-            if (flags.aliases[key]) {
-                flags.aliases[key].forEach(function (x) {
-                    const keyProperties = x.split('.');
-                    setKey(argv, keyProperties, value);
-                });
-            }
-            if (splitKey.length > 1 && configuration['dot-notation']) {
-                (flags.aliases[splitKey[0]] || []).forEach(function (x) {
-                    let keyProperties = x.split('.');
-                    const a = [].concat(splitKey);
-                    a.shift();
-                    keyProperties = keyProperties.concat(a);
-                    if (!(flags.aliases[key] || []).includes(keyProperties.join('.'))) {
-                        setKey(argv, keyProperties, value);
-                    }
-                });
-            }
-            if (checkAllAliases(key, flags.normalize) && !checkAllAliases(key, flags.arrays)) {
-                const keys = [key].concat(flags.aliases[key] || []);
-                keys.forEach(function (key) {
-                    Object.defineProperty(argvReturn, key, {
-                        enumerable: true,
-                        get() {
-                            return val;
-                        },
-                        set(value) {
-                            val = typeof value === 'string' ? mixin.normalize(value) : value;
-                        }
-                    });
-                });
-            }
-        }
-        function addNewAlias(key, alias) {
-            if (!(flags.aliases[key] && flags.aliases[key].length)) {
-                flags.aliases[key] = [alias];
-                newAliases[alias] = true;
-            }
-            if (!(flags.aliases[alias] && flags.aliases[alias].length)) {
-                addNewAlias(alias, key);
-            }
-        }
-        function processValue(key, val, shouldStripQuotes) {
-            if (shouldStripQuotes) {
-                val = stripQuotes(val);
-            }
-            if (checkAllAliases(key, flags.bools) || checkAllAliases(key, flags.counts)) {
-                if (typeof val === 'string')
-                    val = val === 'true';
-            }
-            let value = Array.isArray(val)
-                ? val.map(function (v) { return maybeCoerceNumber(key, v); })
-                : maybeCoerceNumber(key, val);
-            if (checkAllAliases(key, flags.counts) && (isUndefined(value) || typeof value === 'boolean')) {
-                value = increment();
-            }
-            if (checkAllAliases(key, flags.normalize) && checkAllAliases(key, flags.arrays)) {
-                if (Array.isArray(val))
-                    value = val.map((val) => { return mixin.normalize(val); });
-                else
-                    value = mixin.normalize(val);
-            }
-            return value;
-        }
-        function maybeCoerceNumber(key, value) {
-            if (!configuration['parse-positional-numbers'] && key === '_')
-                return value;
-            if (!checkAllAliases(key, flags.strings) && !checkAllAliases(key, flags.bools) && !Array.isArray(value)) {
-                const shouldCoerceNumber = looksLikeNumber(value) && configuration['parse-numbers'] && (Number.isSafeInteger(Math.floor(parseFloat(`${value}`))));
-                if (shouldCoerceNumber || (!isUndefined(value) && checkAllAliases(key, flags.numbers))) {
-                    value = Number(value);
-                }
-            }
-            return value;
-        }
-        function setConfig(argv) {
-            const configLookup = Object.create(null);
-            applyDefaultsAndAliases(configLookup, flags.aliases, defaults);
-            Object.keys(flags.configs).forEach(function (configKey) {
-                const configPath = argv[configKey] || configLookup[configKey];
-                if (configPath) {
-                    try {
-                        let config = null;
-                        const resolvedConfigPath = mixin.resolve(mixin.cwd(), configPath);
-                        const resolveConfig = flags.configs[configKey];
-                        if (typeof resolveConfig === 'function') {
-                            try {
-                                config = resolveConfig(resolvedConfigPath);
-                            }
-                            catch (e) {
-                                config = e;
-                            }
-                            if (config instanceof Error) {
-                                error = config;
-                                return;
-                            }
-                        }
-                        else {
-                            config = mixin.require(resolvedConfigPath);
-                        }
-                        setConfigObject(config);
-                    }
-                    catch (ex) {
-                        if (ex.name === 'PermissionDenied')
-                            error = ex;
-                        else if (argv[configKey])
-                            error = Error(__('Invalid JSON config file: %s', configPath));
-                    }
-                }
-            });
-        }
-        function setConfigObject(config, prev) {
-            Object.keys(config).forEach(function (key) {
-                const value = config[key];
-                const fullKey = prev ? prev + '.' + key : key;
-                if (typeof value === 'object' && value !== null && !Array.isArray(value) && configuration['dot-notation']) {
-                    setConfigObject(value, fullKey);
-                }
-                else {
-                    if (!hasKey(argv, fullKey.split('.')) || (checkAllAliases(fullKey, flags.arrays) && configuration['combine-arrays'])) {
-                        setArg(fullKey, value);
-                    }
-                }
-            });
-        }
-        function setConfigObjects() {
-            if (typeof configObjects !== 'undefined') {
-                configObjects.forEach(function (configObject) {
-                    setConfigObject(configObject);
-                });
-            }
-        }
-        function applyEnvVars(argv, configOnly) {
-            if (typeof envPrefix === 'undefined')
+        parsed.optional.forEach(optional => {
+            if (args.length === 0)
                 return;
-            const prefix = typeof envPrefix === 'string' ? envPrefix : '';
-            const env = mixin.env();
-            Object.keys(env).forEach(function (envVar) {
-                if (prefix === '' || envVar.lastIndexOf(prefix, 0) === 0) {
-                    const keys = envVar.split('__').map(function (key, i) {
-                        if (i === 0) {
-                            key = key.substring(prefix.length);
-                        }
-                        return camelCase(key);
-                    });
-                    if (((configOnly && flags.configs[keys.join('.')]) || !configOnly) && !hasKey(argv, keys)) {
-                        setArg(keys.join('.'), env[envVar]);
-                    }
+            const arg = args.shift();
+            const observedType = guessType(arg);
+            const matchingTypes = optional.cmd.filter(type => type === observedType || type === '*');
+            if (matchingTypes.length === 0)
+                argumentTypeError(observedType, optional.cmd, position);
+            position += 1;
+        });
+    }
+    catch (err) {
+        console.warn(err.stack);
+    }
+}
+function guessType(arg) {
+    if (Array.isArray(arg)) {
+        return 'array';
+    }
+    else if (arg === null) {
+        return 'null';
+    }
+    return typeof arg;
+}
+function argumentTypeError(observedType, allowedTypes, position) {
+    throw new YError(`Invalid ${positionName[position] || 'manyith'} argument. Expected ${allowedTypes.join(' or ')} but received ${observedType}.`);
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/middleware.js
+
+
+class GlobalMiddleware {
+    constructor(yargs) {
+        this.globalMiddleware = [];
+        this.frozens = [];
+        this.yargs = yargs;
+    }
+    addMiddleware(callback, applyBeforeValidation, global = true, mutates = false) {
+        argsert('<array|function> [boolean] [boolean] [boolean]', [callback, applyBeforeValidation, global], arguments.length);
+        if (Array.isArray(callback)) {
+            for (let i = 0; i < callback.length; i++) {
+                if (typeof callback[i] !== 'function') {
+                    throw Error('middleware must be a function');
                 }
-            });
+                const m = callback[i];
+                m.applyBeforeValidation = applyBeforeValidation;
+                m.global = global;
+            }
+            Array.prototype.push.apply(this.globalMiddleware, callback);
         }
-        function applyCoercions(argv) {
-            let coerce;
-            const applied = new Set();
-            Object.keys(argv).forEach(function (key) {
-                if (!applied.has(key)) {
-                    coerce = checkAllAliases(key, flags.coercions);
-                    if (typeof coerce === 'function') {
-                        try {
-                            const value = maybeCoerceNumber(key, coerce(argv[key]));
-                            ([].concat(flags.aliases[key] || [], key)).forEach(ali => {
-                                applied.add(ali);
-                                argv[ali] = value;
-                            });
-                        }
-                        catch (err) {
-                            error = err;
-                        }
-                    }
-                }
-            });
+        else if (typeof callback === 'function') {
+            const m = callback;
+            m.applyBeforeValidation = applyBeforeValidation;
+            m.global = global;
+            m.mutates = mutates;
+            this.globalMiddleware.push(callback);
         }
-        function setPlaceholderKeys(argv) {
-            flags.keys.forEach((key) => {
-                if (~key.indexOf('.'))
-                    return;
-                if (typeof argv[key] === 'undefined')
-                    argv[key] = undefined;
-            });
-            return argv;
-        }
-        function applyDefaultsAndAliases(obj, aliases, defaults, canLog = false) {
-            Object.keys(defaults).forEach(function (key) {
-                if (!hasKey(obj, key.split('.'))) {
-                    setKey(obj, key.split('.'), defaults[key]);
-                    if (canLog)
-                        defaulted[key] = true;
-                    (aliases[key] || []).forEach(function (x) {
-                        if (hasKey(obj, x.split('.')))
-                            return;
-                        setKey(obj, x.split('.'), defaults[key]);
-                    });
-                }
-            });
-        }
-        function hasKey(obj, keys) {
-            let o = obj;
-            if (!configuration['dot-notation'])
-                keys = [keys.join('.')];
-            keys.slice(0, -1).forEach(function (key) {
-                o = (o[key] || {});
-            });
-            const key = keys[keys.length - 1];
-            if (typeof o !== 'object')
-                return false;
+        return this.yargs;
+    }
+    addCoerceMiddleware(callback, option) {
+        const aliases = this.yargs.getAliases();
+        this.globalMiddleware = this.globalMiddleware.filter(m => {
+            const toCheck = [...(aliases[option] || []), option];
+            if (!m.option)
+                return true;
             else
-                return key in o;
+                return !toCheck.includes(m.option);
+        });
+        callback.option = option;
+        return this.addMiddleware(callback, true, true, true);
+    }
+    getMiddleware() {
+        return this.globalMiddleware;
+    }
+    freeze() {
+        this.frozens.push([...this.globalMiddleware]);
+    }
+    unfreeze() {
+        const frozen = this.frozens.pop();
+        if (frozen !== undefined)
+            this.globalMiddleware = frozen;
+    }
+    reset() {
+        this.globalMiddleware = this.globalMiddleware.filter(m => m.global);
+    }
+}
+function commandMiddlewareFactory(commandMiddleware) {
+    if (!commandMiddleware)
+        return [];
+    return commandMiddleware.map(middleware => {
+        middleware.applyBeforeValidation = false;
+        return middleware;
+    });
+}
+function applyMiddleware(argv, yargs, middlewares, beforeValidation) {
+    return middlewares.reduce((acc, middleware) => {
+        if (middleware.applyBeforeValidation !== beforeValidation) {
+            return acc;
         }
-        function setKey(obj, keys, value) {
-            let o = obj;
-            if (!configuration['dot-notation'])
-                keys = [keys.join('.')];
-            keys.slice(0, -1).forEach(function (key) {
-                key = sanitizeKey(key);
-                if (typeof o === 'object' && o[key] === undefined) {
-                    o[key] = {};
+        if (middleware.mutates) {
+            if (middleware.applied)
+                return acc;
+            middleware.applied = true;
+        }
+        if (isPromise(acc)) {
+            return acc
+                .then(initialObj => Promise.all([initialObj, middleware(initialObj, yargs)]))
+                .then(([initialObj, middlewareObj]) => Object.assign(initialObj, middlewareObj));
+        }
+        else {
+            const result = middleware(acc, yargs);
+            return isPromise(result)
+                ? result.then(middlewareObj => Object.assign(acc, middlewareObj))
+                : Object.assign(acc, result);
+        }
+    }, argv);
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/utils/maybe-async-result.js
+
+function maybeAsyncResult(getResult, resultHandler, errorHandler = (err) => {
+    throw err;
+}) {
+    try {
+        const result = isFunction(getResult) ? getResult() : getResult;
+        return isPromise(result)
+            ? result.then((result) => resultHandler(result))
+            : resultHandler(result);
+    }
+    catch (err) {
+        return errorHandler(err);
+    }
+}
+function isFunction(arg) {
+    return typeof arg === 'function';
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/utils/which-module.js
+function whichModule(exported) {
+    if (typeof require === 'undefined')
+        return null;
+    for (let i = 0, files = Object.keys(require.cache), mod; i < files.length; i++) {
+        mod = require.cache[files[i]];
+        if (mod.exports === exported)
+            return mod;
+    }
+    return null;
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/command.js
+
+
+
+
+
+
+
+const DEFAULT_MARKER = /(^\*)|(^\$0)/;
+class CommandInstance {
+    constructor(usage, validation, globalMiddleware, shim) {
+        this.requireCache = new Set();
+        this.handlers = {};
+        this.aliasMap = {};
+        this.frozens = [];
+        this.shim = shim;
+        this.usage = usage;
+        this.globalMiddleware = globalMiddleware;
+        this.validation = validation;
+    }
+    addDirectory(dir, req, callerFile, opts) {
+        opts = opts || {};
+        if (typeof opts.recurse !== 'boolean')
+            opts.recurse = false;
+        if (!Array.isArray(opts.extensions))
+            opts.extensions = ['js'];
+        const parentVisit = typeof opts.visit === 'function' ? opts.visit : (o) => o;
+        opts.visit = (obj, joined, filename) => {
+            const visited = parentVisit(obj, joined, filename);
+            if (visited) {
+                if (this.requireCache.has(joined))
+                    return visited;
+                else
+                    this.requireCache.add(joined);
+                this.addHandler(visited);
+            }
+            return visited;
+        };
+        this.shim.requireDirectory({ require: req, filename: callerFile }, dir, opts);
+    }
+    addHandler(cmd, description, builder, handler, commandMiddleware, deprecated) {
+        let aliases = [];
+        const middlewares = commandMiddlewareFactory(commandMiddleware);
+        handler = handler || (() => { });
+        if (Array.isArray(cmd)) {
+            if (isCommandAndAliases(cmd)) {
+                [cmd, ...aliases] = cmd;
+            }
+            else {
+                for (const command of cmd) {
+                    this.addHandler(command);
                 }
-                if (typeof o[key] !== 'object' || Array.isArray(o[key])) {
-                    if (Array.isArray(o[key])) {
-                        o[key].push({});
+            }
+        }
+        else if (isCommandHandlerDefinition(cmd)) {
+            let command = Array.isArray(cmd.command) || typeof cmd.command === 'string'
+                ? cmd.command
+                : this.moduleName(cmd);
+            if (cmd.aliases)
+                command = [].concat(command).concat(cmd.aliases);
+            this.addHandler(command, this.extractDesc(cmd), cmd.builder, cmd.handler, cmd.middlewares, cmd.deprecated);
+            return;
+        }
+        else if (isCommandBuilderDefinition(builder)) {
+            this.addHandler([cmd].concat(aliases), description, builder.builder, builder.handler, builder.middlewares, builder.deprecated);
+            return;
+        }
+        if (typeof cmd === 'string') {
+            const parsedCommand = parseCommand(cmd);
+            aliases = aliases.map(alias => parseCommand(alias).cmd);
+            let isDefault = false;
+            const parsedAliases = [parsedCommand.cmd].concat(aliases).filter(c => {
+                if (DEFAULT_MARKER.test(c)) {
+                    isDefault = true;
+                    return false;
+                }
+                return true;
+            });
+            if (parsedAliases.length === 0 && isDefault)
+                parsedAliases.push('$0');
+            if (isDefault) {
+                parsedCommand.cmd = parsedAliases[0];
+                aliases = parsedAliases.slice(1);
+                cmd = cmd.replace(DEFAULT_MARKER, parsedCommand.cmd);
+            }
+            aliases.forEach(alias => {
+                this.aliasMap[alias] = parsedCommand.cmd;
+            });
+            if (description !== false) {
+                this.usage.command(cmd, description, isDefault, aliases, deprecated);
+            }
+            this.handlers[parsedCommand.cmd] = {
+                original: cmd,
+                description,
+                handler,
+                builder: builder || {},
+                middlewares,
+                deprecated,
+                demanded: parsedCommand.demanded,
+                optional: parsedCommand.optional,
+            };
+            if (isDefault)
+                this.defaultCommand = this.handlers[parsedCommand.cmd];
+        }
+    }
+    getCommandHandlers() {
+        return this.handlers;
+    }
+    getCommands() {
+        return Object.keys(this.handlers).concat(Object.keys(this.aliasMap));
+    }
+    hasDefaultCommand() {
+        return !!this.defaultCommand;
+    }
+    runCommand(command, yargs, parsed, commandIndex, helpOnly, helpOrVersionSet) {
+        const commandHandler = this.handlers[command] ||
+            this.handlers[this.aliasMap[command]] ||
+            this.defaultCommand;
+        const currentContext = yargs.getInternalMethods().getContext();
+        const parentCommands = currentContext.commands.slice();
+        const isDefaultCommand = !command;
+        if (command) {
+            currentContext.commands.push(command);
+            currentContext.fullCommands.push(commandHandler.original);
+        }
+        const builderResult = this.applyBuilderUpdateUsageAndParse(isDefaultCommand, commandHandler, yargs, parsed.aliases, parentCommands, commandIndex, helpOnly, helpOrVersionSet);
+        return isPromise(builderResult)
+            ? builderResult.then(result => this.applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, result.innerArgv, currentContext, helpOnly, result.aliases, yargs))
+            : this.applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, builderResult.innerArgv, currentContext, helpOnly, builderResult.aliases, yargs);
+    }
+    applyBuilderUpdateUsageAndParse(isDefaultCommand, commandHandler, yargs, aliases, parentCommands, commandIndex, helpOnly, helpOrVersionSet) {
+        const builder = commandHandler.builder;
+        let innerYargs = yargs;
+        if (isCommandBuilderCallback(builder)) {
+            yargs.getInternalMethods().getUsageInstance().freeze();
+            const builderOutput = builder(yargs.getInternalMethods().reset(aliases), helpOrVersionSet);
+            if (isPromise(builderOutput)) {
+                return builderOutput.then(output => {
+                    innerYargs = isYargsInstance(output) ? output : yargs;
+                    return this.parseAndUpdateUsage(isDefaultCommand, commandHandler, innerYargs, parentCommands, commandIndex, helpOnly);
+                });
+            }
+        }
+        else if (isCommandBuilderOptionDefinitions(builder)) {
+            yargs.getInternalMethods().getUsageInstance().freeze();
+            innerYargs = yargs.getInternalMethods().reset(aliases);
+            Object.keys(commandHandler.builder).forEach(key => {
+                innerYargs.option(key, builder[key]);
+            });
+        }
+        return this.parseAndUpdateUsage(isDefaultCommand, commandHandler, innerYargs, parentCommands, commandIndex, helpOnly);
+    }
+    parseAndUpdateUsage(isDefaultCommand, commandHandler, innerYargs, parentCommands, commandIndex, helpOnly) {
+        if (isDefaultCommand)
+            innerYargs.getInternalMethods().getUsageInstance().unfreeze(true);
+        if (this.shouldUpdateUsage(innerYargs)) {
+            innerYargs
+                .getInternalMethods()
+                .getUsageInstance()
+                .usage(this.usageFromParentCommandsCommandHandler(parentCommands, commandHandler), commandHandler.description);
+        }
+        const innerArgv = innerYargs
+            .getInternalMethods()
+            .runYargsParserAndExecuteCommands(null, undefined, true, commandIndex, helpOnly);
+        return isPromise(innerArgv)
+            ? innerArgv.then(argv => ({
+                aliases: innerYargs.parsed.aliases,
+                innerArgv: argv,
+            }))
+            : {
+                aliases: innerYargs.parsed.aliases,
+                innerArgv: innerArgv,
+            };
+    }
+    shouldUpdateUsage(yargs) {
+        return (!yargs.getInternalMethods().getUsageInstance().getUsageDisabled() &&
+            yargs.getInternalMethods().getUsageInstance().getUsage().length === 0);
+    }
+    usageFromParentCommandsCommandHandler(parentCommands, commandHandler) {
+        const c = DEFAULT_MARKER.test(commandHandler.original)
+            ? commandHandler.original.replace(DEFAULT_MARKER, '').trim()
+            : commandHandler.original;
+        const pc = parentCommands.filter(c => {
+            return !DEFAULT_MARKER.test(c);
+        });
+        pc.push(c);
+        return `$0 ${pc.join(' ')}`;
+    }
+    handleValidationAndGetResult(isDefaultCommand, commandHandler, innerArgv, currentContext, aliases, yargs, middlewares, positionalMap) {
+        if (!yargs.getInternalMethods().getHasOutput()) {
+            const validation = yargs
+                .getInternalMethods()
+                .runValidation(aliases, positionalMap, yargs.parsed.error, isDefaultCommand);
+            innerArgv = maybeAsyncResult(innerArgv, result => {
+                validation(result);
+                return result;
+            });
+        }
+        if (commandHandler.handler && !yargs.getInternalMethods().getHasOutput()) {
+            yargs.getInternalMethods().setHasOutput();
+            const populateDoubleDash = !!yargs.getOptions().configuration['populate--'];
+            yargs
+                .getInternalMethods()
+                .postProcess(innerArgv, populateDoubleDash, false, false);
+            innerArgv = applyMiddleware(innerArgv, yargs, middlewares, false);
+            innerArgv = maybeAsyncResult(innerArgv, result => {
+                const handlerResult = commandHandler.handler(result);
+                return isPromise(handlerResult)
+                    ? handlerResult.then(() => result)
+                    : result;
+            });
+            if (!isDefaultCommand) {
+                yargs.getInternalMethods().getUsageInstance().cacheHelpMessage();
+            }
+            if (isPromise(innerArgv) &&
+                !yargs.getInternalMethods().hasParseCallback()) {
+                innerArgv.catch(error => {
+                    try {
+                        yargs.getInternalMethods().getUsageInstance().fail(null, error);
+                    }
+                    catch (_err) {
+                    }
+                });
+            }
+        }
+        if (!isDefaultCommand) {
+            currentContext.commands.pop();
+            currentContext.fullCommands.pop();
+        }
+        return innerArgv;
+    }
+    applyMiddlewareAndGetResult(isDefaultCommand, commandHandler, innerArgv, currentContext, helpOnly, aliases, yargs) {
+        let positionalMap = {};
+        if (helpOnly)
+            return innerArgv;
+        if (!yargs.getInternalMethods().getHasOutput()) {
+            positionalMap = this.populatePositionals(commandHandler, innerArgv, currentContext, yargs);
+        }
+        const middlewares = this.globalMiddleware
+            .getMiddleware()
+            .slice(0)
+            .concat(commandHandler.middlewares);
+        const maybePromiseArgv = applyMiddleware(innerArgv, yargs, middlewares, true);
+        return isPromise(maybePromiseArgv)
+            ? maybePromiseArgv.then(resolvedInnerArgv => this.handleValidationAndGetResult(isDefaultCommand, commandHandler, resolvedInnerArgv, currentContext, aliases, yargs, middlewares, positionalMap))
+            : this.handleValidationAndGetResult(isDefaultCommand, commandHandler, maybePromiseArgv, currentContext, aliases, yargs, middlewares, positionalMap);
+    }
+    populatePositionals(commandHandler, argv, context, yargs) {
+        argv._ = argv._.slice(context.commands.length);
+        const demanded = commandHandler.demanded.slice(0);
+        const optional = commandHandler.optional.slice(0);
+        const positionalMap = {};
+        this.validation.positionalCount(demanded.length, argv._.length);
+        while (demanded.length) {
+            const demand = demanded.shift();
+            this.populatePositional(demand, argv, positionalMap);
+        }
+        while (optional.length) {
+            const maybe = optional.shift();
+            this.populatePositional(maybe, argv, positionalMap);
+        }
+        argv._ = context.commands.concat(argv._.map(a => '' + a));
+        this.postProcessPositionals(argv, positionalMap, this.cmdToParseOptions(commandHandler.original), yargs);
+        return positionalMap;
+    }
+    populatePositional(positional, argv, positionalMap) {
+        const cmd = positional.cmd[0];
+        if (positional.variadic) {
+            positionalMap[cmd] = argv._.splice(0).map(String);
+        }
+        else {
+            if (argv._.length)
+                positionalMap[cmd] = [String(argv._.shift())];
+        }
+    }
+    cmdToParseOptions(cmdString) {
+        const parseOptions = {
+            array: [],
+            default: {},
+            alias: {},
+            demand: {},
+        };
+        const parsed = parseCommand(cmdString);
+        parsed.demanded.forEach(d => {
+            const [cmd, ...aliases] = d.cmd;
+            if (d.variadic) {
+                parseOptions.array.push(cmd);
+                parseOptions.default[cmd] = [];
+            }
+            parseOptions.alias[cmd] = aliases;
+            parseOptions.demand[cmd] = true;
+        });
+        parsed.optional.forEach(o => {
+            const [cmd, ...aliases] = o.cmd;
+            if (o.variadic) {
+                parseOptions.array.push(cmd);
+                parseOptions.default[cmd] = [];
+            }
+            parseOptions.alias[cmd] = aliases;
+        });
+        return parseOptions;
+    }
+    postProcessPositionals(argv, positionalMap, parseOptions, yargs) {
+        const options = Object.assign({}, yargs.getOptions());
+        options.default = Object.assign(parseOptions.default, options.default);
+        for (const key of Object.keys(parseOptions.alias)) {
+            options.alias[key] = (options.alias[key] || []).concat(parseOptions.alias[key]);
+        }
+        options.array = options.array.concat(parseOptions.array);
+        options.config = {};
+        const unparsed = [];
+        Object.keys(positionalMap).forEach(key => {
+            positionalMap[key].map(value => {
+                if (options.configuration['unknown-options-as-args'])
+                    options.key[key] = true;
+                unparsed.push(`--${key}`);
+                unparsed.push(value);
+            });
+        });
+        if (!unparsed.length)
+            return;
+        const config = Object.assign({}, options.configuration, {
+            'populate--': false,
+        });
+        const parsed = this.shim.Parser.detailed(unparsed, Object.assign({}, options, {
+            configuration: config,
+        }));
+        if (parsed.error) {
+            yargs
+                .getInternalMethods()
+                .getUsageInstance()
+                .fail(parsed.error.message, parsed.error);
+        }
+        else {
+            const positionalKeys = Object.keys(positionalMap);
+            Object.keys(positionalMap).forEach(key => {
+                positionalKeys.push(...parsed.aliases[key]);
+            });
+            Object.keys(parsed.argv).forEach(key => {
+                if (positionalKeys.includes(key)) {
+                    if (!positionalMap[key])
+                        positionalMap[key] = parsed.argv[key];
+                    if (!this.isInConfigs(yargs, key) &&
+                        !this.isDefaulted(yargs, key) &&
+                        Object.prototype.hasOwnProperty.call(argv, key) &&
+                        Object.prototype.hasOwnProperty.call(parsed.argv, key) &&
+                        (Array.isArray(argv[key]) || Array.isArray(parsed.argv[key]))) {
+                        argv[key] = [].concat(argv[key], parsed.argv[key]);
                     }
                     else {
-                        o[key] = [o[key], {}];
+                        argv[key] = parsed.argv[key];
                     }
-                    o = o[key][o[key].length - 1];
-                }
-                else {
-                    o = o[key];
                 }
             });
-            const key = sanitizeKey(keys[keys.length - 1]);
-            const isTypeArray = checkAllAliases(keys.join('.'), flags.arrays);
-            const isValueArray = Array.isArray(value);
-            let duplicate = configuration['duplicate-arguments-array'];
-            if (!duplicate && checkAllAliases(key, flags.nargs)) {
-                duplicate = true;
-                if ((!isUndefined(o[key]) && flags.nargs[key] === 1) || (Array.isArray(o[key]) && o[key].length === flags.nargs[key])) {
-                    o[key] = undefined;
-                }
-            }
-            if (value === increment()) {
-                o[key] = increment(o[key]);
-            }
-            else if (Array.isArray(o[key])) {
-                if (duplicate && isTypeArray && isValueArray) {
-                    o[key] = configuration['flatten-duplicate-arrays'] ? o[key].concat(value) : (Array.isArray(o[key][0]) ? o[key] : [o[key]]).concat([value]);
-                }
-                else if (!duplicate && Boolean(isTypeArray) === Boolean(isValueArray)) {
-                    o[key] = value;
+        }
+    }
+    isDefaulted(yargs, key) {
+        const { default: defaults } = yargs.getOptions();
+        return (Object.prototype.hasOwnProperty.call(defaults, key) ||
+            Object.prototype.hasOwnProperty.call(defaults, this.shim.Parser.camelCase(key)));
+    }
+    isInConfigs(yargs, key) {
+        const { configObjects } = yargs.getOptions();
+        return (configObjects.some(c => Object.prototype.hasOwnProperty.call(c, key)) ||
+            configObjects.some(c => Object.prototype.hasOwnProperty.call(c, this.shim.Parser.camelCase(key))));
+    }
+    runDefaultBuilderOn(yargs) {
+        if (!this.defaultCommand)
+            return;
+        if (this.shouldUpdateUsage(yargs)) {
+            const commandString = DEFAULT_MARKER.test(this.defaultCommand.original)
+                ? this.defaultCommand.original
+                : this.defaultCommand.original.replace(/^[^[\]<>]*/, '$0 ');
+            yargs
+                .getInternalMethods()
+                .getUsageInstance()
+                .usage(commandString, this.defaultCommand.description);
+        }
+        const builder = this.defaultCommand.builder;
+        if (isCommandBuilderCallback(builder)) {
+            return builder(yargs, true);
+        }
+        else if (!isCommandBuilderDefinition(builder)) {
+            Object.keys(builder).forEach(key => {
+                yargs.option(key, builder[key]);
+            });
+        }
+        return undefined;
+    }
+    moduleName(obj) {
+        const mod = whichModule(obj);
+        if (!mod)
+            throw new Error(`No command name given for module: ${this.shim.inspect(obj)}`);
+        return this.commandFromFilename(mod.filename);
+    }
+    commandFromFilename(filename) {
+        return this.shim.path.basename(filename, this.shim.path.extname(filename));
+    }
+    extractDesc({ describe, description, desc }) {
+        for (const test of [describe, description, desc]) {
+            if (typeof test === 'string' || test === false)
+                return test;
+            assertNotStrictEqual(test, true, this.shim);
+        }
+        return false;
+    }
+    freeze() {
+        this.frozens.push({
+            handlers: this.handlers,
+            aliasMap: this.aliasMap,
+            defaultCommand: this.defaultCommand,
+        });
+    }
+    unfreeze() {
+        const frozen = this.frozens.pop();
+        assertNotStrictEqual(frozen, undefined, this.shim);
+        ({
+            handlers: this.handlers,
+            aliasMap: this.aliasMap,
+            defaultCommand: this.defaultCommand,
+        } = frozen);
+    }
+    reset() {
+        this.handlers = {};
+        this.aliasMap = {};
+        this.defaultCommand = undefined;
+        this.requireCache = new Set();
+        return this;
+    }
+}
+function command(usage, validation, globalMiddleware, shim) {
+    return new CommandInstance(usage, validation, globalMiddleware, shim);
+}
+function isCommandBuilderDefinition(builder) {
+    return (typeof builder === 'object' &&
+        !!builder.builder &&
+        typeof builder.handler === 'function');
+}
+function isCommandAndAliases(cmd) {
+    return cmd.every(c => typeof c === 'string');
+}
+function isCommandBuilderCallback(builder) {
+    return typeof builder === 'function';
+}
+function isCommandBuilderOptionDefinitions(builder) {
+    return typeof builder === 'object';
+}
+function isCommandHandlerDefinition(cmd) {
+    return typeof cmd === 'object' && !Array.isArray(cmd);
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/utils/obj-filter.js
+
+function objFilter(original = {}, filter = () => true) {
+    const obj = {};
+    objectKeys(original).forEach(key => {
+        if (filter(key, original[key])) {
+            obj[key] = original[key];
+        }
+    });
+    return obj;
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/utils/set-blocking.js
+function setBlocking(blocking) {
+    if (typeof process === 'undefined')
+        return;
+    [process.stdout, process.stderr].forEach(_stream => {
+        const stream = _stream;
+        if (stream._handle &&
+            stream.isTTY &&
+            typeof stream._handle.setBlocking === 'function') {
+            stream._handle.setBlocking(blocking);
+        }
+    });
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/usage.js
+
+
+
+function isBoolean(fail) {
+    return typeof fail === 'boolean';
+}
+function usage(yargs, shim) {
+    const __ = shim.y18n.__;
+    const self = {};
+    const fails = [];
+    self.failFn = function failFn(f) {
+        fails.push(f);
+    };
+    let failMessage = null;
+    let globalFailMessage = null;
+    let showHelpOnFail = true;
+    self.showHelpOnFail = function showHelpOnFailFn(arg1 = true, arg2) {
+        const [enabled, message] = typeof arg1 === 'string' ? [true, arg1] : [arg1, arg2];
+        if (yargs.getInternalMethods().isGlobalContext()) {
+            globalFailMessage = message;
+        }
+        failMessage = message;
+        showHelpOnFail = enabled;
+        return self;
+    };
+    let failureOutput = false;
+    self.fail = function fail(msg, err) {
+        const logger = yargs.getInternalMethods().getLoggerInstance();
+        if (fails.length) {
+            for (let i = fails.length - 1; i >= 0; --i) {
+                const fail = fails[i];
+                if (isBoolean(fail)) {
+                    if (err)
+                        throw err;
+                    else if (msg)
+                        throw Error(msg);
                 }
                 else {
-                    o[key] = o[key].concat([value]);
+                    fail(msg, err, self);
                 }
             }
-            else if (o[key] === undefined && isTypeArray) {
-                o[key] = isValueArray ? value : [value];
+        }
+        else {
+            if (yargs.getExitProcess())
+                setBlocking(true);
+            if (!failureOutput) {
+                failureOutput = true;
+                if (showHelpOnFail) {
+                    yargs.showHelp('error');
+                    logger.error();
+                }
+                if (msg || err)
+                    logger.error(msg || err);
+                const globalOrCommandFailMessage = failMessage || globalFailMessage;
+                if (globalOrCommandFailMessage) {
+                    if (msg || err)
+                        logger.error('');
+                    logger.error(globalOrCommandFailMessage);
+                }
             }
-            else if (duplicate && !(o[key] === undefined ||
-                checkAllAliases(key, flags.counts) ||
-                checkAllAliases(key, flags.bools))) {
-                o[key] = [o[key], value];
+            err = err || new YError(msg);
+            if (yargs.getExitProcess()) {
+                return yargs.exit(1);
+            }
+            else if (yargs.getInternalMethods().hasParseCallback()) {
+                return yargs.exit(1, err);
             }
             else {
-                o[key] = value;
+                throw err;
             }
         }
-        function extendAliases(...args) {
-            args.forEach(function (obj) {
-                Object.keys(obj || {}).forEach(function (key) {
-                    if (flags.aliases[key])
-                        return;
-                    flags.aliases[key] = [].concat(aliases[key] || []);
-                    flags.aliases[key].concat(key).forEach(function (x) {
-                        if (/-/.test(x) && configuration['camel-case-expansion']) {
-                            const c = camelCase(x);
-                            if (c !== key && flags.aliases[key].indexOf(c) === -1) {
-                                flags.aliases[key].push(c);
-                                newAliases[c] = true;
-                            }
-                        }
+    };
+    let usages = [];
+    let usageDisabled = false;
+    self.usage = (msg, description) => {
+        if (msg === null) {
+            usageDisabled = true;
+            usages = [];
+            return self;
+        }
+        usageDisabled = false;
+        usages.push([msg, description || '']);
+        return self;
+    };
+    self.getUsage = () => {
+        return usages;
+    };
+    self.getUsageDisabled = () => {
+        return usageDisabled;
+    };
+    self.getPositionalGroupName = () => {
+        return __('Positionals:');
+    };
+    let examples = [];
+    self.example = (cmd, description) => {
+        examples.push([cmd, description || '']);
+    };
+    let commands = [];
+    self.command = function command(cmd, description, isDefault, aliases, deprecated = false) {
+        if (isDefault) {
+            commands = commands.map(cmdArray => {
+                cmdArray[2] = false;
+                return cmdArray;
+            });
+        }
+        commands.push([cmd, description || '', isDefault, aliases, deprecated]);
+    };
+    self.getCommands = () => commands;
+    let descriptions = {};
+    self.describe = function describe(keyOrKeys, desc) {
+        if (Array.isArray(keyOrKeys)) {
+            keyOrKeys.forEach(k => {
+                self.describe(k, desc);
+            });
+        }
+        else if (typeof keyOrKeys === 'object') {
+            Object.keys(keyOrKeys).forEach(k => {
+                self.describe(k, keyOrKeys[k]);
+            });
+        }
+        else {
+            descriptions[keyOrKeys] = desc;
+        }
+    };
+    self.getDescriptions = () => descriptions;
+    let epilogs = [];
+    self.epilog = msg => {
+        epilogs.push(msg);
+    };
+    let wrapSet = false;
+    let wrap;
+    self.wrap = cols => {
+        wrapSet = true;
+        wrap = cols;
+    };
+    self.getWrap = () => {
+        if (shim.getEnv('YARGS_DISABLE_WRAP')) {
+            return null;
+        }
+        if (!wrapSet) {
+            wrap = windowWidth();
+            wrapSet = true;
+        }
+        return wrap;
+    };
+    const deferY18nLookupPrefix = '__yargsString__:';
+    self.deferY18nLookup = str => deferY18nLookupPrefix + str;
+    self.help = function help() {
+        if (cachedHelpMessage)
+            return cachedHelpMessage;
+        normalizeAliases();
+        const base$0 = yargs.customScriptName
+            ? yargs.$0
+            : shim.path.basename(yargs.$0);
+        const demandedOptions = yargs.getDemandedOptions();
+        const demandedCommands = yargs.getDemandedCommands();
+        const deprecatedOptions = yargs.getDeprecatedOptions();
+        const groups = yargs.getGroups();
+        const options = yargs.getOptions();
+        let keys = [];
+        keys = keys.concat(Object.keys(descriptions));
+        keys = keys.concat(Object.keys(demandedOptions));
+        keys = keys.concat(Object.keys(demandedCommands));
+        keys = keys.concat(Object.keys(options.default));
+        keys = keys.filter(filterHiddenOptions);
+        keys = Object.keys(keys.reduce((acc, key) => {
+            if (key !== '_')
+                acc[key] = true;
+            return acc;
+        }, {}));
+        const theWrap = self.getWrap();
+        const ui = shim.cliui({
+            width: theWrap,
+            wrap: !!theWrap,
+        });
+        if (!usageDisabled) {
+            if (usages.length) {
+                usages.forEach(usage => {
+                    ui.div({ text: `${usage[0].replace(/\$0/g, base$0)}` });
+                    if (usage[1]) {
+                        ui.div({ text: `${usage[1]}`, padding: [1, 0, 0, 0] });
+                    }
+                });
+                ui.div();
+            }
+            else if (commands.length) {
+                let u = null;
+                if (demandedCommands._) {
+                    u = `${base$0} <${__('command')}>\n`;
+                }
+                else {
+                    u = `${base$0} [${__('command')}]\n`;
+                }
+                ui.div(`${u}`);
+            }
+        }
+        if (commands.length > 1 || (commands.length === 1 && !commands[0][2])) {
+            ui.div(__('Commands:'));
+            const context = yargs.getInternalMethods().getContext();
+            const parentCommands = context.commands.length
+                ? `${context.commands.join(' ')} `
+                : '';
+            if (yargs.getInternalMethods().getParserConfiguration()['sort-commands'] ===
+                true) {
+                commands = commands.sort((a, b) => a[0].localeCompare(b[0]));
+            }
+            const prefix = base$0 ? `${base$0} ` : '';
+            commands.forEach(command => {
+                const commandString = `${prefix}${parentCommands}${command[0].replace(/^\$0 ?/, '')}`;
+                ui.span({
+                    text: commandString,
+                    padding: [0, 2, 0, 2],
+                    width: maxWidth(commands, theWrap, `${base$0}${parentCommands}`) + 4,
+                }, { text: command[1] });
+                const hints = [];
+                if (command[2])
+                    hints.push(`[${__('default')}]`);
+                if (command[3] && command[3].length) {
+                    hints.push(`[${__('aliases:')} ${command[3].join(', ')}]`);
+                }
+                if (command[4]) {
+                    if (typeof command[4] === 'string') {
+                        hints.push(`[${__('deprecated: %s', command[4])}]`);
+                    }
+                    else {
+                        hints.push(`[${__('deprecated')}]`);
+                    }
+                }
+                if (hints.length) {
+                    ui.div({
+                        text: hints.join(' '),
+                        padding: [0, 0, 0, 2],
+                        align: 'right',
                     });
-                    flags.aliases[key].concat(key).forEach(function (x) {
-                        if (x.length > 1 && /[A-Z]/.test(x) && configuration['camel-case-expansion']) {
-                            const c = decamelize(x, '-');
-                            if (c !== key && flags.aliases[key].indexOf(c) === -1) {
-                                flags.aliases[key].push(c);
-                                newAliases[c] = true;
-                            }
-                        }
-                    });
-                    flags.aliases[key].forEach(function (x) {
-                        flags.aliases[x] = [key].concat(flags.aliases[key].filter(function (y) {
-                            return x !== y;
-                        }));
-                    });
+                }
+                else {
+                    ui.div();
+                }
+            });
+            ui.div();
+        }
+        const aliasKeys = (Object.keys(options.alias) || []).concat(Object.keys(yargs.parsed.newAliases) || []);
+        keys = keys.filter(key => !yargs.parsed.newAliases[key] &&
+            aliasKeys.every(alias => (options.alias[alias] || []).indexOf(key) === -1));
+        const defaultGroup = __('Options:');
+        if (!groups[defaultGroup])
+            groups[defaultGroup] = [];
+        addUngroupedKeys(keys, options.alias, groups, defaultGroup);
+        const isLongSwitch = (sw) => /^--/.test(getText(sw));
+        const displayedGroups = Object.keys(groups)
+            .filter(groupName => groups[groupName].length > 0)
+            .map(groupName => {
+            const normalizedKeys = groups[groupName]
+                .filter(filterHiddenOptions)
+                .map(key => {
+                if (aliasKeys.includes(key))
+                    return key;
+                for (let i = 0, aliasKey; (aliasKey = aliasKeys[i]) !== undefined; i++) {
+                    if ((options.alias[aliasKey] || []).includes(key))
+                        return aliasKey;
+                }
+                return key;
+            });
+            return { groupName, normalizedKeys };
+        })
+            .filter(({ normalizedKeys }) => normalizedKeys.length > 0)
+            .map(({ groupName, normalizedKeys }) => {
+            const switches = normalizedKeys.reduce((acc, key) => {
+                acc[key] = [key]
+                    .concat(options.alias[key] || [])
+                    .map(sw => {
+                    if (groupName === self.getPositionalGroupName())
+                        return sw;
+                    else {
+                        return ((/^[0-9]$/.test(sw)
+                            ? options.boolean.includes(key)
+                                ? '-'
+                                : '--'
+                            : sw.length > 1
+                                ? '--'
+                                : '-') + sw);
+                    }
+                })
+                    .sort((sw1, sw2) => isLongSwitch(sw1) === isLongSwitch(sw2)
+                    ? 0
+                    : isLongSwitch(sw1)
+                        ? 1
+                        : -1)
+                    .join(', ');
+                return acc;
+            }, {});
+            return { groupName, normalizedKeys, switches };
+        });
+        const shortSwitchesUsed = displayedGroups
+            .filter(({ groupName }) => groupName !== self.getPositionalGroupName())
+            .some(({ normalizedKeys, switches }) => !normalizedKeys.every(key => isLongSwitch(switches[key])));
+        if (shortSwitchesUsed) {
+            displayedGroups
+                .filter(({ groupName }) => groupName !== self.getPositionalGroupName())
+                .forEach(({ normalizedKeys, switches }) => {
+                normalizedKeys.forEach(key => {
+                    if (isLongSwitch(switches[key])) {
+                        switches[key] = addIndentation(switches[key], '-x, '.length);
+                    }
                 });
             });
         }
-        function checkAllAliases(key, flag) {
-            const toCheck = [].concat(flags.aliases[key] || [], key);
-            const keys = Object.keys(flag);
-            const setAlias = toCheck.find(key => keys.includes(key));
-            return setAlias ? flag[setAlias] : false;
+        displayedGroups.forEach(({ groupName, normalizedKeys, switches }) => {
+            ui.div(groupName);
+            normalizedKeys.forEach(key => {
+                const kswitch = switches[key];
+                let desc = descriptions[key] || '';
+                let type = null;
+                if (desc.includes(deferY18nLookupPrefix))
+                    desc = __(desc.substring(deferY18nLookupPrefix.length));
+                if (options.boolean.includes(key))
+                    type = `[${__('boolean')}]`;
+                if (options.count.includes(key))
+                    type = `[${__('count')}]`;
+                if (options.string.includes(key))
+                    type = `[${__('string')}]`;
+                if (options.normalize.includes(key))
+                    type = `[${__('string')}]`;
+                if (options.array.includes(key))
+                    type = `[${__('array')}]`;
+                if (options.number.includes(key))
+                    type = `[${__('number')}]`;
+                const deprecatedExtra = (deprecated) => typeof deprecated === 'string'
+                    ? `[${__('deprecated: %s', deprecated)}]`
+                    : `[${__('deprecated')}]`;
+                const extra = [
+                    key in deprecatedOptions
+                        ? deprecatedExtra(deprecatedOptions[key])
+                        : null,
+                    type,
+                    key in demandedOptions ? `[${__('required')}]` : null,
+                    options.choices && options.choices[key]
+                        ? `[${__('choices:')} ${self.stringifiedValues(options.choices[key])}]`
+                        : null,
+                    defaultString(options.default[key], options.defaultDescription[key]),
+                ]
+                    .filter(Boolean)
+                    .join(' ');
+                ui.span({
+                    text: getText(kswitch),
+                    padding: [0, 2, 0, 2 + getIndentation(kswitch)],
+                    width: maxWidth(switches, theWrap) + 4,
+                }, desc);
+                const shouldHideOptionExtras = yargs.getInternalMethods().getUsageConfiguration()['hide-types'] ===
+                    true;
+                if (extra && !shouldHideOptionExtras)
+                    ui.div({ text: extra, padding: [0, 0, 0, 2], align: 'right' });
+                else
+                    ui.div();
+            });
+            ui.div();
+        });
+        if (examples.length) {
+            ui.div(__('Examples:'));
+            examples.forEach(example => {
+                example[0] = example[0].replace(/\$0/g, base$0);
+            });
+            examples.forEach(example => {
+                if (example[1] === '') {
+                    ui.div({
+                        text: example[0],
+                        padding: [0, 2, 0, 2],
+                    });
+                }
+                else {
+                    ui.div({
+                        text: example[0],
+                        padding: [0, 2, 0, 2],
+                        width: maxWidth(examples, theWrap) + 4,
+                    }, {
+                        text: example[1],
+                    });
+                }
+            });
+            ui.div();
         }
-        function hasAnyFlag(key) {
-            const flagsKeys = Object.keys(flags);
-            const toCheck = [].concat(flagsKeys.map(k => flags[k]));
-            return toCheck.some(function (flag) {
-                return Array.isArray(flag) ? flag.includes(key) : flag[key];
+        if (epilogs.length > 0) {
+            const e = epilogs
+                .map(epilog => epilog.replace(/\$0/g, base$0))
+                .join('\n');
+            ui.div(`${e}\n`);
+        }
+        return ui.toString().replace(/\s*$/, '');
+    };
+    function maxWidth(table, theWrap, modifier) {
+        let width = 0;
+        if (!Array.isArray(table)) {
+            table = Object.values(table).map(v => [v]);
+        }
+        table.forEach(v => {
+            width = Math.max(shim.stringWidth(modifier ? `${modifier} ${getText(v[0])}` : getText(v[0])) + getIndentation(v[0]), width);
+        });
+        if (theWrap)
+            width = Math.min(width, parseInt((theWrap * 0.5).toString(), 10));
+        return width;
+    }
+    function normalizeAliases() {
+        const demandedOptions = yargs.getDemandedOptions();
+        const options = yargs.getOptions();
+        (Object.keys(options.alias) || []).forEach(key => {
+            options.alias[key].forEach(alias => {
+                if (descriptions[alias])
+                    self.describe(key, descriptions[alias]);
+                if (alias in demandedOptions)
+                    yargs.demandOption(key, demandedOptions[alias]);
+                if (options.boolean.includes(alias))
+                    yargs.boolean(key);
+                if (options.count.includes(alias))
+                    yargs.count(key);
+                if (options.string.includes(alias))
+                    yargs.string(key);
+                if (options.normalize.includes(alias))
+                    yargs.normalize(key);
+                if (options.array.includes(alias))
+                    yargs.array(key);
+                if (options.number.includes(alias))
+                    yargs.number(key);
+            });
+        });
+    }
+    let cachedHelpMessage;
+    self.cacheHelpMessage = function () {
+        cachedHelpMessage = this.help();
+    };
+    self.clearCachedHelpMessage = function () {
+        cachedHelpMessage = undefined;
+    };
+    self.hasCachedHelpMessage = function () {
+        return !!cachedHelpMessage;
+    };
+    function addUngroupedKeys(keys, aliases, groups, defaultGroup) {
+        let groupedKeys = [];
+        let toCheck = null;
+        Object.keys(groups).forEach(group => {
+            groupedKeys = groupedKeys.concat(groups[group]);
+        });
+        keys.forEach(key => {
+            toCheck = [key].concat(aliases[key]);
+            if (!toCheck.some(k => groupedKeys.indexOf(k) !== -1)) {
+                groups[defaultGroup].push(key);
+            }
+        });
+        return groupedKeys;
+    }
+    function filterHiddenOptions(key) {
+        return (yargs.getOptions().hiddenOptions.indexOf(key) < 0 ||
+            yargs.parsed.argv[yargs.getOptions().showHiddenOpt]);
+    }
+    self.showHelp = (level) => {
+        const logger = yargs.getInternalMethods().getLoggerInstance();
+        if (!level)
+            level = 'error';
+        const emit = typeof level === 'function' ? level : logger[level];
+        emit(self.help());
+    };
+    self.functionDescription = fn => {
+        const description = fn.name
+            ? shim.Parser.decamelize(fn.name, '-')
+            : __('generated-value');
+        return ['(', description, ')'].join('');
+    };
+    self.stringifiedValues = function stringifiedValues(values, separator) {
+        let string = '';
+        const sep = separator || ', ';
+        const array = [].concat(values);
+        if (!values || !array.length)
+            return string;
+        array.forEach(value => {
+            if (string.length)
+                string += sep;
+            string += JSON.stringify(value);
+        });
+        return string;
+    };
+    function defaultString(value, defaultDescription) {
+        let string = `[${__('default:')} `;
+        if (value === undefined && !defaultDescription)
+            return null;
+        if (defaultDescription) {
+            string += defaultDescription;
+        }
+        else {
+            switch (typeof value) {
+                case 'string':
+                    string += `"${value}"`;
+                    break;
+                case 'object':
+                    string += JSON.stringify(value);
+                    break;
+                default:
+                    string += value;
+            }
+        }
+        return `${string}]`;
+    }
+    function windowWidth() {
+        const maxWidth = 80;
+        if (shim.process.stdColumns) {
+            return Math.min(maxWidth, shim.process.stdColumns);
+        }
+        else {
+            return maxWidth;
+        }
+    }
+    let version = null;
+    self.version = ver => {
+        version = ver;
+    };
+    self.showVersion = level => {
+        const logger = yargs.getInternalMethods().getLoggerInstance();
+        if (!level)
+            level = 'error';
+        const emit = typeof level === 'function' ? level : logger[level];
+        emit(version);
+    };
+    self.reset = function reset(localLookup) {
+        failMessage = null;
+        failureOutput = false;
+        usages = [];
+        usageDisabled = false;
+        epilogs = [];
+        examples = [];
+        commands = [];
+        descriptions = objFilter(descriptions, k => !localLookup[k]);
+        return self;
+    };
+    const frozens = [];
+    self.freeze = function freeze() {
+        frozens.push({
+            failMessage,
+            failureOutput,
+            usages,
+            usageDisabled,
+            epilogs,
+            examples,
+            commands,
+            descriptions,
+        });
+    };
+    self.unfreeze = function unfreeze(defaultCommand = false) {
+        const frozen = frozens.pop();
+        if (!frozen)
+            return;
+        if (defaultCommand) {
+            descriptions = { ...frozen.descriptions, ...descriptions };
+            commands = [...frozen.commands, ...commands];
+            usages = [...frozen.usages, ...usages];
+            examples = [...frozen.examples, ...examples];
+            epilogs = [...frozen.epilogs, ...epilogs];
+        }
+        else {
+            ({
+                failMessage,
+                failureOutput,
+                usages,
+                usageDisabled,
+                epilogs,
+                examples,
+                commands,
+                descriptions,
+            } = frozen);
+        }
+    };
+    return self;
+}
+function isIndentedText(text) {
+    return typeof text === 'object';
+}
+function addIndentation(text, indent) {
+    return isIndentedText(text)
+        ? { text: text.text, indentation: text.indentation + indent }
+        : { text, indentation: indent };
+}
+function getIndentation(text) {
+    return isIndentedText(text) ? text.indentation : 0;
+}
+function getText(text) {
+    return isIndentedText(text) ? text.text : text;
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/completion-templates.js
+const completionShTemplate = `###-begin-{{app_name}}-completions-###
+#
+# yargs command completion script
+#
+# Installation: {{app_path}} {{completion_command}} >> ~/.bashrc
+#    or {{app_path}} {{completion_command}} >> ~/.bash_profile on OSX.
+#
+_{{app_name}}_yargs_completions()
+{
+    local cur_word args type_list
+
+    cur_word="\${COMP_WORDS[COMP_CWORD]}"
+    args=("\${COMP_WORDS[@]}")
+
+    # ask yargs to generate completions.
+    type_list=$({{app_path}} --get-yargs-completions "\${args[@]}")
+
+    COMPREPLY=( $(compgen -W "\${type_list}" -- \${cur_word}) )
+
+    # if no match was found, fall back to filename completion
+    if [ \${#COMPREPLY[@]} -eq 0 ]; then
+      COMPREPLY=()
+    fi
+
+    return 0
+}
+complete -o bashdefault -o default -F _{{app_name}}_yargs_completions {{app_name}}
+###-end-{{app_name}}-completions-###
+`;
+const completionZshTemplate = `#compdef {{app_name}}
+###-begin-{{app_name}}-completions-###
+#
+# yargs command completion script
+#
+# Installation: {{app_path}} {{completion_command}} >> ~/.zshrc
+#    or {{app_path}} {{completion_command}} >> ~/.zprofile on OSX.
+#
+_{{app_name}}_yargs_completions()
+{
+  local reply
+  local si=$IFS
+  IFS=$'\n' reply=($(COMP_CWORD="$((CURRENT-1))" COMP_LINE="$BUFFER" COMP_POINT="$CURSOR" {{app_path}} --get-yargs-completions "\${words[@]}"))
+  IFS=$si
+  _describe 'values' reply
+}
+compdef _{{app_name}}_yargs_completions {{app_name}}
+###-end-{{app_name}}-completions-###
+`;
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/completion.js
+
+
+
+
+
+class Completion {
+    constructor(yargs, usage, command, shim) {
+        var _a, _b, _c;
+        this.yargs = yargs;
+        this.usage = usage;
+        this.command = command;
+        this.shim = shim;
+        this.completionKey = 'get-yargs-completions';
+        this.aliases = null;
+        this.customCompletionFunction = null;
+        this.indexAfterLastReset = 0;
+        this.zshShell =
+            (_c = (((_a = this.shim.getEnv('SHELL')) === null || _a === void 0 ? void 0 : _a.includes('zsh')) ||
+                ((_b = this.shim.getEnv('ZSH_NAME')) === null || _b === void 0 ? void 0 : _b.includes('zsh')))) !== null && _c !== void 0 ? _c : false;
+    }
+    defaultCompletion(args, argv, current, done) {
+        const handlers = this.command.getCommandHandlers();
+        for (let i = 0, ii = args.length; i < ii; ++i) {
+            if (handlers[args[i]] && handlers[args[i]].builder) {
+                const builder = handlers[args[i]].builder;
+                if (isCommandBuilderCallback(builder)) {
+                    this.indexAfterLastReset = i + 1;
+                    const y = this.yargs.getInternalMethods().reset();
+                    builder(y, true);
+                    return y.argv;
+                }
+            }
+        }
+        const completions = [];
+        this.commandCompletions(completions, args, current);
+        this.optionCompletions(completions, args, argv, current);
+        this.choicesFromOptionsCompletions(completions, args, argv, current);
+        this.choicesFromPositionalsCompletions(completions, args, argv, current);
+        done(null, completions);
+    }
+    commandCompletions(completions, args, current) {
+        const parentCommands = this.yargs
+            .getInternalMethods()
+            .getContext().commands;
+        if (!current.match(/^-/) &&
+            parentCommands[parentCommands.length - 1] !== current &&
+            !this.previousArgHasChoices(args)) {
+            this.usage.getCommands().forEach(usageCommand => {
+                const commandName = parseCommand(usageCommand[0]).cmd;
+                if (args.indexOf(commandName) === -1) {
+                    if (!this.zshShell) {
+                        completions.push(commandName);
+                    }
+                    else {
+                        const desc = usageCommand[1] || '';
+                        completions.push(commandName.replace(/:/g, '\\:') + ':' + desc);
+                    }
+                }
             });
         }
-        function hasFlagsMatching(arg, ...patterns) {
-            const toCheck = [].concat(...patterns);
-            return toCheck.some(function (pattern) {
-                const match = arg.match(pattern);
-                return match && hasAnyFlag(match[1]);
+    }
+    optionCompletions(completions, args, argv, current) {
+        if ((current.match(/^-/) || (current === '' && completions.length === 0)) &&
+            !this.previousArgHasChoices(args)) {
+            const options = this.yargs.getOptions();
+            const positionalKeys = this.yargs.getGroups()[this.usage.getPositionalGroupName()] || [];
+            Object.keys(options.key).forEach(key => {
+                const negable = !!options.configuration['boolean-negation'] &&
+                    options.boolean.includes(key);
+                const isPositionalKey = positionalKeys.includes(key);
+                if (!isPositionalKey &&
+                    !options.hiddenOptions.includes(key) &&
+                    !this.argsContainKey(args, key, negable)) {
+                    this.completeOptionKey(key, completions, current, negable && !!options.default[key]);
+                }
             });
         }
-        function hasAllShortFlags(arg) {
-            if (arg.match(negative) || !arg.match(/^-[^-]+/)) {
-                return false;
+    }
+    choicesFromOptionsCompletions(completions, args, argv, current) {
+        if (this.previousArgHasChoices(args)) {
+            const choices = this.getPreviousArgChoices(args);
+            if (choices && choices.length > 0) {
+                completions.push(...choices.map(c => c.replace(/:/g, '\\:')));
             }
-            let hasAllFlags = true;
-            let next;
-            const letters = arg.slice(1).split('');
-            for (let j = 0; j < letters.length; j++) {
-                next = arg.slice(j + 2);
-                if (!hasAnyFlag(letters[j])) {
-                    hasAllFlags = false;
-                    break;
-                }
-                if ((letters[j + 1] && letters[j + 1] === '=') ||
-                    next === '-' ||
-                    (/[A-Za-z]/.test(letters[j]) && /^-?\d+(\.\d*)?(e-?\d+)?$/.test(next)) ||
-                    (letters[j + 1] && letters[j + 1].match(/\W/))) {
-                    break;
-                }
-            }
-            return hasAllFlags;
         }
-        function isUnknownOptionAsArg(arg) {
-            return configuration['unknown-options-as-args'] && isUnknownOption(arg);
+    }
+    choicesFromPositionalsCompletions(completions, args, argv, current) {
+        if (current === '' &&
+            completions.length > 0 &&
+            this.previousArgHasChoices(args)) {
+            return;
         }
-        function isUnknownOption(arg) {
-            arg = arg.replace(/^-{3,}/, '--');
-            if (arg.match(negative)) {
-                return false;
-            }
-            if (hasAllShortFlags(arg)) {
-                return false;
-            }
-            const flagWithEquals = /^-+([^=]+?)=[\s\S]*$/;
-            const normalFlag = /^-+([^=]+?)$/;
-            const flagEndingInHyphen = /^-+([^=]+?)-$/;
-            const flagEndingInDigits = /^-+([^=]+?\d+)$/;
-            const flagEndingInNonWordCharacters = /^-+([^=]+?)\W+.*$/;
-            return !hasFlagsMatching(arg, flagWithEquals, negatedBoolean, normalFlag, flagEndingInHyphen, flagEndingInDigits, flagEndingInNonWordCharacters);
+        const positionalKeys = this.yargs.getGroups()[this.usage.getPositionalGroupName()] || [];
+        const offset = Math.max(this.indexAfterLastReset, this.yargs.getInternalMethods().getContext().commands.length +
+            1);
+        const positionalKey = positionalKeys[argv._.length - offset - 1];
+        if (!positionalKey) {
+            return;
         }
-        function defaultValue(key) {
-            if (!checkAllAliases(key, flags.bools) &&
-                !checkAllAliases(key, flags.counts) &&
-                `${key}` in defaults) {
-                return defaults[key];
+        const choices = this.yargs.getOptions().choices[positionalKey] || [];
+        for (const choice of choices) {
+            if (choice.startsWith(current)) {
+                completions.push(choice.replace(/:/g, '\\:'));
+            }
+        }
+    }
+    getPreviousArgChoices(args) {
+        if (args.length < 1)
+            return;
+        let previousArg = args[args.length - 1];
+        let filter = '';
+        if (!previousArg.startsWith('-') && args.length > 1) {
+            filter = previousArg;
+            previousArg = args[args.length - 2];
+        }
+        if (!previousArg.startsWith('-'))
+            return;
+        const previousArgKey = previousArg.replace(/^-+/, '');
+        const options = this.yargs.getOptions();
+        const possibleAliases = [
+            previousArgKey,
+            ...(this.yargs.getAliases()[previousArgKey] || []),
+        ];
+        let choices;
+        for (const possibleAlias of possibleAliases) {
+            if (Object.prototype.hasOwnProperty.call(options.key, possibleAlias) &&
+                Array.isArray(options.choices[possibleAlias])) {
+                choices = options.choices[possibleAlias];
+                break;
+            }
+        }
+        if (choices) {
+            return choices.filter(choice => !filter || choice.startsWith(filter));
+        }
+    }
+    previousArgHasChoices(args) {
+        const choices = this.getPreviousArgChoices(args);
+        return choices !== undefined && choices.length > 0;
+    }
+    argsContainKey(args, key, negable) {
+        const argsContains = (s) => args.indexOf((/^[^0-9]$/.test(s) ? '-' : '--') + s) !== -1;
+        if (argsContains(key))
+            return true;
+        if (negable && argsContains(`no-${key}`))
+            return true;
+        if (this.aliases) {
+            for (const alias of this.aliases[key]) {
+                if (argsContains(alias))
+                    return true;
+            }
+        }
+        return false;
+    }
+    completeOptionKey(key, completions, current, negable) {
+        var _a, _b, _c, _d;
+        let keyWithDesc = key;
+        if (this.zshShell) {
+            const descs = this.usage.getDescriptions();
+            const aliasKey = (_b = (_a = this === null || this === void 0 ? void 0 : this.aliases) === null || _a === void 0 ? void 0 : _a[key]) === null || _b === void 0 ? void 0 : _b.find(alias => {
+                const desc = descs[alias];
+                return typeof desc === 'string' && desc.length > 0;
+            });
+            const descFromAlias = aliasKey ? descs[aliasKey] : undefined;
+            const desc = (_d = (_c = descs[key]) !== null && _c !== void 0 ? _c : descFromAlias) !== null && _d !== void 0 ? _d : '';
+            keyWithDesc = `${key.replace(/:/g, '\\:')}:${desc
+                .replace('__yargsString__:', '')
+                .replace(/(\r\n|\n|\r)/gm, ' ')}`;
+        }
+        const startsByTwoDashes = (s) => /^--/.test(s);
+        const isShortOption = (s) => /^[^0-9]$/.test(s);
+        const dashes = !startsByTwoDashes(current) && isShortOption(key) ? '-' : '--';
+        completions.push(dashes + keyWithDesc);
+        if (negable) {
+            completions.push(dashes + 'no-' + keyWithDesc);
+        }
+    }
+    customCompletion(args, argv, current, done) {
+        assertNotStrictEqual(this.customCompletionFunction, null, this.shim);
+        if (isSyncCompletionFunction(this.customCompletionFunction)) {
+            const result = this.customCompletionFunction(current, argv);
+            if (isPromise(result)) {
+                return result
+                    .then(list => {
+                    this.shim.process.nextTick(() => {
+                        done(null, list);
+                    });
+                })
+                    .catch(err => {
+                    this.shim.process.nextTick(() => {
+                        done(err, undefined);
+                    });
+                });
+            }
+            return done(null, result);
+        }
+        else if (isFallbackCompletionFunction(this.customCompletionFunction)) {
+            return this.customCompletionFunction(current, argv, (onCompleted = done) => this.defaultCompletion(args, argv, current, onCompleted), completions => {
+                done(null, completions);
+            });
+        }
+        else {
+            return this.customCompletionFunction(current, argv, completions => {
+                done(null, completions);
+            });
+        }
+    }
+    getCompletion(args, done) {
+        const current = args.length ? args[args.length - 1] : '';
+        const argv = this.yargs.parse(args, true);
+        const completionFunction = this.customCompletionFunction
+            ? (argv) => this.customCompletion(args, argv, current, done)
+            : (argv) => this.defaultCompletion(args, argv, current, done);
+        return isPromise(argv)
+            ? argv.then(completionFunction)
+            : completionFunction(argv);
+    }
+    generateCompletionScript($0, cmd) {
+        let script = this.zshShell
+            ? completionZshTemplate
+            : completionShTemplate;
+        const name = this.shim.path.basename($0);
+        if ($0.match(/\.js$/))
+            $0 = `./${$0}`;
+        script = script.replace(/{{app_name}}/g, name);
+        script = script.replace(/{{completion_command}}/g, cmd);
+        return script.replace(/{{app_path}}/g, $0);
+    }
+    registerFunction(fn) {
+        this.customCompletionFunction = fn;
+    }
+    setParsed(parsed) {
+        this.aliases = parsed.aliases;
+    }
+}
+function completion(yargs, usage, command, shim) {
+    return new Completion(yargs, usage, command, shim);
+}
+function isSyncCompletionFunction(completionFunction) {
+    return completionFunction.length < 3;
+}
+function isFallbackCompletionFunction(completionFunction) {
+    return completionFunction.length > 3;
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/utils/levenshtein.js
+function levenshtein(a, b) {
+    if (a.length === 0)
+        return b.length;
+    if (b.length === 0)
+        return a.length;
+    const matrix = [];
+    let i;
+    for (i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+    }
+    let j;
+    for (j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+    for (i = 1; i <= b.length; i++) {
+        for (j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
             }
             else {
-                return defaultForType(guessType(key));
+                if (i > 1 &&
+                    j > 1 &&
+                    b.charAt(i - 2) === a.charAt(j - 1) &&
+                    b.charAt(i - 1) === a.charAt(j - 2)) {
+                    matrix[i][j] = matrix[i - 2][j - 2] + 1;
+                }
+                else {
+                    matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+                }
             }
         }
-        function defaultForType(type) {
-            const def = {
-                [DefaultValuesForTypeKey.BOOLEAN]: true,
-                [DefaultValuesForTypeKey.STRING]: '',
-                [DefaultValuesForTypeKey.NUMBER]: undefined,
-                [DefaultValuesForTypeKey.ARRAY]: []
-            };
-            return def[type];
-        }
-        function guessType(key) {
-            let type = DefaultValuesForTypeKey.BOOLEAN;
-            if (checkAllAliases(key, flags.strings))
-                type = DefaultValuesForTypeKey.STRING;
-            else if (checkAllAliases(key, flags.numbers))
-                type = DefaultValuesForTypeKey.NUMBER;
-            else if (checkAllAliases(key, flags.bools))
-                type = DefaultValuesForTypeKey.BOOLEAN;
-            else if (checkAllAliases(key, flags.arrays))
-                type = DefaultValuesForTypeKey.ARRAY;
-            return type;
-        }
-        function isUndefined(num) {
-            return num === undefined;
-        }
-        function checkConfiguration() {
-            Object.keys(flags.counts).find(key => {
-                if (checkAllAliases(key, flags.arrays)) {
-                    error = Error(__('Invalid configuration: %s, opts.count excludes opts.array.', key));
-                    return true;
+    }
+    return matrix[b.length][a.length];
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/validation.js
+
+
+
+
+const specialKeys = ['$0', '--', '_'];
+function validation(yargs, usage, shim) {
+    const __ = shim.y18n.__;
+    const __n = shim.y18n.__n;
+    const self = {};
+    self.nonOptionCount = function nonOptionCount(argv) {
+        const demandedCommands = yargs.getDemandedCommands();
+        const positionalCount = argv._.length + (argv['--'] ? argv['--'].length : 0);
+        const _s = positionalCount - yargs.getInternalMethods().getContext().commands.length;
+        if (demandedCommands._ &&
+            (_s < demandedCommands._.min || _s > demandedCommands._.max)) {
+            if (_s < demandedCommands._.min) {
+                if (demandedCommands._.minMsg !== undefined) {
+                    usage.fail(demandedCommands._.minMsg
+                        ? demandedCommands._.minMsg
+                            .replace(/\$0/g, _s.toString())
+                            .replace(/\$1/, demandedCommands._.min.toString())
+                        : null);
                 }
-                else if (checkAllAliases(key, flags.nargs)) {
-                    error = Error(__('Invalid configuration: %s, opts.count excludes opts.narg.', key));
-                    return true;
+                else {
+                    usage.fail(__n('Not enough non-option arguments: got %s, need at least %s', 'Not enough non-option arguments: got %s, need at least %s', _s, _s.toString(), demandedCommands._.min.toString()));
                 }
-                return false;
+            }
+            else if (_s > demandedCommands._.max) {
+                if (demandedCommands._.maxMsg !== undefined) {
+                    usage.fail(demandedCommands._.maxMsg
+                        ? demandedCommands._.maxMsg
+                            .replace(/\$0/g, _s.toString())
+                            .replace(/\$1/, demandedCommands._.max.toString())
+                        : null);
+                }
+                else {
+                    usage.fail(__n('Too many non-option arguments: got %s, maximum of %s', 'Too many non-option arguments: got %s, maximum of %s', _s, _s.toString(), demandedCommands._.max.toString()));
+                }
+            }
+        }
+    };
+    self.positionalCount = function positionalCount(required, observed) {
+        if (observed < required) {
+            usage.fail(__n('Not enough non-option arguments: got %s, need at least %s', 'Not enough non-option arguments: got %s, need at least %s', observed, observed + '', required + ''));
+        }
+    };
+    self.requiredArguments = function requiredArguments(argv, demandedOptions) {
+        let missing = null;
+        for (const key of Object.keys(demandedOptions)) {
+            if (!Object.prototype.hasOwnProperty.call(argv, key) ||
+                typeof argv[key] === 'undefined') {
+                missing = missing || {};
+                missing[key] = demandedOptions[key];
+            }
+        }
+        if (missing) {
+            const customMsgs = [];
+            for (const key of Object.keys(missing)) {
+                const msg = missing[key];
+                if (msg && customMsgs.indexOf(msg) < 0) {
+                    customMsgs.push(msg);
+                }
+            }
+            const customMsg = customMsgs.length ? `\n${customMsgs.join('\n')}` : '';
+            usage.fail(__n('Missing required argument: %s', 'Missing required arguments: %s', Object.keys(missing).length, Object.keys(missing).join(', ') + customMsg));
+        }
+    };
+    self.unknownArguments = function unknownArguments(argv, aliases, positionalMap, isDefaultCommand, checkPositionals = true) {
+        var _a;
+        const commandKeys = yargs
+            .getInternalMethods()
+            .getCommandInstance()
+            .getCommands();
+        const unknown = [];
+        const currentContext = yargs.getInternalMethods().getContext();
+        Object.keys(argv).forEach(key => {
+            if (!specialKeys.includes(key) &&
+                !Object.prototype.hasOwnProperty.call(positionalMap, key) &&
+                !Object.prototype.hasOwnProperty.call(yargs.getInternalMethods().getParseContext(), key) &&
+                !self.isValidAndSomeAliasIsNotNew(key, aliases)) {
+                unknown.push(key);
+            }
+        });
+        if (checkPositionals &&
+            (currentContext.commands.length > 0 ||
+                commandKeys.length > 0 ||
+                isDefaultCommand)) {
+            argv._.slice(currentContext.commands.length).forEach(key => {
+                if (!commandKeys.includes('' + key)) {
+                    unknown.push('' + key);
+                }
             });
         }
+        if (checkPositionals) {
+            const demandedCommands = yargs.getDemandedCommands();
+            const maxNonOptDemanded = ((_a = demandedCommands._) === null || _a === void 0 ? void 0 : _a.max) || 0;
+            const expected = currentContext.commands.length + maxNonOptDemanded;
+            if (expected < argv._.length) {
+                argv._.slice(expected).forEach(key => {
+                    key = String(key);
+                    if (!currentContext.commands.includes(key) &&
+                        !unknown.includes(key)) {
+                        unknown.push(key);
+                    }
+                });
+            }
+        }
+        if (unknown.length) {
+            usage.fail(__n('Unknown argument: %s', 'Unknown arguments: %s', unknown.length, unknown.map(s => (s.trim() ? s : `"${s}"`)).join(', ')));
+        }
+    };
+    self.unknownCommands = function unknownCommands(argv) {
+        const commandKeys = yargs
+            .getInternalMethods()
+            .getCommandInstance()
+            .getCommands();
+        const unknown = [];
+        const currentContext = yargs.getInternalMethods().getContext();
+        if (currentContext.commands.length > 0 || commandKeys.length > 0) {
+            argv._.slice(currentContext.commands.length).forEach(key => {
+                if (!commandKeys.includes('' + key)) {
+                    unknown.push('' + key);
+                }
+            });
+        }
+        if (unknown.length > 0) {
+            usage.fail(__n('Unknown command: %s', 'Unknown commands: %s', unknown.length, unknown.join(', ')));
+            return true;
+        }
+        else {
+            return false;
+        }
+    };
+    self.isValidAndSomeAliasIsNotNew = function isValidAndSomeAliasIsNotNew(key, aliases) {
+        if (!Object.prototype.hasOwnProperty.call(aliases, key)) {
+            return false;
+        }
+        const newAliases = yargs.parsed.newAliases;
+        return [key, ...aliases[key]].some(a => !Object.prototype.hasOwnProperty.call(newAliases, a) || !newAliases[key]);
+    };
+    self.limitedChoices = function limitedChoices(argv) {
+        const options = yargs.getOptions();
+        const invalid = {};
+        if (!Object.keys(options.choices).length)
+            return;
+        Object.keys(argv).forEach(key => {
+            if (specialKeys.indexOf(key) === -1 &&
+                Object.prototype.hasOwnProperty.call(options.choices, key)) {
+                [].concat(argv[key]).forEach(value => {
+                    if (options.choices[key].indexOf(value) === -1 &&
+                        value !== undefined) {
+                        invalid[key] = (invalid[key] || []).concat(value);
+                    }
+                });
+            }
+        });
+        const invalidKeys = Object.keys(invalid);
+        if (!invalidKeys.length)
+            return;
+        let msg = __('Invalid values:');
+        invalidKeys.forEach(key => {
+            msg += `\n  ${__('Argument: %s, Given: %s, Choices: %s', key, usage.stringifiedValues(invalid[key]), usage.stringifiedValues(options.choices[key]))}`;
+        });
+        usage.fail(msg);
+    };
+    let implied = {};
+    self.implies = function implies(key, value) {
+        argsert('<string|object> [array|number|string]', [key, value], arguments.length);
+        if (typeof key === 'object') {
+            Object.keys(key).forEach(k => {
+                self.implies(k, key[k]);
+            });
+        }
+        else {
+            yargs.global(key);
+            if (!implied[key]) {
+                implied[key] = [];
+            }
+            if (Array.isArray(value)) {
+                value.forEach(i => self.implies(key, i));
+            }
+            else {
+                assertNotStrictEqual(value, undefined, shim);
+                implied[key].push(value);
+            }
+        }
+    };
+    self.getImplied = function getImplied() {
+        return implied;
+    };
+    function keyExists(argv, val) {
+        const num = Number(val);
+        val = isNaN(num) ? val : num;
+        if (typeof val === 'number') {
+            val = argv._.length >= val;
+        }
+        else if (val.match(/^--no-.+/)) {
+            val = val.match(/^--no-(.+)/)[1];
+            val = !Object.prototype.hasOwnProperty.call(argv, val);
+        }
+        else {
+            val = Object.prototype.hasOwnProperty.call(argv, val);
+        }
+        return val;
+    }
+    self.implications = function implications(argv) {
+        const implyFail = [];
+        Object.keys(implied).forEach(key => {
+            const origKey = key;
+            (implied[key] || []).forEach(value => {
+                let key = origKey;
+                const origValue = value;
+                key = keyExists(argv, key);
+                value = keyExists(argv, value);
+                if (key && !value) {
+                    implyFail.push(` ${origKey} -> ${origValue}`);
+                }
+            });
+        });
+        if (implyFail.length) {
+            let msg = `${__('Implications failed:')}\n`;
+            implyFail.forEach(value => {
+                msg += value;
+            });
+            usage.fail(msg);
+        }
+    };
+    let conflicting = {};
+    self.conflicts = function conflicts(key, value) {
+        argsert('<string|object> [array|string]', [key, value], arguments.length);
+        if (typeof key === 'object') {
+            Object.keys(key).forEach(k => {
+                self.conflicts(k, key[k]);
+            });
+        }
+        else {
+            yargs.global(key);
+            if (!conflicting[key]) {
+                conflicting[key] = [];
+            }
+            if (Array.isArray(value)) {
+                value.forEach(i => self.conflicts(key, i));
+            }
+            else {
+                conflicting[key].push(value);
+            }
+        }
+    };
+    self.getConflicting = () => conflicting;
+    self.conflicting = function conflictingFn(argv) {
+        Object.keys(argv).forEach(key => {
+            if (conflicting[key]) {
+                conflicting[key].forEach(value => {
+                    if (value && argv[key] !== undefined && argv[value] !== undefined) {
+                        usage.fail(__('Arguments %s and %s are mutually exclusive', key, value));
+                    }
+                });
+            }
+        });
+        if (yargs.getInternalMethods().getParserConfiguration()['strip-dashed']) {
+            Object.keys(conflicting).forEach(key => {
+                conflicting[key].forEach(value => {
+                    if (value &&
+                        argv[shim.Parser.camelCase(key)] !== undefined &&
+                        argv[shim.Parser.camelCase(value)] !== undefined) {
+                        usage.fail(__('Arguments %s and %s are mutually exclusive', key, value));
+                    }
+                });
+            });
+        }
+    };
+    self.recommendCommands = function recommendCommands(cmd, potentialCommands) {
+        const threshold = 3;
+        potentialCommands = potentialCommands.sort((a, b) => b.length - a.length);
+        let recommended = null;
+        let bestDistance = Infinity;
+        for (let i = 0, candidate; (candidate = potentialCommands[i]) !== undefined; i++) {
+            const d = levenshtein(cmd, candidate);
+            if (d <= threshold && d < bestDistance) {
+                bestDistance = d;
+                recommended = candidate;
+            }
+        }
+        if (recommended)
+            usage.fail(__('Did you mean %s?', recommended));
+    };
+    self.reset = function reset(localLookup) {
+        implied = objFilter(implied, k => !localLookup[k]);
+        conflicting = objFilter(conflicting, k => !localLookup[k]);
+        return self;
+    };
+    const frozens = [];
+    self.freeze = function freeze() {
+        frozens.push({
+            implied,
+            conflicting,
+        });
+    };
+    self.unfreeze = function unfreeze() {
+        const frozen = frozens.pop();
+        assertNotStrictEqual(frozen, undefined, shim);
+        ({ implied, conflicting } = frozen);
+    };
+    return self;
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/utils/apply-extends.js
+
+let previouslyVisitedConfigs = [];
+let apply_extends_shim;
+function applyExtends(config, cwd, mergeExtends, _shim) {
+    apply_extends_shim = _shim;
+    let defaultConfig = {};
+    if (Object.prototype.hasOwnProperty.call(config, 'extends')) {
+        if (typeof config.extends !== 'string')
+            return defaultConfig;
+        const isPath = /\.json|\..*rc$/.test(config.extends);
+        let pathToDefault = null;
+        if (!isPath) {
+            try {
+                pathToDefault = require.resolve(config.extends);
+            }
+            catch (_err) {
+                return config;
+            }
+        }
+        else {
+            pathToDefault = getPathToDefaultConfig(cwd, config.extends);
+        }
+        checkForCircularExtends(pathToDefault);
+        previouslyVisitedConfigs.push(pathToDefault);
+        defaultConfig = isPath
+            ? JSON.parse(apply_extends_shim.readFileSync(pathToDefault, 'utf8'))
+            : require(config.extends);
+        delete config.extends;
+        defaultConfig = applyExtends(defaultConfig, apply_extends_shim.path.dirname(pathToDefault), mergeExtends, apply_extends_shim);
+    }
+    previouslyVisitedConfigs = [];
+    return mergeExtends
+        ? apply_extends_mergeDeep(defaultConfig, config)
+        : Object.assign({}, defaultConfig, config);
+}
+function checkForCircularExtends(cfgPath) {
+    if (previouslyVisitedConfigs.indexOf(cfgPath) > -1) {
+        throw new YError(`Circular extended configurations: '${cfgPath}'.`);
+    }
+}
+function getPathToDefaultConfig(cwd, pathToExtend) {
+    return apply_extends_shim.path.resolve(cwd, pathToExtend);
+}
+function apply_extends_mergeDeep(config1, config2) {
+    const target = {};
+    function isObject(obj) {
+        return obj && typeof obj === 'object' && !Array.isArray(obj);
+    }
+    Object.assign(target, config1);
+    for (const key of Object.keys(config2)) {
+        if (isObject(config2[key]) && isObject(target[key])) {
+            target[key] = apply_extends_mergeDeep(config1[key], config2[key]);
+        }
+        else {
+            target[key] = config2[key];
+        }
+    }
+    return target;
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/build/lib/yargs-factory.js
+var __classPrivateFieldSet = (undefined && undefined.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
+var __classPrivateFieldGet = (undefined && undefined.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _YargsInstance_command, _YargsInstance_cwd, _YargsInstance_context, _YargsInstance_completion, _YargsInstance_completionCommand, _YargsInstance_defaultShowHiddenOpt, _YargsInstance_exitError, _YargsInstance_detectLocale, _YargsInstance_emittedWarnings, _YargsInstance_exitProcess, _YargsInstance_frozens, _YargsInstance_globalMiddleware, _YargsInstance_groups, _YargsInstance_hasOutput, _YargsInstance_helpOpt, _YargsInstance_isGlobalContext, _YargsInstance_logger, _YargsInstance_output, _YargsInstance_options, _YargsInstance_parentRequire, _YargsInstance_parserConfig, _YargsInstance_parseFn, _YargsInstance_parseContext, _YargsInstance_pkgs, _YargsInstance_preservedGroups, _YargsInstance_processArgs, _YargsInstance_recommendCommands, _YargsInstance_shim, _YargsInstance_strict, _YargsInstance_strictCommands, _YargsInstance_strictOptions, _YargsInstance_usage, _YargsInstance_usageConfig, _YargsInstance_versionOpt, _YargsInstance_validation;
+
+
+
+
+
+
+
+
+
+
+
+
+
+function YargsFactory(_shim) {
+    return (processArgs = [], cwd = _shim.process.cwd(), parentRequire) => {
+        const yargs = new YargsInstance(processArgs, cwd, parentRequire, _shim);
+        Object.defineProperty(yargs, 'argv', {
+            get: () => {
+                return yargs.parse();
+            },
+            enumerable: true,
+        });
+        yargs.help();
+        yargs.version();
+        return yargs;
+    };
+}
+const kCopyDoubleDash = Symbol('copyDoubleDash');
+const kCreateLogger = Symbol('copyDoubleDash');
+const kDeleteFromParserHintObject = Symbol('deleteFromParserHintObject');
+const kEmitWarning = Symbol('emitWarning');
+const kFreeze = Symbol('freeze');
+const kGetDollarZero = Symbol('getDollarZero');
+const kGetParserConfiguration = Symbol('getParserConfiguration');
+const kGetUsageConfiguration = Symbol('getUsageConfiguration');
+const kGuessLocale = Symbol('guessLocale');
+const kGuessVersion = Symbol('guessVersion');
+const kParsePositionalNumbers = Symbol('parsePositionalNumbers');
+const kPkgUp = Symbol('pkgUp');
+const kPopulateParserHintArray = Symbol('populateParserHintArray');
+const kPopulateParserHintSingleValueDictionary = Symbol('populateParserHintSingleValueDictionary');
+const kPopulateParserHintArrayDictionary = Symbol('populateParserHintArrayDictionary');
+const kPopulateParserHintDictionary = Symbol('populateParserHintDictionary');
+const kSanitizeKey = Symbol('sanitizeKey');
+const kSetKey = Symbol('setKey');
+const kUnfreeze = Symbol('unfreeze');
+const kValidateAsync = Symbol('validateAsync');
+const kGetCommandInstance = Symbol('getCommandInstance');
+const kGetContext = Symbol('getContext');
+const kGetHasOutput = Symbol('getHasOutput');
+const kGetLoggerInstance = Symbol('getLoggerInstance');
+const kGetParseContext = Symbol('getParseContext');
+const kGetUsageInstance = Symbol('getUsageInstance');
+const kGetValidationInstance = Symbol('getValidationInstance');
+const kHasParseCallback = Symbol('hasParseCallback');
+const kIsGlobalContext = Symbol('isGlobalContext');
+const kPostProcess = Symbol('postProcess');
+const kRebase = Symbol('rebase');
+const kReset = Symbol('reset');
+const kRunYargsParserAndExecuteCommands = Symbol('runYargsParserAndExecuteCommands');
+const kRunValidation = Symbol('runValidation');
+const kSetHasOutput = Symbol('setHasOutput');
+const kTrackManuallySetKeys = Symbol('kTrackManuallySetKeys');
+class YargsInstance {
+    constructor(processArgs = [], cwd, parentRequire, shim) {
+        this.customScriptName = false;
+        this.parsed = false;
+        _YargsInstance_command.set(this, void 0);
+        _YargsInstance_cwd.set(this, void 0);
+        _YargsInstance_context.set(this, { commands: [], fullCommands: [] });
+        _YargsInstance_completion.set(this, null);
+        _YargsInstance_completionCommand.set(this, null);
+        _YargsInstance_defaultShowHiddenOpt.set(this, 'show-hidden');
+        _YargsInstance_exitError.set(this, null);
+        _YargsInstance_detectLocale.set(this, true);
+        _YargsInstance_emittedWarnings.set(this, {});
+        _YargsInstance_exitProcess.set(this, true);
+        _YargsInstance_frozens.set(this, []);
+        _YargsInstance_globalMiddleware.set(this, void 0);
+        _YargsInstance_groups.set(this, {});
+        _YargsInstance_hasOutput.set(this, false);
+        _YargsInstance_helpOpt.set(this, null);
+        _YargsInstance_isGlobalContext.set(this, true);
+        _YargsInstance_logger.set(this, void 0);
+        _YargsInstance_output.set(this, '');
+        _YargsInstance_options.set(this, void 0);
+        _YargsInstance_parentRequire.set(this, void 0);
+        _YargsInstance_parserConfig.set(this, {});
+        _YargsInstance_parseFn.set(this, null);
+        _YargsInstance_parseContext.set(this, null);
+        _YargsInstance_pkgs.set(this, {});
+        _YargsInstance_preservedGroups.set(this, {});
+        _YargsInstance_processArgs.set(this, void 0);
+        _YargsInstance_recommendCommands.set(this, false);
+        _YargsInstance_shim.set(this, void 0);
+        _YargsInstance_strict.set(this, false);
+        _YargsInstance_strictCommands.set(this, false);
+        _YargsInstance_strictOptions.set(this, false);
+        _YargsInstance_usage.set(this, void 0);
+        _YargsInstance_usageConfig.set(this, {});
+        _YargsInstance_versionOpt.set(this, null);
+        _YargsInstance_validation.set(this, void 0);
+        __classPrivateFieldSet(this, _YargsInstance_shim, shim, "f");
+        __classPrivateFieldSet(this, _YargsInstance_processArgs, processArgs, "f");
+        __classPrivateFieldSet(this, _YargsInstance_cwd, cwd, "f");
+        __classPrivateFieldSet(this, _YargsInstance_parentRequire, parentRequire, "f");
+        __classPrivateFieldSet(this, _YargsInstance_globalMiddleware, new GlobalMiddleware(this), "f");
+        this.$0 = this[kGetDollarZero]();
+        this[kReset]();
+        __classPrivateFieldSet(this, _YargsInstance_command, __classPrivateFieldGet(this, _YargsInstance_command, "f"), "f");
+        __classPrivateFieldSet(this, _YargsInstance_usage, __classPrivateFieldGet(this, _YargsInstance_usage, "f"), "f");
+        __classPrivateFieldSet(this, _YargsInstance_validation, __classPrivateFieldGet(this, _YargsInstance_validation, "f"), "f");
+        __classPrivateFieldSet(this, _YargsInstance_options, __classPrivateFieldGet(this, _YargsInstance_options, "f"), "f");
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").showHiddenOpt = __classPrivateFieldGet(this, _YargsInstance_defaultShowHiddenOpt, "f");
+        __classPrivateFieldSet(this, _YargsInstance_logger, this[kCreateLogger](), "f");
+    }
+    addHelpOpt(opt, msg) {
+        const defaultHelpOpt = 'help';
+        argsert('[string|boolean] [string]', [opt, msg], arguments.length);
+        if (__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f")) {
+            this[kDeleteFromParserHintObject](__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f"));
+            __classPrivateFieldSet(this, _YargsInstance_helpOpt, null, "f");
+        }
+        if (opt === false && msg === undefined)
+            return this;
+        __classPrivateFieldSet(this, _YargsInstance_helpOpt, typeof opt === 'string' ? opt : defaultHelpOpt, "f");
+        this.boolean(__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f"));
+        this.describe(__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f"), msg || __classPrivateFieldGet(this, _YargsInstance_usage, "f").deferY18nLookup('Show help'));
+        return this;
+    }
+    help(opt, msg) {
+        return this.addHelpOpt(opt, msg);
+    }
+    addShowHiddenOpt(opt, msg) {
+        argsert('[string|boolean] [string]', [opt, msg], arguments.length);
+        if (opt === false && msg === undefined)
+            return this;
+        const showHiddenOpt = typeof opt === 'string' ? opt : __classPrivateFieldGet(this, _YargsInstance_defaultShowHiddenOpt, "f");
+        this.boolean(showHiddenOpt);
+        this.describe(showHiddenOpt, msg || __classPrivateFieldGet(this, _YargsInstance_usage, "f").deferY18nLookup('Show hidden options'));
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").showHiddenOpt = showHiddenOpt;
+        return this;
+    }
+    showHidden(opt, msg) {
+        return this.addShowHiddenOpt(opt, msg);
+    }
+    alias(key, value) {
+        argsert('<object|string|array> [string|array]', [key, value], arguments.length);
+        this[kPopulateParserHintArrayDictionary](this.alias.bind(this), 'alias', key, value);
+        return this;
+    }
+    array(keys) {
+        argsert('<array|string>', [keys], arguments.length);
+        this[kPopulateParserHintArray]('array', keys);
+        this[kTrackManuallySetKeys](keys);
+        return this;
+    }
+    boolean(keys) {
+        argsert('<array|string>', [keys], arguments.length);
+        this[kPopulateParserHintArray]('boolean', keys);
+        this[kTrackManuallySetKeys](keys);
+        return this;
+    }
+    check(f, global) {
+        argsert('<function> [boolean]', [f, global], arguments.length);
+        this.middleware((argv, _yargs) => {
+            return maybeAsyncResult(() => {
+                return f(argv, _yargs.getOptions());
+            }, (result) => {
+                if (!result) {
+                    __classPrivateFieldGet(this, _YargsInstance_usage, "f").fail(__classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.__('Argument check failed: %s', f.toString()));
+                }
+                else if (typeof result === 'string' || result instanceof Error) {
+                    __classPrivateFieldGet(this, _YargsInstance_usage, "f").fail(result.toString(), result);
+                }
+                return argv;
+            }, (err) => {
+                __classPrivateFieldGet(this, _YargsInstance_usage, "f").fail(err.message ? err.message : err.toString(), err);
+                return argv;
+            });
+        }, false, global);
+        return this;
+    }
+    choices(key, value) {
+        argsert('<object|string|array> [string|array]', [key, value], arguments.length);
+        this[kPopulateParserHintArrayDictionary](this.choices.bind(this), 'choices', key, value);
+        return this;
+    }
+    coerce(keys, value) {
+        argsert('<object|string|array> [function]', [keys, value], arguments.length);
+        if (Array.isArray(keys)) {
+            if (!value) {
+                throw new YError('coerce callback must be provided');
+            }
+            for (const key of keys) {
+                this.coerce(key, value);
+            }
+            return this;
+        }
+        else if (typeof keys === 'object') {
+            for (const key of Object.keys(keys)) {
+                this.coerce(key, keys[key]);
+            }
+            return this;
+        }
+        if (!value) {
+            throw new YError('coerce callback must be provided');
+        }
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").key[keys] = true;
+        __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").addCoerceMiddleware((argv, yargs) => {
+            let aliases;
+            const shouldCoerce = Object.prototype.hasOwnProperty.call(argv, keys);
+            if (!shouldCoerce) {
+                return argv;
+            }
+            return maybeAsyncResult(() => {
+                aliases = yargs.getAliases();
+                return value(argv[keys]);
+            }, (result) => {
+                argv[keys] = result;
+                const stripAliased = yargs
+                    .getInternalMethods()
+                    .getParserConfiguration()['strip-aliased'];
+                if (aliases[keys] && stripAliased !== true) {
+                    for (const alias of aliases[keys]) {
+                        argv[alias] = result;
+                    }
+                }
+                return argv;
+            }, (err) => {
+                throw new YError(err.message);
+            });
+        }, keys);
+        return this;
+    }
+    conflicts(key1, key2) {
+        argsert('<string|object> [string|array]', [key1, key2], arguments.length);
+        __classPrivateFieldGet(this, _YargsInstance_validation, "f").conflicts(key1, key2);
+        return this;
+    }
+    config(key = 'config', msg, parseFn) {
+        argsert('[object|string] [string|function] [function]', [key, msg, parseFn], arguments.length);
+        if (typeof key === 'object' && !Array.isArray(key)) {
+            key = applyExtends(key, __classPrivateFieldGet(this, _YargsInstance_cwd, "f"), this[kGetParserConfiguration]()['deep-merge-config'] || false, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+            __classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects = (__classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects || []).concat(key);
+            return this;
+        }
+        if (typeof msg === 'function') {
+            parseFn = msg;
+            msg = undefined;
+        }
+        this.describe(key, msg || __classPrivateFieldGet(this, _YargsInstance_usage, "f").deferY18nLookup('Path to JSON config file'));
+        (Array.isArray(key) ? key : [key]).forEach(k => {
+            __classPrivateFieldGet(this, _YargsInstance_options, "f").config[k] = parseFn || true;
+        });
+        return this;
+    }
+    completion(cmd, desc, fn) {
+        argsert('[string] [string|boolean|function] [function]', [cmd, desc, fn], arguments.length);
+        if (typeof desc === 'function') {
+            fn = desc;
+            desc = undefined;
+        }
+        __classPrivateFieldSet(this, _YargsInstance_completionCommand, cmd || __classPrivateFieldGet(this, _YargsInstance_completionCommand, "f") || 'completion', "f");
+        if (!desc && desc !== false) {
+            desc = 'generate completion script';
+        }
+        this.command(__classPrivateFieldGet(this, _YargsInstance_completionCommand, "f"), desc);
+        if (fn)
+            __classPrivateFieldGet(this, _YargsInstance_completion, "f").registerFunction(fn);
+        return this;
+    }
+    command(cmd, description, builder, handler, middlewares, deprecated) {
+        argsert('<string|array|object> [string|boolean] [function|object] [function] [array] [boolean|string]', [cmd, description, builder, handler, middlewares, deprecated], arguments.length);
+        __classPrivateFieldGet(this, _YargsInstance_command, "f").addHandler(cmd, description, builder, handler, middlewares, deprecated);
+        return this;
+    }
+    commands(cmd, description, builder, handler, middlewares, deprecated) {
+        return this.command(cmd, description, builder, handler, middlewares, deprecated);
+    }
+    commandDir(dir, opts) {
+        argsert('<string> [object]', [dir, opts], arguments.length);
+        const req = __classPrivateFieldGet(this, _YargsInstance_parentRequire, "f") || __classPrivateFieldGet(this, _YargsInstance_shim, "f").require;
+        __classPrivateFieldGet(this, _YargsInstance_command, "f").addDirectory(dir, req, __classPrivateFieldGet(this, _YargsInstance_shim, "f").getCallerFile(), opts);
+        return this;
+    }
+    count(keys) {
+        argsert('<array|string>', [keys], arguments.length);
+        this[kPopulateParserHintArray]('count', keys);
+        this[kTrackManuallySetKeys](keys);
+        return this;
+    }
+    default(key, value, defaultDescription) {
+        argsert('<object|string|array> [*] [string]', [key, value, defaultDescription], arguments.length);
+        if (defaultDescription) {
+            assertSingleKey(key, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+            __classPrivateFieldGet(this, _YargsInstance_options, "f").defaultDescription[key] = defaultDescription;
+        }
+        if (typeof value === 'function') {
+            assertSingleKey(key, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+            if (!__classPrivateFieldGet(this, _YargsInstance_options, "f").defaultDescription[key])
+                __classPrivateFieldGet(this, _YargsInstance_options, "f").defaultDescription[key] =
+                    __classPrivateFieldGet(this, _YargsInstance_usage, "f").functionDescription(value);
+            value = value.call();
+        }
+        this[kPopulateParserHintSingleValueDictionary](this.default.bind(this), 'default', key, value);
+        return this;
+    }
+    defaults(key, value, defaultDescription) {
+        return this.default(key, value, defaultDescription);
+    }
+    demandCommand(min = 1, max, minMsg, maxMsg) {
+        argsert('[number] [number|string] [string|null|undefined] [string|null|undefined]', [min, max, minMsg, maxMsg], arguments.length);
+        if (typeof max !== 'number') {
+            minMsg = max;
+            max = Infinity;
+        }
+        this.global('_', false);
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").demandedCommands._ = {
+            min,
+            max,
+            minMsg,
+            maxMsg,
+        };
+        return this;
+    }
+    demand(keys, max, msg) {
+        if (Array.isArray(max)) {
+            max.forEach(key => {
+                assertNotStrictEqual(msg, true, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+                this.demandOption(key, msg);
+            });
+            max = Infinity;
+        }
+        else if (typeof max !== 'number') {
+            msg = max;
+            max = Infinity;
+        }
+        if (typeof keys === 'number') {
+            assertNotStrictEqual(msg, true, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+            this.demandCommand(keys, max, msg, msg);
+        }
+        else if (Array.isArray(keys)) {
+            keys.forEach(key => {
+                assertNotStrictEqual(msg, true, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+                this.demandOption(key, msg);
+            });
+        }
+        else {
+            if (typeof msg === 'string') {
+                this.demandOption(keys, msg);
+            }
+            else if (msg === true || typeof msg === 'undefined') {
+                this.demandOption(keys);
+            }
+        }
+        return this;
+    }
+    demandOption(keys, msg) {
+        argsert('<object|string|array> [string]', [keys, msg], arguments.length);
+        this[kPopulateParserHintSingleValueDictionary](this.demandOption.bind(this), 'demandedOptions', keys, msg);
+        return this;
+    }
+    deprecateOption(option, message) {
+        argsert('<string> [string|boolean]', [option, message], arguments.length);
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").deprecatedOptions[option] = message;
+        return this;
+    }
+    describe(keys, description) {
+        argsert('<object|string|array> [string]', [keys, description], arguments.length);
+        this[kSetKey](keys, true);
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").describe(keys, description);
+        return this;
+    }
+    detectLocale(detect) {
+        argsert('<boolean>', [detect], arguments.length);
+        __classPrivateFieldSet(this, _YargsInstance_detectLocale, detect, "f");
+        return this;
+    }
+    env(prefix) {
+        argsert('[string|boolean]', [prefix], arguments.length);
+        if (prefix === false)
+            delete __classPrivateFieldGet(this, _YargsInstance_options, "f").envPrefix;
+        else
+            __classPrivateFieldGet(this, _YargsInstance_options, "f").envPrefix = prefix || '';
+        return this;
+    }
+    epilogue(msg) {
+        argsert('<string>', [msg], arguments.length);
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").epilog(msg);
+        return this;
+    }
+    epilog(msg) {
+        return this.epilogue(msg);
+    }
+    example(cmd, description) {
+        argsert('<string|array> [string]', [cmd, description], arguments.length);
+        if (Array.isArray(cmd)) {
+            cmd.forEach(exampleParams => this.example(...exampleParams));
+        }
+        else {
+            __classPrivateFieldGet(this, _YargsInstance_usage, "f").example(cmd, description);
+        }
+        return this;
+    }
+    exit(code, err) {
+        __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+        __classPrivateFieldSet(this, _YargsInstance_exitError, err, "f");
+        if (__classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"))
+            __classPrivateFieldGet(this, _YargsInstance_shim, "f").process.exit(code);
+    }
+    exitProcess(enabled = true) {
+        argsert('[boolean]', [enabled], arguments.length);
+        __classPrivateFieldSet(this, _YargsInstance_exitProcess, enabled, "f");
+        return this;
+    }
+    fail(f) {
+        argsert('<function|boolean>', [f], arguments.length);
+        if (typeof f === 'boolean' && f !== false) {
+            throw new YError("Invalid first argument. Expected function or boolean 'false'");
+        }
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").failFn(f);
+        return this;
+    }
+    getAliases() {
+        return this.parsed ? this.parsed.aliases : {};
+    }
+    async getCompletion(args, done) {
+        argsert('<array> [function]', [args, done], arguments.length);
+        if (!done) {
+            return new Promise((resolve, reject) => {
+                __classPrivateFieldGet(this, _YargsInstance_completion, "f").getCompletion(args, (err, completions) => {
+                    if (err)
+                        reject(err);
+                    else
+                        resolve(completions);
+                });
+            });
+        }
+        else {
+            return __classPrivateFieldGet(this, _YargsInstance_completion, "f").getCompletion(args, done);
+        }
+    }
+    getDemandedOptions() {
+        argsert([], 0);
+        return __classPrivateFieldGet(this, _YargsInstance_options, "f").demandedOptions;
+    }
+    getDemandedCommands() {
+        argsert([], 0);
+        return __classPrivateFieldGet(this, _YargsInstance_options, "f").demandedCommands;
+    }
+    getDeprecatedOptions() {
+        argsert([], 0);
+        return __classPrivateFieldGet(this, _YargsInstance_options, "f").deprecatedOptions;
+    }
+    getDetectLocale() {
+        return __classPrivateFieldGet(this, _YargsInstance_detectLocale, "f");
+    }
+    getExitProcess() {
+        return __classPrivateFieldGet(this, _YargsInstance_exitProcess, "f");
+    }
+    getGroups() {
+        return Object.assign({}, __classPrivateFieldGet(this, _YargsInstance_groups, "f"), __classPrivateFieldGet(this, _YargsInstance_preservedGroups, "f"));
+    }
+    getHelp() {
+        __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+        if (!__classPrivateFieldGet(this, _YargsInstance_usage, "f").hasCachedHelpMessage()) {
+            if (!this.parsed) {
+                const parse = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), undefined, undefined, 0, true);
+                if (isPromise(parse)) {
+                    return parse.then(() => {
+                        return __classPrivateFieldGet(this, _YargsInstance_usage, "f").help();
+                    });
+                }
+            }
+            const builderResponse = __classPrivateFieldGet(this, _YargsInstance_command, "f").runDefaultBuilderOn(this);
+            if (isPromise(builderResponse)) {
+                return builderResponse.then(() => {
+                    return __classPrivateFieldGet(this, _YargsInstance_usage, "f").help();
+                });
+            }
+        }
+        return Promise.resolve(__classPrivateFieldGet(this, _YargsInstance_usage, "f").help());
+    }
+    getOptions() {
+        return __classPrivateFieldGet(this, _YargsInstance_options, "f");
+    }
+    getStrict() {
+        return __classPrivateFieldGet(this, _YargsInstance_strict, "f");
+    }
+    getStrictCommands() {
+        return __classPrivateFieldGet(this, _YargsInstance_strictCommands, "f");
+    }
+    getStrictOptions() {
+        return __classPrivateFieldGet(this, _YargsInstance_strictOptions, "f");
+    }
+    global(globals, global) {
+        argsert('<string|array> [boolean]', [globals, global], arguments.length);
+        globals = [].concat(globals);
+        if (global !== false) {
+            __classPrivateFieldGet(this, _YargsInstance_options, "f").local = __classPrivateFieldGet(this, _YargsInstance_options, "f").local.filter(l => globals.indexOf(l) === -1);
+        }
+        else {
+            globals.forEach(g => {
+                if (!__classPrivateFieldGet(this, _YargsInstance_options, "f").local.includes(g))
+                    __classPrivateFieldGet(this, _YargsInstance_options, "f").local.push(g);
+            });
+        }
+        return this;
+    }
+    group(opts, groupName) {
+        argsert('<string|array> <string>', [opts, groupName], arguments.length);
+        const existing = __classPrivateFieldGet(this, _YargsInstance_preservedGroups, "f")[groupName] || __classPrivateFieldGet(this, _YargsInstance_groups, "f")[groupName];
+        if (__classPrivateFieldGet(this, _YargsInstance_preservedGroups, "f")[groupName]) {
+            delete __classPrivateFieldGet(this, _YargsInstance_preservedGroups, "f")[groupName];
+        }
+        const seen = {};
+        __classPrivateFieldGet(this, _YargsInstance_groups, "f")[groupName] = (existing || []).concat(opts).filter(key => {
+            if (seen[key])
+                return false;
+            return (seen[key] = true);
+        });
+        return this;
+    }
+    hide(key) {
+        argsert('<string>', [key], arguments.length);
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").hiddenOptions.push(key);
+        return this;
+    }
+    implies(key, value) {
+        argsert('<string|object> [number|string|array]', [key, value], arguments.length);
+        __classPrivateFieldGet(this, _YargsInstance_validation, "f").implies(key, value);
+        return this;
+    }
+    locale(locale) {
+        argsert('[string]', [locale], arguments.length);
+        if (locale === undefined) {
+            this[kGuessLocale]();
+            return __classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.getLocale();
+        }
+        __classPrivateFieldSet(this, _YargsInstance_detectLocale, false, "f");
+        __classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.setLocale(locale);
+        return this;
+    }
+    middleware(callback, applyBeforeValidation, global) {
+        return __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").addMiddleware(callback, !!applyBeforeValidation, global);
+    }
+    nargs(key, value) {
+        argsert('<string|object|array> [number]', [key, value], arguments.length);
+        this[kPopulateParserHintSingleValueDictionary](this.nargs.bind(this), 'narg', key, value);
+        return this;
+    }
+    normalize(keys) {
+        argsert('<array|string>', [keys], arguments.length);
+        this[kPopulateParserHintArray]('normalize', keys);
+        return this;
+    }
+    number(keys) {
+        argsert('<array|string>', [keys], arguments.length);
+        this[kPopulateParserHintArray]('number', keys);
+        this[kTrackManuallySetKeys](keys);
+        return this;
+    }
+    option(key, opt) {
+        argsert('<string|object> [object]', [key, opt], arguments.length);
+        if (typeof key === 'object') {
+            Object.keys(key).forEach(k => {
+                this.options(k, key[k]);
+            });
+        }
+        else {
+            if (typeof opt !== 'object') {
+                opt = {};
+            }
+            this[kTrackManuallySetKeys](key);
+            if (__classPrivateFieldGet(this, _YargsInstance_versionOpt, "f") && (key === 'version' || (opt === null || opt === void 0 ? void 0 : opt.alias) === 'version')) {
+                this[kEmitWarning]([
+                    '"version" is a reserved word.',
+                    'Please do one of the following:',
+                    '- Disable version with `yargs.version(false)` if using "version" as an option',
+                    '- Use the built-in `yargs.version` method instead (if applicable)',
+                    '- Use a different option key',
+                    'https://yargs.js.org/docs/#api-reference-version',
+                ].join('\n'), undefined, 'versionWarning');
+            }
+            __classPrivateFieldGet(this, _YargsInstance_options, "f").key[key] = true;
+            if (opt.alias)
+                this.alias(key, opt.alias);
+            const deprecate = opt.deprecate || opt.deprecated;
+            if (deprecate) {
+                this.deprecateOption(key, deprecate);
+            }
+            const demand = opt.demand || opt.required || opt.require;
+            if (demand) {
+                this.demand(key, demand);
+            }
+            if (opt.demandOption) {
+                this.demandOption(key, typeof opt.demandOption === 'string' ? opt.demandOption : undefined);
+            }
+            if (opt.conflicts) {
+                this.conflicts(key, opt.conflicts);
+            }
+            if ('default' in opt) {
+                this.default(key, opt.default);
+            }
+            if (opt.implies !== undefined) {
+                this.implies(key, opt.implies);
+            }
+            if (opt.nargs !== undefined) {
+                this.nargs(key, opt.nargs);
+            }
+            if (opt.config) {
+                this.config(key, opt.configParser);
+            }
+            if (opt.normalize) {
+                this.normalize(key);
+            }
+            if (opt.choices) {
+                this.choices(key, opt.choices);
+            }
+            if (opt.coerce) {
+                this.coerce(key, opt.coerce);
+            }
+            if (opt.group) {
+                this.group(key, opt.group);
+            }
+            if (opt.boolean || opt.type === 'boolean') {
+                this.boolean(key);
+                if (opt.alias)
+                    this.boolean(opt.alias);
+            }
+            if (opt.array || opt.type === 'array') {
+                this.array(key);
+                if (opt.alias)
+                    this.array(opt.alias);
+            }
+            if (opt.number || opt.type === 'number') {
+                this.number(key);
+                if (opt.alias)
+                    this.number(opt.alias);
+            }
+            if (opt.string || opt.type === 'string') {
+                this.string(key);
+                if (opt.alias)
+                    this.string(opt.alias);
+            }
+            if (opt.count || opt.type === 'count') {
+                this.count(key);
+            }
+            if (typeof opt.global === 'boolean') {
+                this.global(key, opt.global);
+            }
+            if (opt.defaultDescription) {
+                __classPrivateFieldGet(this, _YargsInstance_options, "f").defaultDescription[key] = opt.defaultDescription;
+            }
+            if (opt.skipValidation) {
+                this.skipValidation(key);
+            }
+            const desc = opt.describe || opt.description || opt.desc;
+            const descriptions = __classPrivateFieldGet(this, _YargsInstance_usage, "f").getDescriptions();
+            if (!Object.prototype.hasOwnProperty.call(descriptions, key) ||
+                typeof desc === 'string') {
+                this.describe(key, desc);
+            }
+            if (opt.hidden) {
+                this.hide(key);
+            }
+            if (opt.requiresArg) {
+                this.requiresArg(key);
+            }
+        }
+        return this;
+    }
+    options(key, opt) {
+        return this.option(key, opt);
+    }
+    parse(args, shortCircuit, _parseFn) {
+        argsert('[string|array] [function|boolean|object] [function]', [args, shortCircuit, _parseFn], arguments.length);
+        this[kFreeze]();
+        if (typeof args === 'undefined') {
+            args = __classPrivateFieldGet(this, _YargsInstance_processArgs, "f");
+        }
+        if (typeof shortCircuit === 'object') {
+            __classPrivateFieldSet(this, _YargsInstance_parseContext, shortCircuit, "f");
+            shortCircuit = _parseFn;
+        }
+        if (typeof shortCircuit === 'function') {
+            __classPrivateFieldSet(this, _YargsInstance_parseFn, shortCircuit, "f");
+            shortCircuit = false;
+        }
+        if (!shortCircuit)
+            __classPrivateFieldSet(this, _YargsInstance_processArgs, args, "f");
+        if (__classPrivateFieldGet(this, _YargsInstance_parseFn, "f"))
+            __classPrivateFieldSet(this, _YargsInstance_exitProcess, false, "f");
+        const parsed = this[kRunYargsParserAndExecuteCommands](args, !!shortCircuit);
+        const tmpParsed = this.parsed;
+        __classPrivateFieldGet(this, _YargsInstance_completion, "f").setParsed(this.parsed);
+        if (isPromise(parsed)) {
+            return parsed
+                .then(argv => {
+                if (__classPrivateFieldGet(this, _YargsInstance_parseFn, "f"))
+                    __classPrivateFieldGet(this, _YargsInstance_parseFn, "f").call(this, __classPrivateFieldGet(this, _YargsInstance_exitError, "f"), argv, __classPrivateFieldGet(this, _YargsInstance_output, "f"));
+                return argv;
+            })
+                .catch(err => {
+                if (__classPrivateFieldGet(this, _YargsInstance_parseFn, "f")) {
+                    __classPrivateFieldGet(this, _YargsInstance_parseFn, "f")(err, this.parsed.argv, __classPrivateFieldGet(this, _YargsInstance_output, "f"));
+                }
+                throw err;
+            })
+                .finally(() => {
+                this[kUnfreeze]();
+                this.parsed = tmpParsed;
+            });
+        }
+        else {
+            if (__classPrivateFieldGet(this, _YargsInstance_parseFn, "f"))
+                __classPrivateFieldGet(this, _YargsInstance_parseFn, "f").call(this, __classPrivateFieldGet(this, _YargsInstance_exitError, "f"), parsed, __classPrivateFieldGet(this, _YargsInstance_output, "f"));
+            this[kUnfreeze]();
+            this.parsed = tmpParsed;
+        }
+        return parsed;
+    }
+    parseAsync(args, shortCircuit, _parseFn) {
+        const maybePromise = this.parse(args, shortCircuit, _parseFn);
+        return !isPromise(maybePromise)
+            ? Promise.resolve(maybePromise)
+            : maybePromise;
+    }
+    parseSync(args, shortCircuit, _parseFn) {
+        const maybePromise = this.parse(args, shortCircuit, _parseFn);
+        if (isPromise(maybePromise)) {
+            throw new YError('.parseSync() must not be used with asynchronous builders, handlers, or middleware');
+        }
+        return maybePromise;
+    }
+    parserConfiguration(config) {
+        argsert('<object>', [config], arguments.length);
+        __classPrivateFieldSet(this, _YargsInstance_parserConfig, config, "f");
+        return this;
+    }
+    pkgConf(key, rootPath) {
+        argsert('<string> [string]', [key, rootPath], arguments.length);
+        let conf = null;
+        const obj = this[kPkgUp](rootPath || __classPrivateFieldGet(this, _YargsInstance_cwd, "f"));
+        if (obj[key] && typeof obj[key] === 'object') {
+            conf = applyExtends(obj[key], rootPath || __classPrivateFieldGet(this, _YargsInstance_cwd, "f"), this[kGetParserConfiguration]()['deep-merge-config'] || false, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+            __classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects = (__classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects || []).concat(conf);
+        }
+        return this;
+    }
+    positional(key, opts) {
+        argsert('<string> <object>', [key, opts], arguments.length);
+        const supportedOpts = [
+            'default',
+            'defaultDescription',
+            'implies',
+            'normalize',
+            'choices',
+            'conflicts',
+            'coerce',
+            'type',
+            'describe',
+            'desc',
+            'description',
+            'alias',
+        ];
+        opts = objFilter(opts, (k, v) => {
+            if (k === 'type' && !['string', 'number', 'boolean'].includes(v))
+                return false;
+            return supportedOpts.includes(k);
+        });
+        const fullCommand = __classPrivateFieldGet(this, _YargsInstance_context, "f").fullCommands[__classPrivateFieldGet(this, _YargsInstance_context, "f").fullCommands.length - 1];
+        const parseOptions = fullCommand
+            ? __classPrivateFieldGet(this, _YargsInstance_command, "f").cmdToParseOptions(fullCommand)
+            : {
+                array: [],
+                alias: {},
+                default: {},
+                demand: {},
+            };
+        objectKeys(parseOptions).forEach(pk => {
+            const parseOption = parseOptions[pk];
+            if (Array.isArray(parseOption)) {
+                if (parseOption.indexOf(key) !== -1)
+                    opts[pk] = true;
+            }
+            else {
+                if (parseOption[key] && !(pk in opts))
+                    opts[pk] = parseOption[key];
+            }
+        });
+        this.group(key, __classPrivateFieldGet(this, _YargsInstance_usage, "f").getPositionalGroupName());
+        return this.option(key, opts);
+    }
+    recommendCommands(recommend = true) {
+        argsert('[boolean]', [recommend], arguments.length);
+        __classPrivateFieldSet(this, _YargsInstance_recommendCommands, recommend, "f");
+        return this;
+    }
+    required(keys, max, msg) {
+        return this.demand(keys, max, msg);
+    }
+    require(keys, max, msg) {
+        return this.demand(keys, max, msg);
+    }
+    requiresArg(keys) {
+        argsert('<array|string|object> [number]', [keys], arguments.length);
+        if (typeof keys === 'string' && __classPrivateFieldGet(this, _YargsInstance_options, "f").narg[keys]) {
+            return this;
+        }
+        else {
+            this[kPopulateParserHintSingleValueDictionary](this.requiresArg.bind(this), 'narg', keys, NaN);
+        }
+        return this;
+    }
+    showCompletionScript($0, cmd) {
+        argsert('[string] [string]', [$0, cmd], arguments.length);
+        $0 = $0 || this.$0;
+        __classPrivateFieldGet(this, _YargsInstance_logger, "f").log(__classPrivateFieldGet(this, _YargsInstance_completion, "f").generateCompletionScript($0, cmd || __classPrivateFieldGet(this, _YargsInstance_completionCommand, "f") || 'completion'));
+        return this;
+    }
+    showHelp(level) {
+        argsert('[string|function]', [level], arguments.length);
+        __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+        if (!__classPrivateFieldGet(this, _YargsInstance_usage, "f").hasCachedHelpMessage()) {
+            if (!this.parsed) {
+                const parse = this[kRunYargsParserAndExecuteCommands](__classPrivateFieldGet(this, _YargsInstance_processArgs, "f"), undefined, undefined, 0, true);
+                if (isPromise(parse)) {
+                    parse.then(() => {
+                        __classPrivateFieldGet(this, _YargsInstance_usage, "f").showHelp(level);
+                    });
+                    return this;
+                }
+            }
+            const builderResponse = __classPrivateFieldGet(this, _YargsInstance_command, "f").runDefaultBuilderOn(this);
+            if (isPromise(builderResponse)) {
+                builderResponse.then(() => {
+                    __classPrivateFieldGet(this, _YargsInstance_usage, "f").showHelp(level);
+                });
+                return this;
+            }
+        }
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").showHelp(level);
+        return this;
+    }
+    scriptName(scriptName) {
+        this.customScriptName = true;
+        this.$0 = scriptName;
+        return this;
+    }
+    showHelpOnFail(enabled, message) {
+        argsert('[boolean|string] [string]', [enabled, message], arguments.length);
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").showHelpOnFail(enabled, message);
+        return this;
+    }
+    showVersion(level) {
+        argsert('[string|function]', [level], arguments.length);
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").showVersion(level);
+        return this;
+    }
+    skipValidation(keys) {
+        argsert('<array|string>', [keys], arguments.length);
+        this[kPopulateParserHintArray]('skipValidation', keys);
+        return this;
+    }
+    strict(enabled) {
+        argsert('[boolean]', [enabled], arguments.length);
+        __classPrivateFieldSet(this, _YargsInstance_strict, enabled !== false, "f");
+        return this;
+    }
+    strictCommands(enabled) {
+        argsert('[boolean]', [enabled], arguments.length);
+        __classPrivateFieldSet(this, _YargsInstance_strictCommands, enabled !== false, "f");
+        return this;
+    }
+    strictOptions(enabled) {
+        argsert('[boolean]', [enabled], arguments.length);
+        __classPrivateFieldSet(this, _YargsInstance_strictOptions, enabled !== false, "f");
+        return this;
+    }
+    string(keys) {
+        argsert('<array|string>', [keys], arguments.length);
+        this[kPopulateParserHintArray]('string', keys);
+        this[kTrackManuallySetKeys](keys);
+        return this;
+    }
+    terminalWidth() {
+        argsert([], 0);
+        return __classPrivateFieldGet(this, _YargsInstance_shim, "f").process.stdColumns;
+    }
+    updateLocale(obj) {
+        return this.updateStrings(obj);
+    }
+    updateStrings(obj) {
+        argsert('<object>', [obj], arguments.length);
+        __classPrivateFieldSet(this, _YargsInstance_detectLocale, false, "f");
+        __classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.updateLocale(obj);
+        return this;
+    }
+    usage(msg, description, builder, handler) {
+        argsert('<string|null|undefined> [string|boolean] [function|object] [function]', [msg, description, builder, handler], arguments.length);
+        if (description !== undefined) {
+            assertNotStrictEqual(msg, null, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+            if ((msg || '').match(/^\$0( |$)/)) {
+                return this.command(msg, description, builder, handler);
+            }
+            else {
+                throw new YError('.usage() description must start with $0 if being used as alias for .command()');
+            }
+        }
+        else {
+            __classPrivateFieldGet(this, _YargsInstance_usage, "f").usage(msg);
+            return this;
+        }
+    }
+    usageConfiguration(config) {
+        argsert('<object>', [config], arguments.length);
+        __classPrivateFieldSet(this, _YargsInstance_usageConfig, config, "f");
+        return this;
+    }
+    version(opt, msg, ver) {
+        const defaultVersionOpt = 'version';
+        argsert('[boolean|string] [string] [string]', [opt, msg, ver], arguments.length);
+        if (__classPrivateFieldGet(this, _YargsInstance_versionOpt, "f")) {
+            this[kDeleteFromParserHintObject](__classPrivateFieldGet(this, _YargsInstance_versionOpt, "f"));
+            __classPrivateFieldGet(this, _YargsInstance_usage, "f").version(undefined);
+            __classPrivateFieldSet(this, _YargsInstance_versionOpt, null, "f");
+        }
+        if (arguments.length === 0) {
+            ver = this[kGuessVersion]();
+            opt = defaultVersionOpt;
+        }
+        else if (arguments.length === 1) {
+            if (opt === false) {
+                return this;
+            }
+            ver = opt;
+            opt = defaultVersionOpt;
+        }
+        else if (arguments.length === 2) {
+            ver = msg;
+            msg = undefined;
+        }
+        __classPrivateFieldSet(this, _YargsInstance_versionOpt, typeof opt === 'string' ? opt : defaultVersionOpt, "f");
+        msg = msg || __classPrivateFieldGet(this, _YargsInstance_usage, "f").deferY18nLookup('Show version number');
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").version(ver || undefined);
+        this.boolean(__classPrivateFieldGet(this, _YargsInstance_versionOpt, "f"));
+        this.describe(__classPrivateFieldGet(this, _YargsInstance_versionOpt, "f"), msg);
+        return this;
+    }
+    wrap(cols) {
+        argsert('<number|null|undefined>', [cols], arguments.length);
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").wrap(cols);
+        return this;
+    }
+    [(_YargsInstance_command = new WeakMap(), _YargsInstance_cwd = new WeakMap(), _YargsInstance_context = new WeakMap(), _YargsInstance_completion = new WeakMap(), _YargsInstance_completionCommand = new WeakMap(), _YargsInstance_defaultShowHiddenOpt = new WeakMap(), _YargsInstance_exitError = new WeakMap(), _YargsInstance_detectLocale = new WeakMap(), _YargsInstance_emittedWarnings = new WeakMap(), _YargsInstance_exitProcess = new WeakMap(), _YargsInstance_frozens = new WeakMap(), _YargsInstance_globalMiddleware = new WeakMap(), _YargsInstance_groups = new WeakMap(), _YargsInstance_hasOutput = new WeakMap(), _YargsInstance_helpOpt = new WeakMap(), _YargsInstance_isGlobalContext = new WeakMap(), _YargsInstance_logger = new WeakMap(), _YargsInstance_output = new WeakMap(), _YargsInstance_options = new WeakMap(), _YargsInstance_parentRequire = new WeakMap(), _YargsInstance_parserConfig = new WeakMap(), _YargsInstance_parseFn = new WeakMap(), _YargsInstance_parseContext = new WeakMap(), _YargsInstance_pkgs = new WeakMap(), _YargsInstance_preservedGroups = new WeakMap(), _YargsInstance_processArgs = new WeakMap(), _YargsInstance_recommendCommands = new WeakMap(), _YargsInstance_shim = new WeakMap(), _YargsInstance_strict = new WeakMap(), _YargsInstance_strictCommands = new WeakMap(), _YargsInstance_strictOptions = new WeakMap(), _YargsInstance_usage = new WeakMap(), _YargsInstance_usageConfig = new WeakMap(), _YargsInstance_versionOpt = new WeakMap(), _YargsInstance_validation = new WeakMap(), kCopyDoubleDash)](argv) {
+        if (!argv._ || !argv['--'])
+            return argv;
+        argv._.push.apply(argv._, argv['--']);
+        try {
+            delete argv['--'];
+        }
+        catch (_err) { }
+        return argv;
+    }
+    [kCreateLogger]() {
         return {
-            aliases: Object.assign({}, flags.aliases),
-            argv: Object.assign(argvReturn, argv),
-            configuration: configuration,
-            defaulted: Object.assign({}, defaulted),
-            error: error,
-            newAliases: Object.assign({}, newAliases)
+            log: (...args) => {
+                if (!this[kHasParseCallback]())
+                    console.log(...args);
+                __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+                if (__classPrivateFieldGet(this, _YargsInstance_output, "f").length)
+                    __classPrivateFieldSet(this, _YargsInstance_output, __classPrivateFieldGet(this, _YargsInstance_output, "f") + '\n', "f");
+                __classPrivateFieldSet(this, _YargsInstance_output, __classPrivateFieldGet(this, _YargsInstance_output, "f") + args.join(' '), "f");
+            },
+            error: (...args) => {
+                if (!this[kHasParseCallback]())
+                    console.error(...args);
+                __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+                if (__classPrivateFieldGet(this, _YargsInstance_output, "f").length)
+                    __classPrivateFieldSet(this, _YargsInstance_output, __classPrivateFieldGet(this, _YargsInstance_output, "f") + '\n', "f");
+                __classPrivateFieldSet(this, _YargsInstance_output, __classPrivateFieldGet(this, _YargsInstance_output, "f") + args.join(' '), "f");
+            },
         };
     }
-}
-function combineAliases(aliases) {
-    const aliasArrays = [];
-    const combined = Object.create(null);
-    let change = true;
-    Object.keys(aliases).forEach(function (key) {
-        aliasArrays.push([].concat(aliases[key], key));
-    });
-    while (change) {
-        change = false;
-        for (let i = 0; i < aliasArrays.length; i++) {
-            for (let ii = i + 1; ii < aliasArrays.length; ii++) {
-                const intersect = aliasArrays[i].filter(function (v) {
-                    return aliasArrays[ii].indexOf(v) !== -1;
+    [kDeleteFromParserHintObject](optionKey) {
+        objectKeys(__classPrivateFieldGet(this, _YargsInstance_options, "f")).forEach((hintKey) => {
+            if (((key) => key === 'configObjects')(hintKey))
+                return;
+            const hint = __classPrivateFieldGet(this, _YargsInstance_options, "f")[hintKey];
+            if (Array.isArray(hint)) {
+                if (hint.includes(optionKey))
+                    hint.splice(hint.indexOf(optionKey), 1);
+            }
+            else if (typeof hint === 'object') {
+                delete hint[optionKey];
+            }
+        });
+        delete __classPrivateFieldGet(this, _YargsInstance_usage, "f").getDescriptions()[optionKey];
+    }
+    [kEmitWarning](warning, type, deduplicationId) {
+        if (!__classPrivateFieldGet(this, _YargsInstance_emittedWarnings, "f")[deduplicationId]) {
+            __classPrivateFieldGet(this, _YargsInstance_shim, "f").process.emitWarning(warning, type);
+            __classPrivateFieldGet(this, _YargsInstance_emittedWarnings, "f")[deduplicationId] = true;
+        }
+    }
+    [kFreeze]() {
+        __classPrivateFieldGet(this, _YargsInstance_frozens, "f").push({
+            options: __classPrivateFieldGet(this, _YargsInstance_options, "f"),
+            configObjects: __classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects.slice(0),
+            exitProcess: __classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"),
+            groups: __classPrivateFieldGet(this, _YargsInstance_groups, "f"),
+            strict: __classPrivateFieldGet(this, _YargsInstance_strict, "f"),
+            strictCommands: __classPrivateFieldGet(this, _YargsInstance_strictCommands, "f"),
+            strictOptions: __classPrivateFieldGet(this, _YargsInstance_strictOptions, "f"),
+            completionCommand: __classPrivateFieldGet(this, _YargsInstance_completionCommand, "f"),
+            output: __classPrivateFieldGet(this, _YargsInstance_output, "f"),
+            exitError: __classPrivateFieldGet(this, _YargsInstance_exitError, "f"),
+            hasOutput: __classPrivateFieldGet(this, _YargsInstance_hasOutput, "f"),
+            parsed: this.parsed,
+            parseFn: __classPrivateFieldGet(this, _YargsInstance_parseFn, "f"),
+            parseContext: __classPrivateFieldGet(this, _YargsInstance_parseContext, "f"),
+        });
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").freeze();
+        __classPrivateFieldGet(this, _YargsInstance_validation, "f").freeze();
+        __classPrivateFieldGet(this, _YargsInstance_command, "f").freeze();
+        __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").freeze();
+    }
+    [kGetDollarZero]() {
+        let $0 = '';
+        let default$0;
+        if (/\b(node|iojs|electron)(\.exe)?$/.test(__classPrivateFieldGet(this, _YargsInstance_shim, "f").process.argv()[0])) {
+            default$0 = __classPrivateFieldGet(this, _YargsInstance_shim, "f").process.argv().slice(1, 2);
+        }
+        else {
+            default$0 = __classPrivateFieldGet(this, _YargsInstance_shim, "f").process.argv().slice(0, 1);
+        }
+        $0 = default$0
+            .map(x => {
+            const b = this[kRebase](__classPrivateFieldGet(this, _YargsInstance_cwd, "f"), x);
+            return x.match(/^(\/|([a-zA-Z]:)?\\)/) && b.length < x.length ? b : x;
+        })
+            .join(' ')
+            .trim();
+        if (__classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv('_') &&
+            __classPrivateFieldGet(this, _YargsInstance_shim, "f").getProcessArgvBin() === __classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv('_')) {
+            $0 = __classPrivateFieldGet(this, _YargsInstance_shim, "f")
+                .getEnv('_')
+                .replace(`${__classPrivateFieldGet(this, _YargsInstance_shim, "f").path.dirname(__classPrivateFieldGet(this, _YargsInstance_shim, "f").process.execPath())}/`, '');
+        }
+        return $0;
+    }
+    [kGetParserConfiguration]() {
+        return __classPrivateFieldGet(this, _YargsInstance_parserConfig, "f");
+    }
+    [kGetUsageConfiguration]() {
+        return __classPrivateFieldGet(this, _YargsInstance_usageConfig, "f");
+    }
+    [kGuessLocale]() {
+        if (!__classPrivateFieldGet(this, _YargsInstance_detectLocale, "f"))
+            return;
+        const locale = __classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv('LC_ALL') ||
+            __classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv('LC_MESSAGES') ||
+            __classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv('LANG') ||
+            __classPrivateFieldGet(this, _YargsInstance_shim, "f").getEnv('LANGUAGE') ||
+            'en_US';
+        this.locale(locale.replace(/[.:].*/, ''));
+    }
+    [kGuessVersion]() {
+        const obj = this[kPkgUp]();
+        return obj.version || 'unknown';
+    }
+    [kParsePositionalNumbers](argv) {
+        const args = argv['--'] ? argv['--'] : argv._;
+        for (let i = 0, arg; (arg = args[i]) !== undefined; i++) {
+            if (__classPrivateFieldGet(this, _YargsInstance_shim, "f").Parser.looksLikeNumber(arg) &&
+                Number.isSafeInteger(Math.floor(parseFloat(`${arg}`)))) {
+                args[i] = Number(arg);
+            }
+        }
+        return argv;
+    }
+    [kPkgUp](rootPath) {
+        const npath = rootPath || '*';
+        if (__classPrivateFieldGet(this, _YargsInstance_pkgs, "f")[npath])
+            return __classPrivateFieldGet(this, _YargsInstance_pkgs, "f")[npath];
+        let obj = {};
+        try {
+            let startDir = rootPath || __classPrivateFieldGet(this, _YargsInstance_shim, "f").mainFilename;
+            if (!rootPath && __classPrivateFieldGet(this, _YargsInstance_shim, "f").path.extname(startDir)) {
+                startDir = __classPrivateFieldGet(this, _YargsInstance_shim, "f").path.dirname(startDir);
+            }
+            const pkgJsonPath = __classPrivateFieldGet(this, _YargsInstance_shim, "f").findUp(startDir, (dir, names) => {
+                if (names.includes('package.json')) {
+                    return 'package.json';
+                }
+                else {
+                    return undefined;
+                }
+            });
+            assertNotStrictEqual(pkgJsonPath, undefined, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+            obj = JSON.parse(__classPrivateFieldGet(this, _YargsInstance_shim, "f").readFileSync(pkgJsonPath, 'utf8'));
+        }
+        catch (_noop) { }
+        __classPrivateFieldGet(this, _YargsInstance_pkgs, "f")[npath] = obj || {};
+        return __classPrivateFieldGet(this, _YargsInstance_pkgs, "f")[npath];
+    }
+    [kPopulateParserHintArray](type, keys) {
+        keys = [].concat(keys);
+        keys.forEach(key => {
+            key = this[kSanitizeKey](key);
+            __classPrivateFieldGet(this, _YargsInstance_options, "f")[type].push(key);
+        });
+    }
+    [kPopulateParserHintSingleValueDictionary](builder, type, key, value) {
+        this[kPopulateParserHintDictionary](builder, type, key, value, (type, key, value) => {
+            __classPrivateFieldGet(this, _YargsInstance_options, "f")[type][key] = value;
+        });
+    }
+    [kPopulateParserHintArrayDictionary](builder, type, key, value) {
+        this[kPopulateParserHintDictionary](builder, type, key, value, (type, key, value) => {
+            __classPrivateFieldGet(this, _YargsInstance_options, "f")[type][key] = (__classPrivateFieldGet(this, _YargsInstance_options, "f")[type][key] || []).concat(value);
+        });
+    }
+    [kPopulateParserHintDictionary](builder, type, key, value, singleKeyHandler) {
+        if (Array.isArray(key)) {
+            key.forEach(k => {
+                builder(k, value);
+            });
+        }
+        else if (((key) => typeof key === 'object')(key)) {
+            for (const k of objectKeys(key)) {
+                builder(k, key[k]);
+            }
+        }
+        else {
+            singleKeyHandler(type, this[kSanitizeKey](key), value);
+        }
+    }
+    [kSanitizeKey](key) {
+        if (key === '__proto__')
+            return '___proto___';
+        return key;
+    }
+    [kSetKey](key, set) {
+        this[kPopulateParserHintSingleValueDictionary](this[kSetKey].bind(this), 'key', key, set);
+        return this;
+    }
+    [kUnfreeze]() {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        const frozen = __classPrivateFieldGet(this, _YargsInstance_frozens, "f").pop();
+        assertNotStrictEqual(frozen, undefined, __classPrivateFieldGet(this, _YargsInstance_shim, "f"));
+        let configObjects;
+        (_a = this, _b = this, _c = this, _d = this, _e = this, _f = this, _g = this, _h = this, _j = this, _k = this, _l = this, _m = this, {
+            options: ({ set value(_o) { __classPrivateFieldSet(_a, _YargsInstance_options, _o, "f"); } }).value,
+            configObjects,
+            exitProcess: ({ set value(_o) { __classPrivateFieldSet(_b, _YargsInstance_exitProcess, _o, "f"); } }).value,
+            groups: ({ set value(_o) { __classPrivateFieldSet(_c, _YargsInstance_groups, _o, "f"); } }).value,
+            output: ({ set value(_o) { __classPrivateFieldSet(_d, _YargsInstance_output, _o, "f"); } }).value,
+            exitError: ({ set value(_o) { __classPrivateFieldSet(_e, _YargsInstance_exitError, _o, "f"); } }).value,
+            hasOutput: ({ set value(_o) { __classPrivateFieldSet(_f, _YargsInstance_hasOutput, _o, "f"); } }).value,
+            parsed: this.parsed,
+            strict: ({ set value(_o) { __classPrivateFieldSet(_g, _YargsInstance_strict, _o, "f"); } }).value,
+            strictCommands: ({ set value(_o) { __classPrivateFieldSet(_h, _YargsInstance_strictCommands, _o, "f"); } }).value,
+            strictOptions: ({ set value(_o) { __classPrivateFieldSet(_j, _YargsInstance_strictOptions, _o, "f"); } }).value,
+            completionCommand: ({ set value(_o) { __classPrivateFieldSet(_k, _YargsInstance_completionCommand, _o, "f"); } }).value,
+            parseFn: ({ set value(_o) { __classPrivateFieldSet(_l, _YargsInstance_parseFn, _o, "f"); } }).value,
+            parseContext: ({ set value(_o) { __classPrivateFieldSet(_m, _YargsInstance_parseContext, _o, "f"); } }).value,
+        } = frozen);
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects = configObjects;
+        __classPrivateFieldGet(this, _YargsInstance_usage, "f").unfreeze();
+        __classPrivateFieldGet(this, _YargsInstance_validation, "f").unfreeze();
+        __classPrivateFieldGet(this, _YargsInstance_command, "f").unfreeze();
+        __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").unfreeze();
+    }
+    [kValidateAsync](validation, argv) {
+        return maybeAsyncResult(argv, result => {
+            validation(result);
+            return result;
+        });
+    }
+    getInternalMethods() {
+        return {
+            getCommandInstance: this[kGetCommandInstance].bind(this),
+            getContext: this[kGetContext].bind(this),
+            getHasOutput: this[kGetHasOutput].bind(this),
+            getLoggerInstance: this[kGetLoggerInstance].bind(this),
+            getParseContext: this[kGetParseContext].bind(this),
+            getParserConfiguration: this[kGetParserConfiguration].bind(this),
+            getUsageConfiguration: this[kGetUsageConfiguration].bind(this),
+            getUsageInstance: this[kGetUsageInstance].bind(this),
+            getValidationInstance: this[kGetValidationInstance].bind(this),
+            hasParseCallback: this[kHasParseCallback].bind(this),
+            isGlobalContext: this[kIsGlobalContext].bind(this),
+            postProcess: this[kPostProcess].bind(this),
+            reset: this[kReset].bind(this),
+            runValidation: this[kRunValidation].bind(this),
+            runYargsParserAndExecuteCommands: this[kRunYargsParserAndExecuteCommands].bind(this),
+            setHasOutput: this[kSetHasOutput].bind(this),
+        };
+    }
+    [kGetCommandInstance]() {
+        return __classPrivateFieldGet(this, _YargsInstance_command, "f");
+    }
+    [kGetContext]() {
+        return __classPrivateFieldGet(this, _YargsInstance_context, "f");
+    }
+    [kGetHasOutput]() {
+        return __classPrivateFieldGet(this, _YargsInstance_hasOutput, "f");
+    }
+    [kGetLoggerInstance]() {
+        return __classPrivateFieldGet(this, _YargsInstance_logger, "f");
+    }
+    [kGetParseContext]() {
+        return __classPrivateFieldGet(this, _YargsInstance_parseContext, "f") || {};
+    }
+    [kGetUsageInstance]() {
+        return __classPrivateFieldGet(this, _YargsInstance_usage, "f");
+    }
+    [kGetValidationInstance]() {
+        return __classPrivateFieldGet(this, _YargsInstance_validation, "f");
+    }
+    [kHasParseCallback]() {
+        return !!__classPrivateFieldGet(this, _YargsInstance_parseFn, "f");
+    }
+    [kIsGlobalContext]() {
+        return __classPrivateFieldGet(this, _YargsInstance_isGlobalContext, "f");
+    }
+    [kPostProcess](argv, populateDoubleDash, calledFromCommand, runGlobalMiddleware) {
+        if (calledFromCommand)
+            return argv;
+        if (isPromise(argv))
+            return argv;
+        if (!populateDoubleDash) {
+            argv = this[kCopyDoubleDash](argv);
+        }
+        const parsePositionalNumbers = this[kGetParserConfiguration]()['parse-positional-numbers'] ||
+            this[kGetParserConfiguration]()['parse-positional-numbers'] === undefined;
+        if (parsePositionalNumbers) {
+            argv = this[kParsePositionalNumbers](argv);
+        }
+        if (runGlobalMiddleware) {
+            argv = applyMiddleware(argv, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), false);
+        }
+        return argv;
+    }
+    [kReset](aliases = {}) {
+        __classPrivateFieldSet(this, _YargsInstance_options, __classPrivateFieldGet(this, _YargsInstance_options, "f") || {}, "f");
+        const tmpOptions = {};
+        tmpOptions.local = __classPrivateFieldGet(this, _YargsInstance_options, "f").local || [];
+        tmpOptions.configObjects = __classPrivateFieldGet(this, _YargsInstance_options, "f").configObjects || [];
+        const localLookup = {};
+        tmpOptions.local.forEach(l => {
+            localLookup[l] = true;
+            (aliases[l] || []).forEach(a => {
+                localLookup[a] = true;
+            });
+        });
+        Object.assign(__classPrivateFieldGet(this, _YargsInstance_preservedGroups, "f"), Object.keys(__classPrivateFieldGet(this, _YargsInstance_groups, "f")).reduce((acc, groupName) => {
+            const keys = __classPrivateFieldGet(this, _YargsInstance_groups, "f")[groupName].filter(key => !(key in localLookup));
+            if (keys.length > 0) {
+                acc[groupName] = keys;
+            }
+            return acc;
+        }, {}));
+        __classPrivateFieldSet(this, _YargsInstance_groups, {}, "f");
+        const arrayOptions = [
+            'array',
+            'boolean',
+            'string',
+            'skipValidation',
+            'count',
+            'normalize',
+            'number',
+            'hiddenOptions',
+        ];
+        const objectOptions = [
+            'narg',
+            'key',
+            'alias',
+            'default',
+            'defaultDescription',
+            'config',
+            'choices',
+            'demandedOptions',
+            'demandedCommands',
+            'deprecatedOptions',
+        ];
+        arrayOptions.forEach(k => {
+            tmpOptions[k] = (__classPrivateFieldGet(this, _YargsInstance_options, "f")[k] || []).filter((k) => !localLookup[k]);
+        });
+        objectOptions.forEach((k) => {
+            tmpOptions[k] = objFilter(__classPrivateFieldGet(this, _YargsInstance_options, "f")[k], k => !localLookup[k]);
+        });
+        tmpOptions.envPrefix = __classPrivateFieldGet(this, _YargsInstance_options, "f").envPrefix;
+        __classPrivateFieldSet(this, _YargsInstance_options, tmpOptions, "f");
+        __classPrivateFieldSet(this, _YargsInstance_usage, __classPrivateFieldGet(this, _YargsInstance_usage, "f")
+            ? __classPrivateFieldGet(this, _YargsInstance_usage, "f").reset(localLookup)
+            : usage(this, __classPrivateFieldGet(this, _YargsInstance_shim, "f")), "f");
+        __classPrivateFieldSet(this, _YargsInstance_validation, __classPrivateFieldGet(this, _YargsInstance_validation, "f")
+            ? __classPrivateFieldGet(this, _YargsInstance_validation, "f").reset(localLookup)
+            : validation(this, __classPrivateFieldGet(this, _YargsInstance_usage, "f"), __classPrivateFieldGet(this, _YargsInstance_shim, "f")), "f");
+        __classPrivateFieldSet(this, _YargsInstance_command, __classPrivateFieldGet(this, _YargsInstance_command, "f")
+            ? __classPrivateFieldGet(this, _YargsInstance_command, "f").reset()
+            : command(__classPrivateFieldGet(this, _YargsInstance_usage, "f"), __classPrivateFieldGet(this, _YargsInstance_validation, "f"), __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f"), __classPrivateFieldGet(this, _YargsInstance_shim, "f")), "f");
+        if (!__classPrivateFieldGet(this, _YargsInstance_completion, "f"))
+            __classPrivateFieldSet(this, _YargsInstance_completion, completion(this, __classPrivateFieldGet(this, _YargsInstance_usage, "f"), __classPrivateFieldGet(this, _YargsInstance_command, "f"), __classPrivateFieldGet(this, _YargsInstance_shim, "f")), "f");
+        __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").reset();
+        __classPrivateFieldSet(this, _YargsInstance_completionCommand, null, "f");
+        __classPrivateFieldSet(this, _YargsInstance_output, '', "f");
+        __classPrivateFieldSet(this, _YargsInstance_exitError, null, "f");
+        __classPrivateFieldSet(this, _YargsInstance_hasOutput, false, "f");
+        this.parsed = false;
+        return this;
+    }
+    [kRebase](base, dir) {
+        return __classPrivateFieldGet(this, _YargsInstance_shim, "f").path.relative(base, dir);
+    }
+    [kRunYargsParserAndExecuteCommands](args, shortCircuit, calledFromCommand, commandIndex = 0, helpOnly = false) {
+        let skipValidation = !!calledFromCommand || helpOnly;
+        args = args || __classPrivateFieldGet(this, _YargsInstance_processArgs, "f");
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").__ = __classPrivateFieldGet(this, _YargsInstance_shim, "f").y18n.__;
+        __classPrivateFieldGet(this, _YargsInstance_options, "f").configuration = this[kGetParserConfiguration]();
+        const populateDoubleDash = !!__classPrivateFieldGet(this, _YargsInstance_options, "f").configuration['populate--'];
+        const config = Object.assign({}, __classPrivateFieldGet(this, _YargsInstance_options, "f").configuration, {
+            'populate--': true,
+        });
+        const parsed = __classPrivateFieldGet(this, _YargsInstance_shim, "f").Parser.detailed(args, Object.assign({}, __classPrivateFieldGet(this, _YargsInstance_options, "f"), {
+            configuration: { 'parse-positional-numbers': false, ...config },
+        }));
+        const argv = Object.assign(parsed.argv, __classPrivateFieldGet(this, _YargsInstance_parseContext, "f"));
+        let argvPromise = undefined;
+        const aliases = parsed.aliases;
+        let helpOptSet = false;
+        let versionOptSet = false;
+        Object.keys(argv).forEach(key => {
+            if (key === __classPrivateFieldGet(this, _YargsInstance_helpOpt, "f") && argv[key]) {
+                helpOptSet = true;
+            }
+            else if (key === __classPrivateFieldGet(this, _YargsInstance_versionOpt, "f") && argv[key]) {
+                versionOptSet = true;
+            }
+        });
+        argv.$0 = this.$0;
+        this.parsed = parsed;
+        if (commandIndex === 0) {
+            __classPrivateFieldGet(this, _YargsInstance_usage, "f").clearCachedHelpMessage();
+        }
+        try {
+            this[kGuessLocale]();
+            if (shortCircuit) {
+                return this[kPostProcess](argv, populateDoubleDash, !!calledFromCommand, false);
+            }
+            if (__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f")) {
+                const helpCmds = [__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f")]
+                    .concat(aliases[__classPrivateFieldGet(this, _YargsInstance_helpOpt, "f")] || [])
+                    .filter(k => k.length > 1);
+                if (helpCmds.includes('' + argv._[argv._.length - 1])) {
+                    argv._.pop();
+                    helpOptSet = true;
+                }
+            }
+            __classPrivateFieldSet(this, _YargsInstance_isGlobalContext, false, "f");
+            const handlerKeys = __classPrivateFieldGet(this, _YargsInstance_command, "f").getCommands();
+            const requestCompletions = __classPrivateFieldGet(this, _YargsInstance_completion, "f").completionKey in argv;
+            const skipRecommendation = helpOptSet || requestCompletions || helpOnly;
+            if (argv._.length) {
+                if (handlerKeys.length) {
+                    let firstUnknownCommand;
+                    for (let i = commandIndex || 0, cmd; argv._[i] !== undefined; i++) {
+                        cmd = String(argv._[i]);
+                        if (handlerKeys.includes(cmd) && cmd !== __classPrivateFieldGet(this, _YargsInstance_completionCommand, "f")) {
+                            const innerArgv = __classPrivateFieldGet(this, _YargsInstance_command, "f").runCommand(cmd, this, parsed, i + 1, helpOnly, helpOptSet || versionOptSet || helpOnly);
+                            return this[kPostProcess](innerArgv, populateDoubleDash, !!calledFromCommand, false);
+                        }
+                        else if (!firstUnknownCommand &&
+                            cmd !== __classPrivateFieldGet(this, _YargsInstance_completionCommand, "f")) {
+                            firstUnknownCommand = cmd;
+                            break;
+                        }
+                    }
+                    if (!__classPrivateFieldGet(this, _YargsInstance_command, "f").hasDefaultCommand() &&
+                        __classPrivateFieldGet(this, _YargsInstance_recommendCommands, "f") &&
+                        firstUnknownCommand &&
+                        !skipRecommendation) {
+                        __classPrivateFieldGet(this, _YargsInstance_validation, "f").recommendCommands(firstUnknownCommand, handlerKeys);
+                    }
+                }
+                if (__classPrivateFieldGet(this, _YargsInstance_completionCommand, "f") &&
+                    argv._.includes(__classPrivateFieldGet(this, _YargsInstance_completionCommand, "f")) &&
+                    !requestCompletions) {
+                    if (__classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"))
+                        setBlocking(true);
+                    this.showCompletionScript();
+                    this.exit(0);
+                }
+            }
+            if (__classPrivateFieldGet(this, _YargsInstance_command, "f").hasDefaultCommand() && !skipRecommendation) {
+                const innerArgv = __classPrivateFieldGet(this, _YargsInstance_command, "f").runCommand(null, this, parsed, 0, helpOnly, helpOptSet || versionOptSet || helpOnly);
+                return this[kPostProcess](innerArgv, populateDoubleDash, !!calledFromCommand, false);
+            }
+            if (requestCompletions) {
+                if (__classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"))
+                    setBlocking(true);
+                args = [].concat(args);
+                const completionArgs = args.slice(args.indexOf(`--${__classPrivateFieldGet(this, _YargsInstance_completion, "f").completionKey}`) + 1);
+                __classPrivateFieldGet(this, _YargsInstance_completion, "f").getCompletion(completionArgs, (err, completions) => {
+                    if (err)
+                        throw new YError(err.message);
+                    (completions || []).forEach(completion => {
+                        __classPrivateFieldGet(this, _YargsInstance_logger, "f").log(completion);
+                    });
+                    this.exit(0);
                 });
-                if (intersect.length) {
-                    aliasArrays[i] = aliasArrays[i].concat(aliasArrays[ii]);
-                    aliasArrays.splice(ii, 1);
-                    change = true;
-                    break;
+                return this[kPostProcess](argv, !populateDoubleDash, !!calledFromCommand, false);
+            }
+            if (!__classPrivateFieldGet(this, _YargsInstance_hasOutput, "f")) {
+                if (helpOptSet) {
+                    if (__classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"))
+                        setBlocking(true);
+                    skipValidation = true;
+                    this.showHelp('log');
+                    this.exit(0);
+                }
+                else if (versionOptSet) {
+                    if (__classPrivateFieldGet(this, _YargsInstance_exitProcess, "f"))
+                        setBlocking(true);
+                    skipValidation = true;
+                    __classPrivateFieldGet(this, _YargsInstance_usage, "f").showVersion('log');
+                    this.exit(0);
+                }
+            }
+            if (!skipValidation && __classPrivateFieldGet(this, _YargsInstance_options, "f").skipValidation.length > 0) {
+                skipValidation = Object.keys(argv).some(key => __classPrivateFieldGet(this, _YargsInstance_options, "f").skipValidation.indexOf(key) >= 0 && argv[key] === true);
+            }
+            if (!skipValidation) {
+                if (parsed.error)
+                    throw new YError(parsed.error.message);
+                if (!requestCompletions) {
+                    const validation = this[kRunValidation](aliases, {}, parsed.error);
+                    if (!calledFromCommand) {
+                        argvPromise = applyMiddleware(argv, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), true);
+                    }
+                    argvPromise = this[kValidateAsync](validation, argvPromise !== null && argvPromise !== void 0 ? argvPromise : argv);
+                    if (isPromise(argvPromise) && !calledFromCommand) {
+                        argvPromise = argvPromise.then(() => {
+                            return applyMiddleware(argv, this, __classPrivateFieldGet(this, _YargsInstance_globalMiddleware, "f").getMiddleware(), false);
+                        });
+                    }
                 }
             }
         }
+        catch (err) {
+            if (err instanceof YError)
+                __classPrivateFieldGet(this, _YargsInstance_usage, "f").fail(err.message, err);
+            else
+                throw err;
+        }
+        return this[kPostProcess](argvPromise !== null && argvPromise !== void 0 ? argvPromise : argv, populateDoubleDash, !!calledFromCommand, true);
     }
-    aliasArrays.forEach(function (aliasArray) {
-        aliasArray = aliasArray.filter(function (v, i, self) {
-            return self.indexOf(v) === i;
+    [kRunValidation](aliases, positionalMap, parseErrors, isDefaultCommand) {
+        const demandedOptions = { ...this.getDemandedOptions() };
+        return (argv) => {
+            if (parseErrors)
+                throw new YError(parseErrors.message);
+            __classPrivateFieldGet(this, _YargsInstance_validation, "f").nonOptionCount(argv);
+            __classPrivateFieldGet(this, _YargsInstance_validation, "f").requiredArguments(argv, demandedOptions);
+            let failedStrictCommands = false;
+            if (__classPrivateFieldGet(this, _YargsInstance_strictCommands, "f")) {
+                failedStrictCommands = __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownCommands(argv);
+            }
+            if (__classPrivateFieldGet(this, _YargsInstance_strict, "f") && !failedStrictCommands) {
+                __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownArguments(argv, aliases, positionalMap, !!isDefaultCommand);
+            }
+            else if (__classPrivateFieldGet(this, _YargsInstance_strictOptions, "f")) {
+                __classPrivateFieldGet(this, _YargsInstance_validation, "f").unknownArguments(argv, aliases, {}, false, false);
+            }
+            __classPrivateFieldGet(this, _YargsInstance_validation, "f").limitedChoices(argv);
+            __classPrivateFieldGet(this, _YargsInstance_validation, "f").implications(argv);
+            __classPrivateFieldGet(this, _YargsInstance_validation, "f").conflicting(argv);
+        };
+    }
+    [kSetHasOutput]() {
+        __classPrivateFieldSet(this, _YargsInstance_hasOutput, true, "f");
+    }
+    [kTrackManuallySetKeys](keys) {
+        if (typeof keys === 'string') {
+            __classPrivateFieldGet(this, _YargsInstance_options, "f").key[keys] = true;
+        }
+        else {
+            for (const k of keys) {
+                __classPrivateFieldGet(this, _YargsInstance_options, "f").key[k] = true;
+            }
+        }
+    }
+}
+function isYargsInstance(y) {
+    return !!y && typeof y.getInternalMethods === 'function';
+}
+
+;// CONCATENATED MODULE: ./node_modules/yargs/index.mjs
+
+
+// Bootstraps yargs for ESM:
+
+
+
+const Yargs = YargsFactory(esm);
+/* harmony default export */ const yargs = (Yargs);
+
+;// CONCATENATED MODULE: ./scan-repos.js
+
+
+
+
+
+
+
+const MyOctokit = Octokit.plugin(throttling, dist_node.paginateRest);
+
+async function main() {
+
+    const argv = yargs(process.argv)
+        .option("token", {
+            alias: "t",
+            description: "personal access token with which to authenticate",
+            global: true,
+            demandOption: true,
+        })
+        .option("org", {
+            alias: "o",
+            description: "org",
+            global: true,
+            demandOption: true
+        })
+        .option("nag-number", {
+            alias: "n",
+            description: "Number of issues to create to warn users of non compliance",
+            global: true,
+            demandOption: false,
+            default: 3
+        })
+        .count("verbose")
+        .option("verbose", {
+            alias: "v",
+            description: "set verbose logging",
+            global: true,
+            demandOption: false,
+            type: "boolean",
+            default: false
+        })
+        .argv;
+
+    const VERBOSITY_LEVEL = argv.verbose
+    const NAG_NUMBER = argv.nagNumber
+
+    const logger = {
+        error: (message) => { console.error(message) },
+        warn: (message) => { if (VERBOSITY_LEVEL >= 0) { console.warn(message) } },
+        info: (message) => { if (VERBOSITY_LEVEL >= 1) { console.info(message) } },
+        debug: (message) => { if (VERBOSITY_LEVEL >= 2) { console.debug(message) } },
+        log: (message) => { console.log(message) }
+    }
+
+
+    try {
+        // const ACTION_SEARCH_STRING = "/^action.yml$/"  // Code search api doesn't support regexes via the API yet
+        const ACTION_SEARCH_STRING = "filename:action.yml path:/"
+        const SECURITY_SCANNING_SEARCH_STRING = "github/codeql-action/analyze@v2 in:file"
+        const client = new MyOctokit({
+            auth: `token ${argv.token}`,
+            previews: ["luke-cage"],
+            throttle: {
+                onRateLimit: (retryAfter, options, octokit, retryCount) => {
+                    octokit.log.warn(
+                        `Request quota exhausted for request ${options.method} ${options.url}`,
+                    );
+
+                    if (retryCount < 1) {
+                        // only retries once
+                        octokit.log.info(`Retrying after ${retryAfter} seconds!`);
+                        return true;
+                    }
+                },
+                onSecondaryRateLimit: (retryAfter, options, octokit) => {
+                    // does not retry, only logs a warning
+                    octokit.log.warn(
+                        `SecondaryRateLimit detected for request ${options.method} ${options.url}`,
+                    );
+                },
+            },
         });
-        const lastAlias = aliasArray.pop();
-        if (lastAlias !== undefined && typeof lastAlias === 'string') {
-            combined[lastAlias] = aliasArray;
+
+        // search for code in org
+        let search_results = await client.request(`GET /search/code`, {
+            q: `org:${argv.org} ${ACTION_SEARCH_STRING}`,
+            headers: {
+                'X-GitHub-Api-Version': '2022-11-28'
+            }
+        })
+
+        logger.debug(search_results)
+        // print search results
+        logger.debug(`Search Results: ${external_util_.inspect(search_results.data.items, { depth: null })}`)
+
+
+        let actions_repositories = [];
+        for (let i = 0; i < search_results.data.items.length; i++) {
+            let item = search_results.data.items[i]
+            actions_repositories.push({
+                name: item.repository.name,
+                url: item.repository.html_url,
+                scanning_enabled: false,
+                scanning_workflow: false,
+                dependabot_scanning_enabled: false,
+                all_alerts_closed: false,
+                visibility: undefined
+            });
+
         }
-    });
-    return combined;
-}
-function increment(orig) {
-    return orig !== undefined ? orig + 1 : 1;
-}
-function sanitizeKey(key) {
-    if (key === '__proto__')
-        return '___proto___';
-    return key;
-}
-function stripQuotes(val) {
-    return (typeof val === 'string' &&
-        (val[0] === "'" || val[0] === '"') &&
-        val[val.length - 1] === val[0])
-        ? val.substring(1, val.length - 1)
-        : val;
-}
 
-var _a, _b, _c;
-const minNodeVersion = (process && process.env && process.env.YARGS_MIN_NODE_VERSION)
-    ? Number(process.env.YARGS_MIN_NODE_VERSION)
-    : 12;
-const nodeVersion = (_b = (_a = process === null || process === void 0 ? void 0 : process.versions) === null || _a === void 0 ? void 0 : _a.node) !== null && _b !== void 0 ? _b : (_c = process === null || process === void 0 ? void 0 : process.version) === null || _c === void 0 ? void 0 : _c.slice(1);
-if (nodeVersion) {
-    const major = Number(nodeVersion.match(/^([^.]+)/)[1]);
-    if (major < minNodeVersion) {
-        throw Error(`yargs parser supports a minimum Node.js version of ${minNodeVersion}. Read our version support policy: https://github.com/yargs/yargs-parser#supported-nodejs-versions`);
-    }
-}
-const env = process ? process.env : {};
-const parser = new YargsParser({
-    cwd: process.cwd,
-    env: () => {
-        return env;
-    },
-    format: util.format,
-    normalize: path.normalize,
-    resolve: path.resolve,
-    require: (path) => {
-        if (true) {
-            return __nccwpck_require__(5670)(path);
+        // loop through results
+        for (const repository of actions_repositories) {
+            let repository_configuration = await client.request(`GET /repos/{owner}/{repo}`, {
+                owner: argv.org,
+                repo: repository.name,
+                headers: {
+                    'X-GitHub-Api-Version': '2022-11-28'
+                }
+            })
+
+            repository.visibility = repository_configuration.data.visibility // kind of nasty but this should set the value in the actions_repositories object which we can use later
+
+            logger.debug(`${external_util_.inspect(repository_configuration, { depth: null })}`)
+
+            repository['description'] = repository_configuration.data.description ?? ''
+            repository['default_branch'] = repository_configuration.data.default_branch
+            repository['scanning_enabled'] = repository_configuration.data.security_and_analysis?.advanced_security?.status === 'enabled'
+            repository['dependabot_scanning_enabled'] = repository_configuration.data.security_and_analysis?.dependabot_security_updates?.status === 'enabled'
+
+            // search for code in org
+            let search_code_scanning_results = await client.request(`GET /search/code`, {
+                q: `repo:${argv.org}/${repository.name} ${SECURITY_SCANNING_SEARCH_STRING}`,
+                headers: {
+                    'X-GitHub-Api-Version': '2022-11-28'
+                }
+
+            })
+
+            logger.debug(`${external_util_.inspect(search_code_scanning_results, { depth: null })}`)
+
+            repository['scanning_workflow'] = search_code_scanning_results.data?.total_count > 0
+
+            if (repository.scanning_enabled && repository.scanning_workflow) {
+
+                let code_scanning_alerts
+                try {
+                    code_scanning_alerts = await client.paginate(`GET /repos/{owner}/{repo}/code-scanning/alerts`, {
+                        owner: argv.org,
+                        repo: repository.name,
+                        headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    })
+                } catch (error) {
+                    // ignore 404 errors
+                    if (error.status !== 404) {
+                        throw error
+                    } else {
+                        logger.info(`No scanning results: ${error}`)
+                    }
+                }
+                
+                // if ther are no results then all alerts are closed remains false
+                if (code_scanning_alerts) {
+                    logger.debug(code_scanning_alerts)
+                    const open_alerts = code_scanning_alerts.filter(alert => alert.state === 'open')
+
+                    // if there are no alerts, print a message
+                    if (open_alerts.length == 0) {
+                        logger.info("No alerts found")
+                        repository['all_alerts_closed'] = true
+                    } else {
+                        repository['all_alerts_closed'] = false
+                        // print code scanning alerts
+                        for (let i = 0; i < code_scanning_alerts.length; i++) {
+                            logger.info(code_scanning_alerts[i].rule.name);
+                        }
+                    }
+                }
+            }
+
+            if(repository.dependabot_scanning_enabled){
+                let dependabot_alerts
+                try {
+                    dependabot_alerts = await client.paginate(`GET /repos/{owner}/{repo}/dependabot/alerts`, {
+                        owner: argv.org,
+                        repo: repository.name,
+                        headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    })
+                } catch (error) {
+                    // ignore 404 errors
+                    if (error.status !== 404) {
+                        throw error
+                    } else {
+                        logger.info(`No dependabot alerts: ${error}`)
+                    }
+                }
+                
+                // if ther are no results then all alerts are closed remains false
+                if (dependabot_alerts) {
+                    logger.debug(dependabot_alerts)
+                    const open_alerts = dependabot_alerts.filter(alert => alert.state === 'open')
+
+                    // if there are no alerts, print a message
+                    if (open_alerts.length == 0) {
+                        logger.info("No alerts found")
+                        repository['all_alerts_closed'] = true
+                    } else {
+                        repository['all_alerts_closed'] = false
+                        // print code scanning alerts
+                        for (let i = 0; i < dependabot_alerts.length; i++) {
+                            logger.info(dependabot_alerts[i].security_advisory.cve_id);
+                        }
+                    }
+                }
+
+            }
         }
-        else {}
+
+        // print results
+        logger.debug(`${JSON.stringify(actions_repositories)}`)
+
+        // loop through repositories
+        for (const repo of actions_repositories) {
+            logger.debug(`Repo ${repo.name} scanning enabled: ${repo.scanning_enabled} scanning workflow: ${repo.scanning_workflow} dependabot scanning enabled: ${repo.dependabot_scanning_enabled} all alerts closed: ${repo.all_alerts_closed}`)
+            // if scanning is enabled, and there are alerts, and there are open alerts, nag
+            if (!repo.scanning_enabled || !repo.scanning_workflow || !repo.all_alerts_closed || !repo.dependabot_scanning_enabled) {
+                if (repo.description === '') {
+                    logger.info(`Description is empty, can't sync upstream to ${repo.name}`)
+                } else {
+                    try {
+                        const verbosity = logger.VERBOSITY_LEVEL >= 2 == true ? 'GIT_CURL_VERBOSE=1 ' : ''
+                        if (shell.exec(`${verbosity}git clone https://${argv.token}@github.com/${argv.org}/${repo.name}.git`, { silent: logger.VERBOSITY_LEVEL < 2 }).code === 0) {
+                            shell.exec(`cd ${repo.name} && curl https://raw.githubusercontent.com/repo-sync/github-sync/3832fe8e2be32372e1b3970bbae8e7079edeec88/github-sync.sh > github-sync.sh`)
+                            shell.exec(`pwd && cd ${repo.name} && GITHUB_TOKEN="${argv.token}" GITHUB_REPOSITORY="${argv.org}/${repo.name}" bash github-sync.sh ${repo.description} "${repo.default_branch}:${repo.default_branch}-sync"`)
+                            // Get common ancestor
+                            const common_ancestor = shell.exec(`cd ${repo.name} && git merge-base remotes/origin/${repo.default_branch}-sync HEAD`, { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
+                            // Get head of sync branch
+                            const sync_head = shell.exec(`cd ${repo.name} && git show-ref remotes/origin/${repo.default_branch}-sync -s`, { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
+                            // Open a PR if there is stuff to merge
+                            if (common_ancestor != sync_head) {
+                                // Find Admin Team
+                                const teams_with_members = []
+                                const admin_teams = await client.paginate(`GET /repos/${argv.org}/${repo.name}/teams`, {
+                                    headers: {
+                                        'X-GitHub-Api-Version': '2022-11-28'
+                                    }
+                                })
+
+                                logger.debug(`Admin Teams: ${external_util_.inspect(admin_teams, { depth: null })}`)
+
+                                for (const team of admin_teams) {
+                                    const current_team_members = await client.paginate(`GET ${team.members_url.replace(/{\/member}/, '')}`, {
+                                        headers: {
+                                            'X-GitHub-Api-Version': '2022-11-28'
+                                        }
+
+                                    })
+                                    logger.debug(`Team Members: ${external_util_.inspect(current_team_members, { depth: null })}`)
+
+                                    if (current_team_members.length > 0) {
+                                        teams_with_members.push(team)
+                                    }
+                                }
+
+                                logger.debug(`Teams with Members: ${external_util_.inspect(teams_with_members, { depth: null })}`)
+
+                                let reviewers = ''
+                                // If teams with members empty, find org admins
+                                if (teams_with_members.length === 0) {
+                                    const org_admins = await client.paginate(`GET /orgs/{org}/members`, {
+                                        org: argv.org,
+                                        role: "admin",
+                                        headers: {
+                                            'X-GitHub-Api-Version': '2022-11-28'
+                                        }
+                                    })
+
+                                    logger.debug(`Org Admins: ${external_util_.inspect(org_admins, { depth: null })}`)
+                                    for (const member of org_admins) {
+                                        logger.debug(`${external_util_.inspect(member, { depth: null })}`)
+                                        reviewers += ` --reviewer ${member.login}`
+                                    }
+                                } else {
+                                    for (const team of teams_with_members) {
+                                        logger.debug(`${external_util_.inspect(team, { depth: null })}`)
+                                        reviewers += ` --reviewer @${argv.org}/${team.name}`
+                                    }
+                                }
+
+                                logger.debug(`Reviewers: ${external_util_.inspect(reviewers, { depth: null })}`)
+                                shell.exec(`gh pr --repo ${argv.org}/${repo.name} create --title "Merge Upstream" --body "This repository is non-compliant.  This PR has been automatically generated to help you merge Upstream in hopes that it helps come in to compliance" --base ${repo.default_branch} --head "${repo.default_branch}-sync" ${reviewers}`)
+
+                            } else {
+                                logger.info('Common Ancestor matches upstream so nothing to merge')
+                            }
+                        } else {
+                            logger.warn(`Failed to clone ${repo.name}`)
+                        }
+                    } catch (error) {
+                        logger.error(error)
+                    }
+                    finally {
+                        shell.exec(`rm -rf ${repo.name}`)
+                    }
+                }
+
+                // check if nagged 3 times
+                const issues = await client.paginate(`GET /repos/{owner}/{repo}/issues`, {
+                    owner: argv.org,
+                    repo: repo.name,
+                    state: "all",
+                    labels: "non-compliant",
+                    headers: {
+                        'X-GitHub-Api-Version': '2022-11-28'
+                    }
+                })
+
+                if (issues.length > NAG_NUMBER) {
+                    if (repo.visibility !== 'public') {
+                        await client.request(`PUT /repos/{owner}/{repo}/actions/permissions/access`, {
+                            owner: argv.org,
+                            repo: repo.name,
+                            access_level: "none",
+                            headers: {
+                                'X-GitHub-Api-Version': '2022-11-28'
+                            }
+                        })
+                    }
+
+                    await client.request(`POST /repos/{owner}/{repo}/issues`, {
+                        owner: argv.org,
+                        repo: repo.name,
+                        title: 'Repository Disabled for Actions',
+                        body: 'This repository has been disabled for use within actions due to non-compliance.  Please remediate by enabling code scanning and resolving all alerts before contacting the GitHub Organization Admins to re-enable this Action.',
+                        labels: ['non-compliant'],
+                        headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    })
+                } else {
+                    // nag
+                    await client.request(`POST /repos/{owner}/{repo}/issues`, {
+                        owner: argv.org,
+                        repo: repo.name,
+                        title: 'Repository Non-Compliant for use with GitHub Actions',
+                        body: 'This repository is non-compliant for use with GitHub Actions.  To remediate this please make sure Dependabot and code-scanning are enabled and all alerts are resolved. If applicable, a PR has been opened to merge upstream into this repository in hopes that it helps this repository come back in to compliance.  This repository will be disabled for use within actions after the 3rd notification.',
+                        labels: ['non-compliant'],
+                        headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    })
+                }
+            }
+        }
+    } catch (error) {
+        logger.error(error);
+        process.exit(1)
     }
-});
-const yargsParser = function Parser(args, opts) {
-    const result = parser.parse(args.slice(), opts);
-    return result.argv;
-};
-yargsParser.detailed = function (args, opts) {
-    return parser.parse(args.slice(), opts);
-};
-yargsParser.camelCase = camelCase;
-yargsParser.decamelize = decamelize;
-yargsParser.looksLikeNumber = looksLikeNumber;
-
-module.exports = yargsParser;
-
-
-/***/ }),
-
-/***/ 9562:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-var t=__nccwpck_require__(9491);class e extends Error{constructor(t){super(t||"yargs error"),this.name="YError",Error.captureStackTrace&&Error.captureStackTrace(this,e)}}let s,i=[];function n(t,o,a,h){s=h;let l={};if(Object.prototype.hasOwnProperty.call(t,"extends")){if("string"!=typeof t.extends)return l;const r=/\.json|\..*rc$/.test(t.extends);let h=null;if(r)h=function(t,e){return s.path.resolve(t,e)}(o,t.extends);else try{h=/*require.resolve*/(__nccwpck_require__(9167).resolve(t.extends))}catch(e){return t}!function(t){if(i.indexOf(t)>-1)throw new e(`Circular extended configurations: '${t}'.`)}(h),i.push(h),l=r?JSON.parse(s.readFileSync(h,"utf8")):__nccwpck_require__(9167)(t.extends),delete t.extends,l=n(l,s.path.dirname(h),a,s)}return i=[],a?r(l,t):Object.assign({},l,t)}function r(t,e){const s={};function i(t){return t&&"object"==typeof t&&!Array.isArray(t)}Object.assign(s,t);for(const n of Object.keys(e))i(e[n])&&i(s[n])?s[n]=r(t[n],e[n]):s[n]=e[n];return s}function o(t){const e=t.replace(/\s{2,}/g," ").split(/\s+(?![^[]*]|[^<]*>)/),s=/\.*[\][<>]/g,i=e.shift();if(!i)throw new Error(`No command found in: ${t}`);const n={cmd:i.replace(s,""),demanded:[],optional:[]};return e.forEach(((t,i)=>{let r=!1;t=t.replace(/\s/g,""),/\.+[\]>]/.test(t)&&i===e.length-1&&(r=!0),/^\[/.test(t)?n.optional.push({cmd:t.replace(s,"").split("|"),variadic:r}):n.demanded.push({cmd:t.replace(s,"").split("|"),variadic:r})})),n}const a=["first","second","third","fourth","fifth","sixth"];function h(t,s,i){try{let n=0;const[r,a,h]="object"==typeof t?[{demanded:[],optional:[]},t,s]:[o(`cmd ${t}`),s,i],f=[].slice.call(a);for(;f.length&&void 0===f[f.length-1];)f.pop();const d=h||f.length;if(d<r.demanded.length)throw new e(`Not enough arguments provided. Expected ${r.demanded.length} but received ${f.length}.`);const u=r.demanded.length+r.optional.length;if(d>u)throw new e(`Too many arguments provided. Expected max ${u} but received ${d}.`);r.demanded.forEach((t=>{const e=l(f.shift());0===t.cmd.filter((t=>t===e||"*"===t)).length&&c(e,t.cmd,n),n+=1})),r.optional.forEach((t=>{if(0===f.length)return;const e=l(f.shift());0===t.cmd.filter((t=>t===e||"*"===t)).length&&c(e,t.cmd,n),n+=1}))}catch(t){console.warn(t.stack)}}function l(t){return Array.isArray(t)?"array":null===t?"null":typeof t}function c(t,s,i){throw new e(`Invalid ${a[i]||"manyith"} argument. Expected ${s.join(" or ")} but received ${t}.`)}function f(t){return!!t&&!!t.then&&"function"==typeof t.then}function d(t,e,s,i){s.assert.notStrictEqual(t,e,i)}function u(t,e){e.assert.strictEqual(typeof t,"string")}function p(t){return Object.keys(t)}function g(t={},e=(()=>!0)){const s={};return p(t).forEach((i=>{e(i,t[i])&&(s[i]=t[i])})),s}function m(){return process.versions.electron&&!process.defaultApp?0:1}function y(){return process.argv[m()]}var b=Object.freeze({__proto__:null,hideBin:function(t){return t.slice(m()+1)},getProcessArgvBin:y});function v(t,e,s,i){if("a"===s&&!i)throw new TypeError("Private accessor was defined without a getter");if("function"==typeof e?t!==e||!i:!e.has(t))throw new TypeError("Cannot read private member from an object whose class did not declare it");return"m"===s?i:"a"===s?i.call(t):i?i.value:e.get(t)}function O(t,e,s,i,n){if("m"===i)throw new TypeError("Private method is not writable");if("a"===i&&!n)throw new TypeError("Private accessor was defined without a setter");if("function"==typeof e?t!==e||!n:!e.has(t))throw new TypeError("Cannot write private member to an object whose class did not declare it");return"a"===i?n.call(t,s):n?n.value=s:e.set(t,s),s}class w{constructor(t){this.globalMiddleware=[],this.frozens=[],this.yargs=t}addMiddleware(t,e,s=!0,i=!1){if(h("<array|function> [boolean] [boolean] [boolean]",[t,e,s],arguments.length),Array.isArray(t)){for(let i=0;i<t.length;i++){if("function"!=typeof t[i])throw Error("middleware must be a function");const n=t[i];n.applyBeforeValidation=e,n.global=s}Array.prototype.push.apply(this.globalMiddleware,t)}else if("function"==typeof t){const n=t;n.applyBeforeValidation=e,n.global=s,n.mutates=i,this.globalMiddleware.push(t)}return this.yargs}addCoerceMiddleware(t,e){const s=this.yargs.getAliases();return this.globalMiddleware=this.globalMiddleware.filter((t=>{const i=[...s[e]||[],e];return!t.option||!i.includes(t.option)})),t.option=e,this.addMiddleware(t,!0,!0,!0)}getMiddleware(){return this.globalMiddleware}freeze(){this.frozens.push([...this.globalMiddleware])}unfreeze(){const t=this.frozens.pop();void 0!==t&&(this.globalMiddleware=t)}reset(){this.globalMiddleware=this.globalMiddleware.filter((t=>t.global))}}function C(t,e,s,i){return s.reduce(((t,s)=>{if(s.applyBeforeValidation!==i)return t;if(s.mutates){if(s.applied)return t;s.applied=!0}if(f(t))return t.then((t=>Promise.all([t,s(t,e)]))).then((([t,e])=>Object.assign(t,e)));{const i=s(t,e);return f(i)?i.then((e=>Object.assign(t,e))):Object.assign(t,i)}}),t)}function j(t,e,s=(t=>{throw t})){try{const s="function"==typeof t?t():t;return f(s)?s.then((t=>e(t))):e(s)}catch(t){return s(t)}}const M=/(^\*)|(^\$0)/;class _{constructor(t,e,s,i){this.requireCache=new Set,this.handlers={},this.aliasMap={},this.frozens=[],this.shim=i,this.usage=t,this.globalMiddleware=s,this.validation=e}addDirectory(t,e,s,i){"boolean"!=typeof(i=i||{}).recurse&&(i.recurse=!1),Array.isArray(i.extensions)||(i.extensions=["js"]);const n="function"==typeof i.visit?i.visit:t=>t;i.visit=(t,e,s)=>{const i=n(t,e,s);if(i){if(this.requireCache.has(e))return i;this.requireCache.add(e),this.addHandler(i)}return i},this.shim.requireDirectory({require:e,filename:s},t,i)}addHandler(t,e,s,i,n,r){let a=[];const h=function(t){return t?t.map((t=>(t.applyBeforeValidation=!1,t))):[]}(n);if(i=i||(()=>{}),Array.isArray(t))if(function(t){return t.every((t=>"string"==typeof t))}(t))[t,...a]=t;else for(const e of t)this.addHandler(e);else{if(function(t){return"object"==typeof t&&!Array.isArray(t)}(t)){let e=Array.isArray(t.command)||"string"==typeof t.command?t.command:this.moduleName(t);return t.aliases&&(e=[].concat(e).concat(t.aliases)),void this.addHandler(e,this.extractDesc(t),t.builder,t.handler,t.middlewares,t.deprecated)}if(k(s))return void this.addHandler([t].concat(a),e,s.builder,s.handler,s.middlewares,s.deprecated)}if("string"==typeof t){const n=o(t);a=a.map((t=>o(t).cmd));let l=!1;const c=[n.cmd].concat(a).filter((t=>!M.test(t)||(l=!0,!1)));0===c.length&&l&&c.push("$0"),l&&(n.cmd=c[0],a=c.slice(1),t=t.replace(M,n.cmd)),a.forEach((t=>{this.aliasMap[t]=n.cmd})),!1!==e&&this.usage.command(t,e,l,a,r),this.handlers[n.cmd]={original:t,description:e,handler:i,builder:s||{},middlewares:h,deprecated:r,demanded:n.demanded,optional:n.optional},l&&(this.defaultCommand=this.handlers[n.cmd])}}getCommandHandlers(){return this.handlers}getCommands(){return Object.keys(this.handlers).concat(Object.keys(this.aliasMap))}hasDefaultCommand(){return!!this.defaultCommand}runCommand(t,e,s,i,n,r){const o=this.handlers[t]||this.handlers[this.aliasMap[t]]||this.defaultCommand,a=e.getInternalMethods().getContext(),h=a.commands.slice(),l=!t;t&&(a.commands.push(t),a.fullCommands.push(o.original));const c=this.applyBuilderUpdateUsageAndParse(l,o,e,s.aliases,h,i,n,r);return f(c)?c.then((t=>this.applyMiddlewareAndGetResult(l,o,t.innerArgv,a,n,t.aliases,e))):this.applyMiddlewareAndGetResult(l,o,c.innerArgv,a,n,c.aliases,e)}applyBuilderUpdateUsageAndParse(t,e,s,i,n,r,o,a){const h=e.builder;let l=s;if(x(h)){s.getInternalMethods().getUsageInstance().freeze();const c=h(s.getInternalMethods().reset(i),a);if(f(c))return c.then((i=>{var a;return l=(a=i)&&"function"==typeof a.getInternalMethods?i:s,this.parseAndUpdateUsage(t,e,l,n,r,o)}))}else(function(t){return"object"==typeof t})(h)&&(s.getInternalMethods().getUsageInstance().freeze(),l=s.getInternalMethods().reset(i),Object.keys(e.builder).forEach((t=>{l.option(t,h[t])})));return this.parseAndUpdateUsage(t,e,l,n,r,o)}parseAndUpdateUsage(t,e,s,i,n,r){t&&s.getInternalMethods().getUsageInstance().unfreeze(!0),this.shouldUpdateUsage(s)&&s.getInternalMethods().getUsageInstance().usage(this.usageFromParentCommandsCommandHandler(i,e),e.description);const o=s.getInternalMethods().runYargsParserAndExecuteCommands(null,void 0,!0,n,r);return f(o)?o.then((t=>({aliases:s.parsed.aliases,innerArgv:t}))):{aliases:s.parsed.aliases,innerArgv:o}}shouldUpdateUsage(t){return!t.getInternalMethods().getUsageInstance().getUsageDisabled()&&0===t.getInternalMethods().getUsageInstance().getUsage().length}usageFromParentCommandsCommandHandler(t,e){const s=M.test(e.original)?e.original.replace(M,"").trim():e.original,i=t.filter((t=>!M.test(t)));return i.push(s),`$0 ${i.join(" ")}`}handleValidationAndGetResult(t,e,s,i,n,r,o,a){if(!r.getInternalMethods().getHasOutput()){const e=r.getInternalMethods().runValidation(n,a,r.parsed.error,t);s=j(s,(t=>(e(t),t)))}if(e.handler&&!r.getInternalMethods().getHasOutput()){r.getInternalMethods().setHasOutput();const i=!!r.getOptions().configuration["populate--"];r.getInternalMethods().postProcess(s,i,!1,!1),s=j(s=C(s,r,o,!1),(t=>{const s=e.handler(t);return f(s)?s.then((()=>t)):t})),t||r.getInternalMethods().getUsageInstance().cacheHelpMessage(),f(s)&&!r.getInternalMethods().hasParseCallback()&&s.catch((t=>{try{r.getInternalMethods().getUsageInstance().fail(null,t)}catch(t){}}))}return t||(i.commands.pop(),i.fullCommands.pop()),s}applyMiddlewareAndGetResult(t,e,s,i,n,r,o){let a={};if(n)return s;o.getInternalMethods().getHasOutput()||(a=this.populatePositionals(e,s,i,o));const h=this.globalMiddleware.getMiddleware().slice(0).concat(e.middlewares),l=C(s,o,h,!0);return f(l)?l.then((s=>this.handleValidationAndGetResult(t,e,s,i,r,o,h,a))):this.handleValidationAndGetResult(t,e,l,i,r,o,h,a)}populatePositionals(t,e,s,i){e._=e._.slice(s.commands.length);const n=t.demanded.slice(0),r=t.optional.slice(0),o={};for(this.validation.positionalCount(n.length,e._.length);n.length;){const t=n.shift();this.populatePositional(t,e,o)}for(;r.length;){const t=r.shift();this.populatePositional(t,e,o)}return e._=s.commands.concat(e._.map((t=>""+t))),this.postProcessPositionals(e,o,this.cmdToParseOptions(t.original),i),o}populatePositional(t,e,s){const i=t.cmd[0];t.variadic?s[i]=e._.splice(0).map(String):e._.length&&(s[i]=[String(e._.shift())])}cmdToParseOptions(t){const e={array:[],default:{},alias:{},demand:{}},s=o(t);return s.demanded.forEach((t=>{const[s,...i]=t.cmd;t.variadic&&(e.array.push(s),e.default[s]=[]),e.alias[s]=i,e.demand[s]=!0})),s.optional.forEach((t=>{const[s,...i]=t.cmd;t.variadic&&(e.array.push(s),e.default[s]=[]),e.alias[s]=i})),e}postProcessPositionals(t,e,s,i){const n=Object.assign({},i.getOptions());n.default=Object.assign(s.default,n.default);for(const t of Object.keys(s.alias))n.alias[t]=(n.alias[t]||[]).concat(s.alias[t]);n.array=n.array.concat(s.array),n.config={};const r=[];if(Object.keys(e).forEach((t=>{e[t].map((e=>{n.configuration["unknown-options-as-args"]&&(n.key[t]=!0),r.push(`--${t}`),r.push(e)}))})),!r.length)return;const o=Object.assign({},n.configuration,{"populate--":!1}),a=this.shim.Parser.detailed(r,Object.assign({},n,{configuration:o}));if(a.error)i.getInternalMethods().getUsageInstance().fail(a.error.message,a.error);else{const s=Object.keys(e);Object.keys(e).forEach((t=>{s.push(...a.aliases[t])})),Object.keys(a.argv).forEach((n=>{s.includes(n)&&(e[n]||(e[n]=a.argv[n]),!this.isInConfigs(i,n)&&!this.isDefaulted(i,n)&&Object.prototype.hasOwnProperty.call(t,n)&&Object.prototype.hasOwnProperty.call(a.argv,n)&&(Array.isArray(t[n])||Array.isArray(a.argv[n]))?t[n]=[].concat(t[n],a.argv[n]):t[n]=a.argv[n])}))}}isDefaulted(t,e){const{default:s}=t.getOptions();return Object.prototype.hasOwnProperty.call(s,e)||Object.prototype.hasOwnProperty.call(s,this.shim.Parser.camelCase(e))}isInConfigs(t,e){const{configObjects:s}=t.getOptions();return s.some((t=>Object.prototype.hasOwnProperty.call(t,e)))||s.some((t=>Object.prototype.hasOwnProperty.call(t,this.shim.Parser.camelCase(e))))}runDefaultBuilderOn(t){if(!this.defaultCommand)return;if(this.shouldUpdateUsage(t)){const e=M.test(this.defaultCommand.original)?this.defaultCommand.original:this.defaultCommand.original.replace(/^[^[\]<>]*/,"$0 ");t.getInternalMethods().getUsageInstance().usage(e,this.defaultCommand.description)}const e=this.defaultCommand.builder;if(x(e))return e(t,!0);k(e)||Object.keys(e).forEach((s=>{t.option(s,e[s])}))}moduleName(t){const e=function(t){if(false){}for(let e,s=0,i=Object.keys(__nccwpck_require__.c);s<i.length;s++)if(e=__nccwpck_require__.c[i[s]],e.exports===t)return e;return null}(t);if(!e)throw new Error(`No command name given for module: ${this.shim.inspect(t)}`);return this.commandFromFilename(e.filename)}commandFromFilename(t){return this.shim.path.basename(t,this.shim.path.extname(t))}extractDesc({describe:t,description:e,desc:s}){for(const i of[t,e,s]){if("string"==typeof i||!1===i)return i;d(i,!0,this.shim)}return!1}freeze(){this.frozens.push({handlers:this.handlers,aliasMap:this.aliasMap,defaultCommand:this.defaultCommand})}unfreeze(){const t=this.frozens.pop();d(t,void 0,this.shim),({handlers:this.handlers,aliasMap:this.aliasMap,defaultCommand:this.defaultCommand}=t)}reset(){return this.handlers={},this.aliasMap={},this.defaultCommand=void 0,this.requireCache=new Set,this}}function k(t){return"object"==typeof t&&!!t.builder&&"function"==typeof t.handler}function x(t){return"function"==typeof t}function E(t){"undefined"!=typeof process&&[process.stdout,process.stderr].forEach((e=>{const s=e;s._handle&&s.isTTY&&"function"==typeof s._handle.setBlocking&&s._handle.setBlocking(t)}))}function A(t){return"boolean"==typeof t}function P(t,s){const i=s.y18n.__,n={},r=[];n.failFn=function(t){r.push(t)};let o=null,a=null,h=!0;n.showHelpOnFail=function(e=!0,s){const[i,r]="string"==typeof e?[!0,e]:[e,s];return t.getInternalMethods().isGlobalContext()&&(a=r),o=r,h=i,n};let l=!1;n.fail=function(s,i){const c=t.getInternalMethods().getLoggerInstance();if(!r.length){if(t.getExitProcess()&&E(!0),!l){l=!0,h&&(t.showHelp("error"),c.error()),(s||i)&&c.error(s||i);const e=o||a;e&&((s||i)&&c.error(""),c.error(e))}if(i=i||new e(s),t.getExitProcess())return t.exit(1);if(t.getInternalMethods().hasParseCallback())return t.exit(1,i);throw i}for(let t=r.length-1;t>=0;--t){const e=r[t];if(A(e)){if(i)throw i;if(s)throw Error(s)}else e(s,i,n)}};let c=[],f=!1;n.usage=(t,e)=>null===t?(f=!0,c=[],n):(f=!1,c.push([t,e||""]),n),n.getUsage=()=>c,n.getUsageDisabled=()=>f,n.getPositionalGroupName=()=>i("Positionals:");let d=[];n.example=(t,e)=>{d.push([t,e||""])};let u=[];n.command=function(t,e,s,i,n=!1){s&&(u=u.map((t=>(t[2]=!1,t)))),u.push([t,e||"",s,i,n])},n.getCommands=()=>u;let p={};n.describe=function(t,e){Array.isArray(t)?t.forEach((t=>{n.describe(t,e)})):"object"==typeof t?Object.keys(t).forEach((e=>{n.describe(e,t[e])})):p[t]=e},n.getDescriptions=()=>p;let m=[];n.epilog=t=>{m.push(t)};let y,b=!1;n.wrap=t=>{b=!0,y=t},n.getWrap=()=>s.getEnv("YARGS_DISABLE_WRAP")?null:(b||(y=function(){const t=80;return s.process.stdColumns?Math.min(t,s.process.stdColumns):t}(),b=!0),y);const v="__yargsString__:";function O(t,e,i){let n=0;return Array.isArray(t)||(t=Object.values(t).map((t=>[t]))),t.forEach((t=>{n=Math.max(s.stringWidth(i?`${i} ${I(t[0])}`:I(t[0]))+$(t[0]),n)})),e&&(n=Math.min(n,parseInt((.5*e).toString(),10))),n}let w;function C(e){return t.getOptions().hiddenOptions.indexOf(e)<0||t.parsed.argv[t.getOptions().showHiddenOpt]}function j(t,e){let s=`[${i("default:")} `;if(void 0===t&&!e)return null;if(e)s+=e;else switch(typeof t){case"string":s+=`"${t}"`;break;case"object":s+=JSON.stringify(t);break;default:s+=t}return`${s}]`}n.deferY18nLookup=t=>v+t,n.help=function(){if(w)return w;!function(){const e=t.getDemandedOptions(),s=t.getOptions();(Object.keys(s.alias)||[]).forEach((i=>{s.alias[i].forEach((r=>{p[r]&&n.describe(i,p[r]),r in e&&t.demandOption(i,e[r]),s.boolean.includes(r)&&t.boolean(i),s.count.includes(r)&&t.count(i),s.string.includes(r)&&t.string(i),s.normalize.includes(r)&&t.normalize(i),s.array.includes(r)&&t.array(i),s.number.includes(r)&&t.number(i)}))}))}();const e=t.customScriptName?t.$0:s.path.basename(t.$0),r=t.getDemandedOptions(),o=t.getDemandedCommands(),a=t.getDeprecatedOptions(),h=t.getGroups(),l=t.getOptions();let g=[];g=g.concat(Object.keys(p)),g=g.concat(Object.keys(r)),g=g.concat(Object.keys(o)),g=g.concat(Object.keys(l.default)),g=g.filter(C),g=Object.keys(g.reduce(((t,e)=>("_"!==e&&(t[e]=!0),t)),{}));const y=n.getWrap(),b=s.cliui({width:y,wrap:!!y});if(!f)if(c.length)c.forEach((t=>{b.div({text:`${t[0].replace(/\$0/g,e)}`}),t[1]&&b.div({text:`${t[1]}`,padding:[1,0,0,0]})})),b.div();else if(u.length){let t=null;t=o._?`${e} <${i("command")}>\n`:`${e} [${i("command")}]\n`,b.div(`${t}`)}if(u.length>1||1===u.length&&!u[0][2]){b.div(i("Commands:"));const s=t.getInternalMethods().getContext(),n=s.commands.length?`${s.commands.join(" ")} `:"";!0===t.getInternalMethods().getParserConfiguration()["sort-commands"]&&(u=u.sort(((t,e)=>t[0].localeCompare(e[0]))));const r=e?`${e} `:"";u.forEach((t=>{const s=`${r}${n}${t[0].replace(/^\$0 ?/,"")}`;b.span({text:s,padding:[0,2,0,2],width:O(u,y,`${e}${n}`)+4},{text:t[1]});const o=[];t[2]&&o.push(`[${i("default")}]`),t[3]&&t[3].length&&o.push(`[${i("aliases:")} ${t[3].join(", ")}]`),t[4]&&("string"==typeof t[4]?o.push(`[${i("deprecated: %s",t[4])}]`):o.push(`[${i("deprecated")}]`)),o.length?b.div({text:o.join(" "),padding:[0,0,0,2],align:"right"}):b.div()})),b.div()}const M=(Object.keys(l.alias)||[]).concat(Object.keys(t.parsed.newAliases)||[]);g=g.filter((e=>!t.parsed.newAliases[e]&&M.every((t=>-1===(l.alias[t]||[]).indexOf(e)))));const _=i("Options:");h[_]||(h[_]=[]),function(t,e,s,i){let n=[],r=null;Object.keys(s).forEach((t=>{n=n.concat(s[t])})),t.forEach((t=>{r=[t].concat(e[t]),r.some((t=>-1!==n.indexOf(t)))||s[i].push(t)}))}(g,l.alias,h,_);const k=t=>/^--/.test(I(t)),x=Object.keys(h).filter((t=>h[t].length>0)).map((t=>({groupName:t,normalizedKeys:h[t].filter(C).map((t=>{if(M.includes(t))return t;for(let e,s=0;void 0!==(e=M[s]);s++)if((l.alias[e]||[]).includes(t))return e;return t}))}))).filter((({normalizedKeys:t})=>t.length>0)).map((({groupName:t,normalizedKeys:e})=>{const s=e.reduce(((e,s)=>(e[s]=[s].concat(l.alias[s]||[]).map((e=>t===n.getPositionalGroupName()?e:(/^[0-9]$/.test(e)?l.boolean.includes(s)?"-":"--":e.length>1?"--":"-")+e)).sort(((t,e)=>k(t)===k(e)?0:k(t)?1:-1)).join(", "),e)),{});return{groupName:t,normalizedKeys:e,switches:s}}));if(x.filter((({groupName:t})=>t!==n.getPositionalGroupName())).some((({normalizedKeys:t,switches:e})=>!t.every((t=>k(e[t])))))&&x.filter((({groupName:t})=>t!==n.getPositionalGroupName())).forEach((({normalizedKeys:t,switches:e})=>{t.forEach((t=>{var s,i;k(e[t])&&(e[t]=(s=e[t],i=4,S(s)?{text:s.text,indentation:s.indentation+i}:{text:s,indentation:i}))}))})),x.forEach((({groupName:e,normalizedKeys:s,switches:o})=>{b.div(e),s.forEach((e=>{const s=o[e];let h=p[e]||"",c=null;h.includes(v)&&(h=i(h.substring(16))),l.boolean.includes(e)&&(c=`[${i("boolean")}]`),l.count.includes(e)&&(c=`[${i("count")}]`),l.string.includes(e)&&(c=`[${i("string")}]`),l.normalize.includes(e)&&(c=`[${i("string")}]`),l.array.includes(e)&&(c=`[${i("array")}]`),l.number.includes(e)&&(c=`[${i("number")}]`);const f=[e in a?(d=a[e],"string"==typeof d?`[${i("deprecated: %s",d)}]`:`[${i("deprecated")}]`):null,c,e in r?`[${i("required")}]`:null,l.choices&&l.choices[e]?`[${i("choices:")} ${n.stringifiedValues(l.choices[e])}]`:null,j(l.default[e],l.defaultDescription[e])].filter(Boolean).join(" ");var d;b.span({text:I(s),padding:[0,2,0,2+$(s)],width:O(o,y)+4},h);const u=!0===t.getInternalMethods().getUsageConfiguration()["hide-types"];f&&!u?b.div({text:f,padding:[0,0,0,2],align:"right"}):b.div()})),b.div()})),d.length&&(b.div(i("Examples:")),d.forEach((t=>{t[0]=t[0].replace(/\$0/g,e)})),d.forEach((t=>{""===t[1]?b.div({text:t[0],padding:[0,2,0,2]}):b.div({text:t[0],padding:[0,2,0,2],width:O(d,y)+4},{text:t[1]})})),b.div()),m.length>0){const t=m.map((t=>t.replace(/\$0/g,e))).join("\n");b.div(`${t}\n`)}return b.toString().replace(/\s*$/,"")},n.cacheHelpMessage=function(){w=this.help()},n.clearCachedHelpMessage=function(){w=void 0},n.hasCachedHelpMessage=function(){return!!w},n.showHelp=e=>{const s=t.getInternalMethods().getLoggerInstance();e||(e="error");("function"==typeof e?e:s[e])(n.help())},n.functionDescription=t=>["(",t.name?s.Parser.decamelize(t.name,"-"):i("generated-value"),")"].join(""),n.stringifiedValues=function(t,e){let s="";const i=e||", ",n=[].concat(t);return t&&n.length?(n.forEach((t=>{s.length&&(s+=i),s+=JSON.stringify(t)})),s):s};let M=null;n.version=t=>{M=t},n.showVersion=e=>{const s=t.getInternalMethods().getLoggerInstance();e||(e="error");("function"==typeof e?e:s[e])(M)},n.reset=function(t){return o=null,l=!1,c=[],f=!1,m=[],d=[],u=[],p=g(p,(e=>!t[e])),n};const _=[];return n.freeze=function(){_.push({failMessage:o,failureOutput:l,usages:c,usageDisabled:f,epilogs:m,examples:d,commands:u,descriptions:p})},n.unfreeze=function(t=!1){const e=_.pop();e&&(t?(p={...e.descriptions,...p},u=[...e.commands,...u],c=[...e.usages,...c],d=[...e.examples,...d],m=[...e.epilogs,...m]):({failMessage:o,failureOutput:l,usages:c,usageDisabled:f,epilogs:m,examples:d,commands:u,descriptions:p}=e))},n}function S(t){return"object"==typeof t}function $(t){return S(t)?t.indentation:0}function I(t){return S(t)?t.text:t}class D{constructor(t,e,s,i){var n,r,o;this.yargs=t,this.usage=e,this.command=s,this.shim=i,this.completionKey="get-yargs-completions",this.aliases=null,this.customCompletionFunction=null,this.indexAfterLastReset=0,this.zshShell=null!==(o=(null===(n=this.shim.getEnv("SHELL"))||void 0===n?void 0:n.includes("zsh"))||(null===(r=this.shim.getEnv("ZSH_NAME"))||void 0===r?void 0:r.includes("zsh")))&&void 0!==o&&o}defaultCompletion(t,e,s,i){const n=this.command.getCommandHandlers();for(let e=0,s=t.length;e<s;++e)if(n[t[e]]&&n[t[e]].builder){const s=n[t[e]].builder;if(x(s)){this.indexAfterLastReset=e+1;const t=this.yargs.getInternalMethods().reset();return s(t,!0),t.argv}}const r=[];this.commandCompletions(r,t,s),this.optionCompletions(r,t,e,s),this.choicesFromOptionsCompletions(r,t,e,s),this.choicesFromPositionalsCompletions(r,t,e,s),i(null,r)}commandCompletions(t,e,s){const i=this.yargs.getInternalMethods().getContext().commands;s.match(/^-/)||i[i.length-1]===s||this.previousArgHasChoices(e)||this.usage.getCommands().forEach((s=>{const i=o(s[0]).cmd;if(-1===e.indexOf(i))if(this.zshShell){const e=s[1]||"";t.push(i.replace(/:/g,"\\:")+":"+e)}else t.push(i)}))}optionCompletions(t,e,s,i){if((i.match(/^-/)||""===i&&0===t.length)&&!this.previousArgHasChoices(e)){const s=this.yargs.getOptions(),n=this.yargs.getGroups()[this.usage.getPositionalGroupName()]||[];Object.keys(s.key).forEach((r=>{const o=!!s.configuration["boolean-negation"]&&s.boolean.includes(r);n.includes(r)||s.hiddenOptions.includes(r)||this.argsContainKey(e,r,o)||this.completeOptionKey(r,t,i,o&&!!s.default[r])}))}}choicesFromOptionsCompletions(t,e,s,i){if(this.previousArgHasChoices(e)){const s=this.getPreviousArgChoices(e);s&&s.length>0&&t.push(...s.map((t=>t.replace(/:/g,"\\:"))))}}choicesFromPositionalsCompletions(t,e,s,i){if(""===i&&t.length>0&&this.previousArgHasChoices(e))return;const n=this.yargs.getGroups()[this.usage.getPositionalGroupName()]||[],r=Math.max(this.indexAfterLastReset,this.yargs.getInternalMethods().getContext().commands.length+1),o=n[s._.length-r-1];if(!o)return;const a=this.yargs.getOptions().choices[o]||[];for(const e of a)e.startsWith(i)&&t.push(e.replace(/:/g,"\\:"))}getPreviousArgChoices(t){if(t.length<1)return;let e=t[t.length-1],s="";if(!e.startsWith("-")&&t.length>1&&(s=e,e=t[t.length-2]),!e.startsWith("-"))return;const i=e.replace(/^-+/,""),n=this.yargs.getOptions(),r=[i,...this.yargs.getAliases()[i]||[]];let o;for(const t of r)if(Object.prototype.hasOwnProperty.call(n.key,t)&&Array.isArray(n.choices[t])){o=n.choices[t];break}return o?o.filter((t=>!s||t.startsWith(s))):void 0}previousArgHasChoices(t){const e=this.getPreviousArgChoices(t);return void 0!==e&&e.length>0}argsContainKey(t,e,s){const i=e=>-1!==t.indexOf((/^[^0-9]$/.test(e)?"-":"--")+e);if(i(e))return!0;if(s&&i(`no-${e}`))return!0;if(this.aliases)for(const t of this.aliases[e])if(i(t))return!0;return!1}completeOptionKey(t,e,s,i){var n,r,o,a;let h=t;if(this.zshShell){const e=this.usage.getDescriptions(),s=null===(r=null===(n=null==this?void 0:this.aliases)||void 0===n?void 0:n[t])||void 0===r?void 0:r.find((t=>{const s=e[t];return"string"==typeof s&&s.length>0})),i=s?e[s]:void 0,l=null!==(a=null!==(o=e[t])&&void 0!==o?o:i)&&void 0!==a?a:"";h=`${t.replace(/:/g,"\\:")}:${l.replace("__yargsString__:","").replace(/(\r\n|\n|\r)/gm," ")}`}const l=!/^--/.test(s)&&(t=>/^[^0-9]$/.test(t))(t)?"-":"--";e.push(l+h),i&&e.push(l+"no-"+h)}customCompletion(t,e,s,i){if(d(this.customCompletionFunction,null,this.shim),this.customCompletionFunction.length<3){const t=this.customCompletionFunction(s,e);return f(t)?t.then((t=>{this.shim.process.nextTick((()=>{i(null,t)}))})).catch((t=>{this.shim.process.nextTick((()=>{i(t,void 0)}))})):i(null,t)}return function(t){return t.length>3}(this.customCompletionFunction)?this.customCompletionFunction(s,e,((n=i)=>this.defaultCompletion(t,e,s,n)),(t=>{i(null,t)})):this.customCompletionFunction(s,e,(t=>{i(null,t)}))}getCompletion(t,e){const s=t.length?t[t.length-1]:"",i=this.yargs.parse(t,!0),n=this.customCompletionFunction?i=>this.customCompletion(t,i,s,e):i=>this.defaultCompletion(t,i,s,e);return f(i)?i.then(n):n(i)}generateCompletionScript(t,e){let s=this.zshShell?'#compdef {{app_name}}\n###-begin-{{app_name}}-completions-###\n#\n# yargs command completion script\n#\n# Installation: {{app_path}} {{completion_command}} >> ~/.zshrc\n#    or {{app_path}} {{completion_command}} >> ~/.zprofile on OSX.\n#\n_{{app_name}}_yargs_completions()\n{\n  local reply\n  local si=$IFS\n  IFS=$\'\n\' reply=($(COMP_CWORD="$((CURRENT-1))" COMP_LINE="$BUFFER" COMP_POINT="$CURSOR" {{app_path}} --get-yargs-completions "${words[@]}"))\n  IFS=$si\n  _describe \'values\' reply\n}\ncompdef _{{app_name}}_yargs_completions {{app_name}}\n###-end-{{app_name}}-completions-###\n':'###-begin-{{app_name}}-completions-###\n#\n# yargs command completion script\n#\n# Installation: {{app_path}} {{completion_command}} >> ~/.bashrc\n#    or {{app_path}} {{completion_command}} >> ~/.bash_profile on OSX.\n#\n_{{app_name}}_yargs_completions()\n{\n    local cur_word args type_list\n\n    cur_word="${COMP_WORDS[COMP_CWORD]}"\n    args=("${COMP_WORDS[@]}")\n\n    # ask yargs to generate completions.\n    type_list=$({{app_path}} --get-yargs-completions "${args[@]}")\n\n    COMPREPLY=( $(compgen -W "${type_list}" -- ${cur_word}) )\n\n    # if no match was found, fall back to filename completion\n    if [ ${#COMPREPLY[@]} -eq 0 ]; then\n      COMPREPLY=()\n    fi\n\n    return 0\n}\ncomplete -o bashdefault -o default -F _{{app_name}}_yargs_completions {{app_name}}\n###-end-{{app_name}}-completions-###\n';const i=this.shim.path.basename(t);return t.match(/\.js$/)&&(t=`./${t}`),s=s.replace(/{{app_name}}/g,i),s=s.replace(/{{completion_command}}/g,e),s.replace(/{{app_path}}/g,t)}registerFunction(t){this.customCompletionFunction=t}setParsed(t){this.aliases=t.aliases}}function N(t,e){if(0===t.length)return e.length;if(0===e.length)return t.length;const s=[];let i,n;for(i=0;i<=e.length;i++)s[i]=[i];for(n=0;n<=t.length;n++)s[0][n]=n;for(i=1;i<=e.length;i++)for(n=1;n<=t.length;n++)e.charAt(i-1)===t.charAt(n-1)?s[i][n]=s[i-1][n-1]:i>1&&n>1&&e.charAt(i-2)===t.charAt(n-1)&&e.charAt(i-1)===t.charAt(n-2)?s[i][n]=s[i-2][n-2]+1:s[i][n]=Math.min(s[i-1][n-1]+1,Math.min(s[i][n-1]+1,s[i-1][n]+1));return s[e.length][t.length]}const H=["$0","--","_"];var z,W,q,U,F,L,V,G,R,T,B,Y,K,J,Z,X,Q,tt,et,st,it,nt,rt,ot,at,ht,lt,ct,ft,dt,ut,pt,gt,mt,yt;const bt=Symbol("copyDoubleDash"),vt=Symbol("copyDoubleDash"),Ot=Symbol("deleteFromParserHintObject"),wt=Symbol("emitWarning"),Ct=Symbol("freeze"),jt=Symbol("getDollarZero"),Mt=Symbol("getParserConfiguration"),_t=Symbol("getUsageConfiguration"),kt=Symbol("guessLocale"),xt=Symbol("guessVersion"),Et=Symbol("parsePositionalNumbers"),At=Symbol("pkgUp"),Pt=Symbol("populateParserHintArray"),St=Symbol("populateParserHintSingleValueDictionary"),$t=Symbol("populateParserHintArrayDictionary"),It=Symbol("populateParserHintDictionary"),Dt=Symbol("sanitizeKey"),Nt=Symbol("setKey"),Ht=Symbol("unfreeze"),zt=Symbol("validateAsync"),Wt=Symbol("getCommandInstance"),qt=Symbol("getContext"),Ut=Symbol("getHasOutput"),Ft=Symbol("getLoggerInstance"),Lt=Symbol("getParseContext"),Vt=Symbol("getUsageInstance"),Gt=Symbol("getValidationInstance"),Rt=Symbol("hasParseCallback"),Tt=Symbol("isGlobalContext"),Bt=Symbol("postProcess"),Yt=Symbol("rebase"),Kt=Symbol("reset"),Jt=Symbol("runYargsParserAndExecuteCommands"),Zt=Symbol("runValidation"),Xt=Symbol("setHasOutput"),Qt=Symbol("kTrackManuallySetKeys");class te{constructor(t=[],e,s,i){this.customScriptName=!1,this.parsed=!1,z.set(this,void 0),W.set(this,void 0),q.set(this,{commands:[],fullCommands:[]}),U.set(this,null),F.set(this,null),L.set(this,"show-hidden"),V.set(this,null),G.set(this,!0),R.set(this,{}),T.set(this,!0),B.set(this,[]),Y.set(this,void 0),K.set(this,{}),J.set(this,!1),Z.set(this,null),X.set(this,!0),Q.set(this,void 0),tt.set(this,""),et.set(this,void 0),st.set(this,void 0),it.set(this,{}),nt.set(this,null),rt.set(this,null),ot.set(this,{}),at.set(this,{}),ht.set(this,void 0),lt.set(this,!1),ct.set(this,void 0),ft.set(this,!1),dt.set(this,!1),ut.set(this,!1),pt.set(this,void 0),gt.set(this,{}),mt.set(this,null),yt.set(this,void 0),O(this,ct,i,"f"),O(this,ht,t,"f"),O(this,W,e,"f"),O(this,st,s,"f"),O(this,Y,new w(this),"f"),this.$0=this[jt](),this[Kt](),O(this,z,v(this,z,"f"),"f"),O(this,pt,v(this,pt,"f"),"f"),O(this,yt,v(this,yt,"f"),"f"),O(this,et,v(this,et,"f"),"f"),v(this,et,"f").showHiddenOpt=v(this,L,"f"),O(this,Q,this[vt](),"f")}addHelpOpt(t,e){return h("[string|boolean] [string]",[t,e],arguments.length),v(this,Z,"f")&&(this[Ot](v(this,Z,"f")),O(this,Z,null,"f")),!1===t&&void 0===e||(O(this,Z,"string"==typeof t?t:"help","f"),this.boolean(v(this,Z,"f")),this.describe(v(this,Z,"f"),e||v(this,pt,"f").deferY18nLookup("Show help"))),this}help(t,e){return this.addHelpOpt(t,e)}addShowHiddenOpt(t,e){if(h("[string|boolean] [string]",[t,e],arguments.length),!1===t&&void 0===e)return this;const s="string"==typeof t?t:v(this,L,"f");return this.boolean(s),this.describe(s,e||v(this,pt,"f").deferY18nLookup("Show hidden options")),v(this,et,"f").showHiddenOpt=s,this}showHidden(t,e){return this.addShowHiddenOpt(t,e)}alias(t,e){return h("<object|string|array> [string|array]",[t,e],arguments.length),this[$t](this.alias.bind(this),"alias",t,e),this}array(t){return h("<array|string>",[t],arguments.length),this[Pt]("array",t),this[Qt](t),this}boolean(t){return h("<array|string>",[t],arguments.length),this[Pt]("boolean",t),this[Qt](t),this}check(t,e){return h("<function> [boolean]",[t,e],arguments.length),this.middleware(((e,s)=>j((()=>t(e,s.getOptions())),(s=>(s?("string"==typeof s||s instanceof Error)&&v(this,pt,"f").fail(s.toString(),s):v(this,pt,"f").fail(v(this,ct,"f").y18n.__("Argument check failed: %s",t.toString())),e)),(t=>(v(this,pt,"f").fail(t.message?t.message:t.toString(),t),e)))),!1,e),this}choices(t,e){return h("<object|string|array> [string|array]",[t,e],arguments.length),this[$t](this.choices.bind(this),"choices",t,e),this}coerce(t,s){if(h("<object|string|array> [function]",[t,s],arguments.length),Array.isArray(t)){if(!s)throw new e("coerce callback must be provided");for(const e of t)this.coerce(e,s);return this}if("object"==typeof t){for(const e of Object.keys(t))this.coerce(e,t[e]);return this}if(!s)throw new e("coerce callback must be provided");return v(this,et,"f").key[t]=!0,v(this,Y,"f").addCoerceMiddleware(((i,n)=>{let r;return Object.prototype.hasOwnProperty.call(i,t)?j((()=>(r=n.getAliases(),s(i[t]))),(e=>{i[t]=e;const s=n.getInternalMethods().getParserConfiguration()["strip-aliased"];if(r[t]&&!0!==s)for(const s of r[t])i[s]=e;return i}),(t=>{throw new e(t.message)})):i}),t),this}conflicts(t,e){return h("<string|object> [string|array]",[t,e],arguments.length),v(this,yt,"f").conflicts(t,e),this}config(t="config",e,s){return h("[object|string] [string|function] [function]",[t,e,s],arguments.length),"object"!=typeof t||Array.isArray(t)?("function"==typeof e&&(s=e,e=void 0),this.describe(t,e||v(this,pt,"f").deferY18nLookup("Path to JSON config file")),(Array.isArray(t)?t:[t]).forEach((t=>{v(this,et,"f").config[t]=s||!0})),this):(t=n(t,v(this,W,"f"),this[Mt]()["deep-merge-config"]||!1,v(this,ct,"f")),v(this,et,"f").configObjects=(v(this,et,"f").configObjects||[]).concat(t),this)}completion(t,e,s){return h("[string] [string|boolean|function] [function]",[t,e,s],arguments.length),"function"==typeof e&&(s=e,e=void 0),O(this,F,t||v(this,F,"f")||"completion","f"),e||!1===e||(e="generate completion script"),this.command(v(this,F,"f"),e),s&&v(this,U,"f").registerFunction(s),this}command(t,e,s,i,n,r){return h("<string|array|object> [string|boolean] [function|object] [function] [array] [boolean|string]",[t,e,s,i,n,r],arguments.length),v(this,z,"f").addHandler(t,e,s,i,n,r),this}commands(t,e,s,i,n,r){return this.command(t,e,s,i,n,r)}commandDir(t,e){h("<string> [object]",[t,e],arguments.length);const s=v(this,st,"f")||v(this,ct,"f").require;return v(this,z,"f").addDirectory(t,s,v(this,ct,"f").getCallerFile(),e),this}count(t){return h("<array|string>",[t],arguments.length),this[Pt]("count",t),this[Qt](t),this}default(t,e,s){return h("<object|string|array> [*] [string]",[t,e,s],arguments.length),s&&(u(t,v(this,ct,"f")),v(this,et,"f").defaultDescription[t]=s),"function"==typeof e&&(u(t,v(this,ct,"f")),v(this,et,"f").defaultDescription[t]||(v(this,et,"f").defaultDescription[t]=v(this,pt,"f").functionDescription(e)),e=e.call()),this[St](this.default.bind(this),"default",t,e),this}defaults(t,e,s){return this.default(t,e,s)}demandCommand(t=1,e,s,i){return h("[number] [number|string] [string|null|undefined] [string|null|undefined]",[t,e,s,i],arguments.length),"number"!=typeof e&&(s=e,e=1/0),this.global("_",!1),v(this,et,"f").demandedCommands._={min:t,max:e,minMsg:s,maxMsg:i},this}demand(t,e,s){return Array.isArray(e)?(e.forEach((t=>{d(s,!0,v(this,ct,"f")),this.demandOption(t,s)})),e=1/0):"number"!=typeof e&&(s=e,e=1/0),"number"==typeof t?(d(s,!0,v(this,ct,"f")),this.demandCommand(t,e,s,s)):Array.isArray(t)?t.forEach((t=>{d(s,!0,v(this,ct,"f")),this.demandOption(t,s)})):"string"==typeof s?this.demandOption(t,s):!0!==s&&void 0!==s||this.demandOption(t),this}demandOption(t,e){return h("<object|string|array> [string]",[t,e],arguments.length),this[St](this.demandOption.bind(this),"demandedOptions",t,e),this}deprecateOption(t,e){return h("<string> [string|boolean]",[t,e],arguments.length),v(this,et,"f").deprecatedOptions[t]=e,this}describe(t,e){return h("<object|string|array> [string]",[t,e],arguments.length),this[Nt](t,!0),v(this,pt,"f").describe(t,e),this}detectLocale(t){return h("<boolean>",[t],arguments.length),O(this,G,t,"f"),this}env(t){return h("[string|boolean]",[t],arguments.length),!1===t?delete v(this,et,"f").envPrefix:v(this,et,"f").envPrefix=t||"",this}epilogue(t){return h("<string>",[t],arguments.length),v(this,pt,"f").epilog(t),this}epilog(t){return this.epilogue(t)}example(t,e){return h("<string|array> [string]",[t,e],arguments.length),Array.isArray(t)?t.forEach((t=>this.example(...t))):v(this,pt,"f").example(t,e),this}exit(t,e){O(this,J,!0,"f"),O(this,V,e,"f"),v(this,T,"f")&&v(this,ct,"f").process.exit(t)}exitProcess(t=!0){return h("[boolean]",[t],arguments.length),O(this,T,t,"f"),this}fail(t){if(h("<function|boolean>",[t],arguments.length),"boolean"==typeof t&&!1!==t)throw new e("Invalid first argument. Expected function or boolean 'false'");return v(this,pt,"f").failFn(t),this}getAliases(){return this.parsed?this.parsed.aliases:{}}async getCompletion(t,e){return h("<array> [function]",[t,e],arguments.length),e?v(this,U,"f").getCompletion(t,e):new Promise(((e,s)=>{v(this,U,"f").getCompletion(t,((t,i)=>{t?s(t):e(i)}))}))}getDemandedOptions(){return h([],0),v(this,et,"f").demandedOptions}getDemandedCommands(){return h([],0),v(this,et,"f").demandedCommands}getDeprecatedOptions(){return h([],0),v(this,et,"f").deprecatedOptions}getDetectLocale(){return v(this,G,"f")}getExitProcess(){return v(this,T,"f")}getGroups(){return Object.assign({},v(this,K,"f"),v(this,at,"f"))}getHelp(){if(O(this,J,!0,"f"),!v(this,pt,"f").hasCachedHelpMessage()){if(!this.parsed){const t=this[Jt](v(this,ht,"f"),void 0,void 0,0,!0);if(f(t))return t.then((()=>v(this,pt,"f").help()))}const t=v(this,z,"f").runDefaultBuilderOn(this);if(f(t))return t.then((()=>v(this,pt,"f").help()))}return Promise.resolve(v(this,pt,"f").help())}getOptions(){return v(this,et,"f")}getStrict(){return v(this,ft,"f")}getStrictCommands(){return v(this,dt,"f")}getStrictOptions(){return v(this,ut,"f")}global(t,e){return h("<string|array> [boolean]",[t,e],arguments.length),t=[].concat(t),!1!==e?v(this,et,"f").local=v(this,et,"f").local.filter((e=>-1===t.indexOf(e))):t.forEach((t=>{v(this,et,"f").local.includes(t)||v(this,et,"f").local.push(t)})),this}group(t,e){h("<string|array> <string>",[t,e],arguments.length);const s=v(this,at,"f")[e]||v(this,K,"f")[e];v(this,at,"f")[e]&&delete v(this,at,"f")[e];const i={};return v(this,K,"f")[e]=(s||[]).concat(t).filter((t=>!i[t]&&(i[t]=!0))),this}hide(t){return h("<string>",[t],arguments.length),v(this,et,"f").hiddenOptions.push(t),this}implies(t,e){return h("<string|object> [number|string|array]",[t,e],arguments.length),v(this,yt,"f").implies(t,e),this}locale(t){return h("[string]",[t],arguments.length),void 0===t?(this[kt](),v(this,ct,"f").y18n.getLocale()):(O(this,G,!1,"f"),v(this,ct,"f").y18n.setLocale(t),this)}middleware(t,e,s){return v(this,Y,"f").addMiddleware(t,!!e,s)}nargs(t,e){return h("<string|object|array> [number]",[t,e],arguments.length),this[St](this.nargs.bind(this),"narg",t,e),this}normalize(t){return h("<array|string>",[t],arguments.length),this[Pt]("normalize",t),this}number(t){return h("<array|string>",[t],arguments.length),this[Pt]("number",t),this[Qt](t),this}option(t,e){if(h("<string|object> [object]",[t,e],arguments.length),"object"==typeof t)Object.keys(t).forEach((e=>{this.options(e,t[e])}));else{"object"!=typeof e&&(e={}),this[Qt](t),!v(this,mt,"f")||"version"!==t&&"version"!==(null==e?void 0:e.alias)||this[wt](['"version" is a reserved word.',"Please do one of the following:",'- Disable version with `yargs.version(false)` if using "version" as an option',"- Use the built-in `yargs.version` method instead (if applicable)","- Use a different option key","https://yargs.js.org/docs/#api-reference-version"].join("\n"),void 0,"versionWarning"),v(this,et,"f").key[t]=!0,e.alias&&this.alias(t,e.alias);const s=e.deprecate||e.deprecated;s&&this.deprecateOption(t,s);const i=e.demand||e.required||e.require;i&&this.demand(t,i),e.demandOption&&this.demandOption(t,"string"==typeof e.demandOption?e.demandOption:void 0),e.conflicts&&this.conflicts(t,e.conflicts),"default"in e&&this.default(t,e.default),void 0!==e.implies&&this.implies(t,e.implies),void 0!==e.nargs&&this.nargs(t,e.nargs),e.config&&this.config(t,e.configParser),e.normalize&&this.normalize(t),e.choices&&this.choices(t,e.choices),e.coerce&&this.coerce(t,e.coerce),e.group&&this.group(t,e.group),(e.boolean||"boolean"===e.type)&&(this.boolean(t),e.alias&&this.boolean(e.alias)),(e.array||"array"===e.type)&&(this.array(t),e.alias&&this.array(e.alias)),(e.number||"number"===e.type)&&(this.number(t),e.alias&&this.number(e.alias)),(e.string||"string"===e.type)&&(this.string(t),e.alias&&this.string(e.alias)),(e.count||"count"===e.type)&&this.count(t),"boolean"==typeof e.global&&this.global(t,e.global),e.defaultDescription&&(v(this,et,"f").defaultDescription[t]=e.defaultDescription),e.skipValidation&&this.skipValidation(t);const n=e.describe||e.description||e.desc,r=v(this,pt,"f").getDescriptions();Object.prototype.hasOwnProperty.call(r,t)&&"string"!=typeof n||this.describe(t,n),e.hidden&&this.hide(t),e.requiresArg&&this.requiresArg(t)}return this}options(t,e){return this.option(t,e)}parse(t,e,s){h("[string|array] [function|boolean|object] [function]",[t,e,s],arguments.length),this[Ct](),void 0===t&&(t=v(this,ht,"f")),"object"==typeof e&&(O(this,rt,e,"f"),e=s),"function"==typeof e&&(O(this,nt,e,"f"),e=!1),e||O(this,ht,t,"f"),v(this,nt,"f")&&O(this,T,!1,"f");const i=this[Jt](t,!!e),n=this.parsed;return v(this,U,"f").setParsed(this.parsed),f(i)?i.then((t=>(v(this,nt,"f")&&v(this,nt,"f").call(this,v(this,V,"f"),t,v(this,tt,"f")),t))).catch((t=>{throw v(this,nt,"f")&&v(this,nt,"f")(t,this.parsed.argv,v(this,tt,"f")),t})).finally((()=>{this[Ht](),this.parsed=n})):(v(this,nt,"f")&&v(this,nt,"f").call(this,v(this,V,"f"),i,v(this,tt,"f")),this[Ht](),this.parsed=n,i)}parseAsync(t,e,s){const i=this.parse(t,e,s);return f(i)?i:Promise.resolve(i)}parseSync(t,s,i){const n=this.parse(t,s,i);if(f(n))throw new e(".parseSync() must not be used with asynchronous builders, handlers, or middleware");return n}parserConfiguration(t){return h("<object>",[t],arguments.length),O(this,it,t,"f"),this}pkgConf(t,e){h("<string> [string]",[t,e],arguments.length);let s=null;const i=this[At](e||v(this,W,"f"));return i[t]&&"object"==typeof i[t]&&(s=n(i[t],e||v(this,W,"f"),this[Mt]()["deep-merge-config"]||!1,v(this,ct,"f")),v(this,et,"f").configObjects=(v(this,et,"f").configObjects||[]).concat(s)),this}positional(t,e){h("<string> <object>",[t,e],arguments.length);const s=["default","defaultDescription","implies","normalize","choices","conflicts","coerce","type","describe","desc","description","alias"];e=g(e,((t,e)=>!("type"===t&&!["string","number","boolean"].includes(e))&&s.includes(t)));const i=v(this,q,"f").fullCommands[v(this,q,"f").fullCommands.length-1],n=i?v(this,z,"f").cmdToParseOptions(i):{array:[],alias:{},default:{},demand:{}};return p(n).forEach((s=>{const i=n[s];Array.isArray(i)?-1!==i.indexOf(t)&&(e[s]=!0):i[t]&&!(s in e)&&(e[s]=i[t])})),this.group(t,v(this,pt,"f").getPositionalGroupName()),this.option(t,e)}recommendCommands(t=!0){return h("[boolean]",[t],arguments.length),O(this,lt,t,"f"),this}required(t,e,s){return this.demand(t,e,s)}require(t,e,s){return this.demand(t,e,s)}requiresArg(t){return h("<array|string|object> [number]",[t],arguments.length),"string"==typeof t&&v(this,et,"f").narg[t]||this[St](this.requiresArg.bind(this),"narg",t,NaN),this}showCompletionScript(t,e){return h("[string] [string]",[t,e],arguments.length),t=t||this.$0,v(this,Q,"f").log(v(this,U,"f").generateCompletionScript(t,e||v(this,F,"f")||"completion")),this}showHelp(t){if(h("[string|function]",[t],arguments.length),O(this,J,!0,"f"),!v(this,pt,"f").hasCachedHelpMessage()){if(!this.parsed){const e=this[Jt](v(this,ht,"f"),void 0,void 0,0,!0);if(f(e))return e.then((()=>{v(this,pt,"f").showHelp(t)})),this}const e=v(this,z,"f").runDefaultBuilderOn(this);if(f(e))return e.then((()=>{v(this,pt,"f").showHelp(t)})),this}return v(this,pt,"f").showHelp(t),this}scriptName(t){return this.customScriptName=!0,this.$0=t,this}showHelpOnFail(t,e){return h("[boolean|string] [string]",[t,e],arguments.length),v(this,pt,"f").showHelpOnFail(t,e),this}showVersion(t){return h("[string|function]",[t],arguments.length),v(this,pt,"f").showVersion(t),this}skipValidation(t){return h("<array|string>",[t],arguments.length),this[Pt]("skipValidation",t),this}strict(t){return h("[boolean]",[t],arguments.length),O(this,ft,!1!==t,"f"),this}strictCommands(t){return h("[boolean]",[t],arguments.length),O(this,dt,!1!==t,"f"),this}strictOptions(t){return h("[boolean]",[t],arguments.length),O(this,ut,!1!==t,"f"),this}string(t){return h("<array|string>",[t],arguments.length),this[Pt]("string",t),this[Qt](t),this}terminalWidth(){return h([],0),v(this,ct,"f").process.stdColumns}updateLocale(t){return this.updateStrings(t)}updateStrings(t){return h("<object>",[t],arguments.length),O(this,G,!1,"f"),v(this,ct,"f").y18n.updateLocale(t),this}usage(t,s,i,n){if(h("<string|null|undefined> [string|boolean] [function|object] [function]",[t,s,i,n],arguments.length),void 0!==s){if(d(t,null,v(this,ct,"f")),(t||"").match(/^\$0( |$)/))return this.command(t,s,i,n);throw new e(".usage() description must start with $0 if being used as alias for .command()")}return v(this,pt,"f").usage(t),this}usageConfiguration(t){return h("<object>",[t],arguments.length),O(this,gt,t,"f"),this}version(t,e,s){const i="version";if(h("[boolean|string] [string] [string]",[t,e,s],arguments.length),v(this,mt,"f")&&(this[Ot](v(this,mt,"f")),v(this,pt,"f").version(void 0),O(this,mt,null,"f")),0===arguments.length)s=this[xt](),t=i;else if(1===arguments.length){if(!1===t)return this;s=t,t=i}else 2===arguments.length&&(s=e,e=void 0);return O(this,mt,"string"==typeof t?t:i,"f"),e=e||v(this,pt,"f").deferY18nLookup("Show version number"),v(this,pt,"f").version(s||void 0),this.boolean(v(this,mt,"f")),this.describe(v(this,mt,"f"),e),this}wrap(t){return h("<number|null|undefined>",[t],arguments.length),v(this,pt,"f").wrap(t),this}[(z=new WeakMap,W=new WeakMap,q=new WeakMap,U=new WeakMap,F=new WeakMap,L=new WeakMap,V=new WeakMap,G=new WeakMap,R=new WeakMap,T=new WeakMap,B=new WeakMap,Y=new WeakMap,K=new WeakMap,J=new WeakMap,Z=new WeakMap,X=new WeakMap,Q=new WeakMap,tt=new WeakMap,et=new WeakMap,st=new WeakMap,it=new WeakMap,nt=new WeakMap,rt=new WeakMap,ot=new WeakMap,at=new WeakMap,ht=new WeakMap,lt=new WeakMap,ct=new WeakMap,ft=new WeakMap,dt=new WeakMap,ut=new WeakMap,pt=new WeakMap,gt=new WeakMap,mt=new WeakMap,yt=new WeakMap,bt)](t){if(!t._||!t["--"])return t;t._.push.apply(t._,t["--"]);try{delete t["--"]}catch(t){}return t}[vt](){return{log:(...t)=>{this[Rt]()||console.log(...t),O(this,J,!0,"f"),v(this,tt,"f").length&&O(this,tt,v(this,tt,"f")+"\n","f"),O(this,tt,v(this,tt,"f")+t.join(" "),"f")},error:(...t)=>{this[Rt]()||console.error(...t),O(this,J,!0,"f"),v(this,tt,"f").length&&O(this,tt,v(this,tt,"f")+"\n","f"),O(this,tt,v(this,tt,"f")+t.join(" "),"f")}}}[Ot](t){p(v(this,et,"f")).forEach((e=>{if("configObjects"===e)return;const s=v(this,et,"f")[e];Array.isArray(s)?s.includes(t)&&s.splice(s.indexOf(t),1):"object"==typeof s&&delete s[t]})),delete v(this,pt,"f").getDescriptions()[t]}[wt](t,e,s){v(this,R,"f")[s]||(v(this,ct,"f").process.emitWarning(t,e),v(this,R,"f")[s]=!0)}[Ct](){v(this,B,"f").push({options:v(this,et,"f"),configObjects:v(this,et,"f").configObjects.slice(0),exitProcess:v(this,T,"f"),groups:v(this,K,"f"),strict:v(this,ft,"f"),strictCommands:v(this,dt,"f"),strictOptions:v(this,ut,"f"),completionCommand:v(this,F,"f"),output:v(this,tt,"f"),exitError:v(this,V,"f"),hasOutput:v(this,J,"f"),parsed:this.parsed,parseFn:v(this,nt,"f"),parseContext:v(this,rt,"f")}),v(this,pt,"f").freeze(),v(this,yt,"f").freeze(),v(this,z,"f").freeze(),v(this,Y,"f").freeze()}[jt](){let t,e="";return t=/\b(node|iojs|electron)(\.exe)?$/.test(v(this,ct,"f").process.argv()[0])?v(this,ct,"f").process.argv().slice(1,2):v(this,ct,"f").process.argv().slice(0,1),e=t.map((t=>{const e=this[Yt](v(this,W,"f"),t);return t.match(/^(\/|([a-zA-Z]:)?\\)/)&&e.length<t.length?e:t})).join(" ").trim(),v(this,ct,"f").getEnv("_")&&v(this,ct,"f").getProcessArgvBin()===v(this,ct,"f").getEnv("_")&&(e=v(this,ct,"f").getEnv("_").replace(`${v(this,ct,"f").path.dirname(v(this,ct,"f").process.execPath())}/`,"")),e}[Mt](){return v(this,it,"f")}[_t](){return v(this,gt,"f")}[kt](){if(!v(this,G,"f"))return;const t=v(this,ct,"f").getEnv("LC_ALL")||v(this,ct,"f").getEnv("LC_MESSAGES")||v(this,ct,"f").getEnv("LANG")||v(this,ct,"f").getEnv("LANGUAGE")||"en_US";this.locale(t.replace(/[.:].*/,""))}[xt](){return this[At]().version||"unknown"}[Et](t){const e=t["--"]?t["--"]:t._;for(let t,s=0;void 0!==(t=e[s]);s++)v(this,ct,"f").Parser.looksLikeNumber(t)&&Number.isSafeInteger(Math.floor(parseFloat(`${t}`)))&&(e[s]=Number(t));return t}[At](t){const e=t||"*";if(v(this,ot,"f")[e])return v(this,ot,"f")[e];let s={};try{let e=t||v(this,ct,"f").mainFilename;!t&&v(this,ct,"f").path.extname(e)&&(e=v(this,ct,"f").path.dirname(e));const i=v(this,ct,"f").findUp(e,((t,e)=>e.includes("package.json")?"package.json":void 0));d(i,void 0,v(this,ct,"f")),s=JSON.parse(v(this,ct,"f").readFileSync(i,"utf8"))}catch(t){}return v(this,ot,"f")[e]=s||{},v(this,ot,"f")[e]}[Pt](t,e){(e=[].concat(e)).forEach((e=>{e=this[Dt](e),v(this,et,"f")[t].push(e)}))}[St](t,e,s,i){this[It](t,e,s,i,((t,e,s)=>{v(this,et,"f")[t][e]=s}))}[$t](t,e,s,i){this[It](t,e,s,i,((t,e,s)=>{v(this,et,"f")[t][e]=(v(this,et,"f")[t][e]||[]).concat(s)}))}[It](t,e,s,i,n){if(Array.isArray(s))s.forEach((e=>{t(e,i)}));else if((t=>"object"==typeof t)(s))for(const e of p(s))t(e,s[e]);else n(e,this[Dt](s),i)}[Dt](t){return"__proto__"===t?"___proto___":t}[Nt](t,e){return this[St](this[Nt].bind(this),"key",t,e),this}[Ht](){var t,e,s,i,n,r,o,a,h,l,c,f;const u=v(this,B,"f").pop();let p;d(u,void 0,v(this,ct,"f")),t=this,e=this,s=this,i=this,n=this,r=this,o=this,a=this,h=this,l=this,c=this,f=this,({options:{set value(e){O(t,et,e,"f")}}.value,configObjects:p,exitProcess:{set value(t){O(e,T,t,"f")}}.value,groups:{set value(t){O(s,K,t,"f")}}.value,output:{set value(t){O(i,tt,t,"f")}}.value,exitError:{set value(t){O(n,V,t,"f")}}.value,hasOutput:{set value(t){O(r,J,t,"f")}}.value,parsed:this.parsed,strict:{set value(t){O(o,ft,t,"f")}}.value,strictCommands:{set value(t){O(a,dt,t,"f")}}.value,strictOptions:{set value(t){O(h,ut,t,"f")}}.value,completionCommand:{set value(t){O(l,F,t,"f")}}.value,parseFn:{set value(t){O(c,nt,t,"f")}}.value,parseContext:{set value(t){O(f,rt,t,"f")}}.value}=u),v(this,et,"f").configObjects=p,v(this,pt,"f").unfreeze(),v(this,yt,"f").unfreeze(),v(this,z,"f").unfreeze(),v(this,Y,"f").unfreeze()}[zt](t,e){return j(e,(e=>(t(e),e)))}getInternalMethods(){return{getCommandInstance:this[Wt].bind(this),getContext:this[qt].bind(this),getHasOutput:this[Ut].bind(this),getLoggerInstance:this[Ft].bind(this),getParseContext:this[Lt].bind(this),getParserConfiguration:this[Mt].bind(this),getUsageConfiguration:this[_t].bind(this),getUsageInstance:this[Vt].bind(this),getValidationInstance:this[Gt].bind(this),hasParseCallback:this[Rt].bind(this),isGlobalContext:this[Tt].bind(this),postProcess:this[Bt].bind(this),reset:this[Kt].bind(this),runValidation:this[Zt].bind(this),runYargsParserAndExecuteCommands:this[Jt].bind(this),setHasOutput:this[Xt].bind(this)}}[Wt](){return v(this,z,"f")}[qt](){return v(this,q,"f")}[Ut](){return v(this,J,"f")}[Ft](){return v(this,Q,"f")}[Lt](){return v(this,rt,"f")||{}}[Vt](){return v(this,pt,"f")}[Gt](){return v(this,yt,"f")}[Rt](){return!!v(this,nt,"f")}[Tt](){return v(this,X,"f")}[Bt](t,e,s,i){if(s)return t;if(f(t))return t;e||(t=this[bt](t));return(this[Mt]()["parse-positional-numbers"]||void 0===this[Mt]()["parse-positional-numbers"])&&(t=this[Et](t)),i&&(t=C(t,this,v(this,Y,"f").getMiddleware(),!1)),t}[Kt](t={}){O(this,et,v(this,et,"f")||{},"f");const e={};e.local=v(this,et,"f").local||[],e.configObjects=v(this,et,"f").configObjects||[];const s={};e.local.forEach((e=>{s[e]=!0,(t[e]||[]).forEach((t=>{s[t]=!0}))})),Object.assign(v(this,at,"f"),Object.keys(v(this,K,"f")).reduce(((t,e)=>{const i=v(this,K,"f")[e].filter((t=>!(t in s)));return i.length>0&&(t[e]=i),t}),{})),O(this,K,{},"f");return["array","boolean","string","skipValidation","count","normalize","number","hiddenOptions"].forEach((t=>{e[t]=(v(this,et,"f")[t]||[]).filter((t=>!s[t]))})),["narg","key","alias","default","defaultDescription","config","choices","demandedOptions","demandedCommands","deprecatedOptions"].forEach((t=>{e[t]=g(v(this,et,"f")[t],(t=>!s[t]))})),e.envPrefix=v(this,et,"f").envPrefix,O(this,et,e,"f"),O(this,pt,v(this,pt,"f")?v(this,pt,"f").reset(s):P(this,v(this,ct,"f")),"f"),O(this,yt,v(this,yt,"f")?v(this,yt,"f").reset(s):function(t,e,s){const i=s.y18n.__,n=s.y18n.__n,r={nonOptionCount:function(s){const i=t.getDemandedCommands(),r=s._.length+(s["--"]?s["--"].length:0)-t.getInternalMethods().getContext().commands.length;i._&&(r<i._.min||r>i._.max)&&(r<i._.min?void 0!==i._.minMsg?e.fail(i._.minMsg?i._.minMsg.replace(/\$0/g,r.toString()).replace(/\$1/,i._.min.toString()):null):e.fail(n("Not enough non-option arguments: got %s, need at least %s","Not enough non-option arguments: got %s, need at least %s",r,r.toString(),i._.min.toString())):r>i._.max&&(void 0!==i._.maxMsg?e.fail(i._.maxMsg?i._.maxMsg.replace(/\$0/g,r.toString()).replace(/\$1/,i._.max.toString()):null):e.fail(n("Too many non-option arguments: got %s, maximum of %s","Too many non-option arguments: got %s, maximum of %s",r,r.toString(),i._.max.toString()))))},positionalCount:function(t,s){s<t&&e.fail(n("Not enough non-option arguments: got %s, need at least %s","Not enough non-option arguments: got %s, need at least %s",s,s+"",t+""))},requiredArguments:function(t,s){let i=null;for(const e of Object.keys(s))Object.prototype.hasOwnProperty.call(t,e)&&void 0!==t[e]||(i=i||{},i[e]=s[e]);if(i){const t=[];for(const e of Object.keys(i)){const s=i[e];s&&t.indexOf(s)<0&&t.push(s)}const s=t.length?`\n${t.join("\n")}`:"";e.fail(n("Missing required argument: %s","Missing required arguments: %s",Object.keys(i).length,Object.keys(i).join(", ")+s))}},unknownArguments:function(s,i,o,a,h=!0){var l;const c=t.getInternalMethods().getCommandInstance().getCommands(),f=[],d=t.getInternalMethods().getContext();if(Object.keys(s).forEach((e=>{H.includes(e)||Object.prototype.hasOwnProperty.call(o,e)||Object.prototype.hasOwnProperty.call(t.getInternalMethods().getParseContext(),e)||r.isValidAndSomeAliasIsNotNew(e,i)||f.push(e)})),h&&(d.commands.length>0||c.length>0||a)&&s._.slice(d.commands.length).forEach((t=>{c.includes(""+t)||f.push(""+t)})),h){const e=(null===(l=t.getDemandedCommands()._)||void 0===l?void 0:l.max)||0,i=d.commands.length+e;i<s._.length&&s._.slice(i).forEach((t=>{t=String(t),d.commands.includes(t)||f.includes(t)||f.push(t)}))}f.length&&e.fail(n("Unknown argument: %s","Unknown arguments: %s",f.length,f.map((t=>t.trim()?t:`"${t}"`)).join(", ")))},unknownCommands:function(s){const i=t.getInternalMethods().getCommandInstance().getCommands(),r=[],o=t.getInternalMethods().getContext();return(o.commands.length>0||i.length>0)&&s._.slice(o.commands.length).forEach((t=>{i.includes(""+t)||r.push(""+t)})),r.length>0&&(e.fail(n("Unknown command: %s","Unknown commands: %s",r.length,r.join(", "))),!0)},isValidAndSomeAliasIsNotNew:function(e,s){if(!Object.prototype.hasOwnProperty.call(s,e))return!1;const i=t.parsed.newAliases;return[e,...s[e]].some((t=>!Object.prototype.hasOwnProperty.call(i,t)||!i[e]))},limitedChoices:function(s){const n=t.getOptions(),r={};if(!Object.keys(n.choices).length)return;Object.keys(s).forEach((t=>{-1===H.indexOf(t)&&Object.prototype.hasOwnProperty.call(n.choices,t)&&[].concat(s[t]).forEach((e=>{-1===n.choices[t].indexOf(e)&&void 0!==e&&(r[t]=(r[t]||[]).concat(e))}))}));const o=Object.keys(r);if(!o.length)return;let a=i("Invalid values:");o.forEach((t=>{a+=`\n  ${i("Argument: %s, Given: %s, Choices: %s",t,e.stringifiedValues(r[t]),e.stringifiedValues(n.choices[t]))}`})),e.fail(a)}};let o={};function a(t,e){const s=Number(e);return"number"==typeof(e=isNaN(s)?e:s)?e=t._.length>=e:e.match(/^--no-.+/)?(e=e.match(/^--no-(.+)/)[1],e=!Object.prototype.hasOwnProperty.call(t,e)):e=Object.prototype.hasOwnProperty.call(t,e),e}r.implies=function(e,i){h("<string|object> [array|number|string]",[e,i],arguments.length),"object"==typeof e?Object.keys(e).forEach((t=>{r.implies(t,e[t])})):(t.global(e),o[e]||(o[e]=[]),Array.isArray(i)?i.forEach((t=>r.implies(e,t))):(d(i,void 0,s),o[e].push(i)))},r.getImplied=function(){return o},r.implications=function(t){const s=[];if(Object.keys(o).forEach((e=>{const i=e;(o[e]||[]).forEach((e=>{let n=i;const r=e;n=a(t,n),e=a(t,e),n&&!e&&s.push(` ${i} -> ${r}`)}))})),s.length){let t=`${i("Implications failed:")}\n`;s.forEach((e=>{t+=e})),e.fail(t)}};let l={};r.conflicts=function(e,s){h("<string|object> [array|string]",[e,s],arguments.length),"object"==typeof e?Object.keys(e).forEach((t=>{r.conflicts(t,e[t])})):(t.global(e),l[e]||(l[e]=[]),Array.isArray(s)?s.forEach((t=>r.conflicts(e,t))):l[e].push(s))},r.getConflicting=()=>l,r.conflicting=function(n){Object.keys(n).forEach((t=>{l[t]&&l[t].forEach((s=>{s&&void 0!==n[t]&&void 0!==n[s]&&e.fail(i("Arguments %s and %s are mutually exclusive",t,s))}))})),t.getInternalMethods().getParserConfiguration()["strip-dashed"]&&Object.keys(l).forEach((t=>{l[t].forEach((r=>{r&&void 0!==n[s.Parser.camelCase(t)]&&void 0!==n[s.Parser.camelCase(r)]&&e.fail(i("Arguments %s and %s are mutually exclusive",t,r))}))}))},r.recommendCommands=function(t,s){s=s.sort(((t,e)=>e.length-t.length));let n=null,r=1/0;for(let e,i=0;void 0!==(e=s[i]);i++){const s=N(t,e);s<=3&&s<r&&(r=s,n=e)}n&&e.fail(i("Did you mean %s?",n))},r.reset=function(t){return o=g(o,(e=>!t[e])),l=g(l,(e=>!t[e])),r};const c=[];return r.freeze=function(){c.push({implied:o,conflicting:l})},r.unfreeze=function(){const t=c.pop();d(t,void 0,s),({implied:o,conflicting:l}=t)},r}(this,v(this,pt,"f"),v(this,ct,"f")),"f"),O(this,z,v(this,z,"f")?v(this,z,"f").reset():function(t,e,s,i){return new _(t,e,s,i)}(v(this,pt,"f"),v(this,yt,"f"),v(this,Y,"f"),v(this,ct,"f")),"f"),v(this,U,"f")||O(this,U,function(t,e,s,i){return new D(t,e,s,i)}(this,v(this,pt,"f"),v(this,z,"f"),v(this,ct,"f")),"f"),v(this,Y,"f").reset(),O(this,F,null,"f"),O(this,tt,"","f"),O(this,V,null,"f"),O(this,J,!1,"f"),this.parsed=!1,this}[Yt](t,e){return v(this,ct,"f").path.relative(t,e)}[Jt](t,s,i,n=0,r=!1){let o=!!i||r;t=t||v(this,ht,"f"),v(this,et,"f").__=v(this,ct,"f").y18n.__,v(this,et,"f").configuration=this[Mt]();const a=!!v(this,et,"f").configuration["populate--"],h=Object.assign({},v(this,et,"f").configuration,{"populate--":!0}),l=v(this,ct,"f").Parser.detailed(t,Object.assign({},v(this,et,"f"),{configuration:{"parse-positional-numbers":!1,...h}})),c=Object.assign(l.argv,v(this,rt,"f"));let d;const u=l.aliases;let p=!1,g=!1;Object.keys(c).forEach((t=>{t===v(this,Z,"f")&&c[t]?p=!0:t===v(this,mt,"f")&&c[t]&&(g=!0)})),c.$0=this.$0,this.parsed=l,0===n&&v(this,pt,"f").clearCachedHelpMessage();try{if(this[kt](),s)return this[Bt](c,a,!!i,!1);if(v(this,Z,"f")){[v(this,Z,"f")].concat(u[v(this,Z,"f")]||[]).filter((t=>t.length>1)).includes(""+c._[c._.length-1])&&(c._.pop(),p=!0)}O(this,X,!1,"f");const h=v(this,z,"f").getCommands(),m=v(this,U,"f").completionKey in c,y=p||m||r;if(c._.length){if(h.length){let t;for(let e,s=n||0;void 0!==c._[s];s++){if(e=String(c._[s]),h.includes(e)&&e!==v(this,F,"f")){const t=v(this,z,"f").runCommand(e,this,l,s+1,r,p||g||r);return this[Bt](t,a,!!i,!1)}if(!t&&e!==v(this,F,"f")){t=e;break}}!v(this,z,"f").hasDefaultCommand()&&v(this,lt,"f")&&t&&!y&&v(this,yt,"f").recommendCommands(t,h)}v(this,F,"f")&&c._.includes(v(this,F,"f"))&&!m&&(v(this,T,"f")&&E(!0),this.showCompletionScript(),this.exit(0))}if(v(this,z,"f").hasDefaultCommand()&&!y){const t=v(this,z,"f").runCommand(null,this,l,0,r,p||g||r);return this[Bt](t,a,!!i,!1)}if(m){v(this,T,"f")&&E(!0);const s=(t=[].concat(t)).slice(t.indexOf(`--${v(this,U,"f").completionKey}`)+1);return v(this,U,"f").getCompletion(s,((t,s)=>{if(t)throw new e(t.message);(s||[]).forEach((t=>{v(this,Q,"f").log(t)})),this.exit(0)})),this[Bt](c,!a,!!i,!1)}if(v(this,J,"f")||(p?(v(this,T,"f")&&E(!0),o=!0,this.showHelp("log"),this.exit(0)):g&&(v(this,T,"f")&&E(!0),o=!0,v(this,pt,"f").showVersion("log"),this.exit(0))),!o&&v(this,et,"f").skipValidation.length>0&&(o=Object.keys(c).some((t=>v(this,et,"f").skipValidation.indexOf(t)>=0&&!0===c[t]))),!o){if(l.error)throw new e(l.error.message);if(!m){const t=this[Zt](u,{},l.error);i||(d=C(c,this,v(this,Y,"f").getMiddleware(),!0)),d=this[zt](t,null!=d?d:c),f(d)&&!i&&(d=d.then((()=>C(c,this,v(this,Y,"f").getMiddleware(),!1))))}}}catch(t){if(!(t instanceof e))throw t;v(this,pt,"f").fail(t.message,t)}return this[Bt](null!=d?d:c,a,!!i,!0)}[Zt](t,s,i,n){const r={...this.getDemandedOptions()};return o=>{if(i)throw new e(i.message);v(this,yt,"f").nonOptionCount(o),v(this,yt,"f").requiredArguments(o,r);let a=!1;v(this,dt,"f")&&(a=v(this,yt,"f").unknownCommands(o)),v(this,ft,"f")&&!a?v(this,yt,"f").unknownArguments(o,t,s,!!n):v(this,ut,"f")&&v(this,yt,"f").unknownArguments(o,t,{},!1,!1),v(this,yt,"f").limitedChoices(o),v(this,yt,"f").implications(o),v(this,yt,"f").conflicting(o)}}[Xt](){O(this,J,!0,"f")}[Qt](t){if("string"==typeof t)v(this,et,"f").key[t]=!0;else for(const e of t)v(this,et,"f").key[e]=!0}}var ee,se;const{readFileSync:ie}=__nccwpck_require__(7147),{inspect:ne}=__nccwpck_require__(3837),{resolve:re}=__nccwpck_require__(1017),oe=__nccwpck_require__(452),ae=__nccwpck_require__(1970);var he,le={assert:{notStrictEqual:t.notStrictEqual,strictEqual:t.strictEqual},cliui:__nccwpck_require__(7059),findUp:__nccwpck_require__(2644),getEnv:t=>process.env[t],getCallerFile:__nccwpck_require__(351),getProcessArgvBin:y,inspect:ne,mainFilename:null!==(se=null===(ee= false||void 0===__nccwpck_require__(9167)?void 0:__nccwpck_require__.c[__nccwpck_require__.s])||void 0===ee?void 0:ee.filename)&&void 0!==se?se:process.cwd(),Parser:ae,path:__nccwpck_require__(1017),process:{argv:()=>process.argv,cwd:process.cwd,emitWarning:(t,e)=>process.emitWarning(t,e),execPath:()=>process.execPath,exit:t=>{process.exit(t)},nextTick:process.nextTick,stdColumns:void 0!==process.stdout.columns?process.stdout.columns:null},readFileSync:ie,require:__nccwpck_require__(9167),requireDirectory:__nccwpck_require__(9200),stringWidth:__nccwpck_require__(2577),y18n:oe({directory:re(__dirname,"../locales"),updateFiles:!1})};const ce=(null===(he=null===process||void 0===process?void 0:process.env)||void 0===he?void 0:he.YARGS_MIN_NODE_VERSION)?Number(process.env.YARGS_MIN_NODE_VERSION):12;if(process&&process.version){if(Number(process.version.match(/v([^.]+)/)[1])<ce)throw Error(`yargs supports a minimum Node.js version of ${ce}. Read our version support policy: https://github.com/yargs/yargs#supported-nodejs-versions`)}const fe=__nccwpck_require__(1970);var de,ue={applyExtends:n,cjsPlatformShim:le,Yargs:(de=le,(t=[],e=de.process.cwd(),s)=>{const i=new te(t,e,s,de);return Object.defineProperty(i,"argv",{get:()=>i.parse(),enumerable:!0}),i.help(),i.version(),i}),argsert:h,isPromise:f,objFilter:g,parseCommand:o,Parser:fe,processArgv:b,YError:e};module.exports=ue;
-
-
-/***/ }),
-
-/***/ 8822:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-// classic singleton yargs API, to use yargs
-// without running as a singleton do:
-// require('yargs/yargs')(process.argv.slice(2))
-const {Yargs, processArgv} = __nccwpck_require__(9562);
-
-Argv(processArgv.hideBin(process.argv));
-
-module.exports = Argv;
-
-function Argv(processArgs, cwd) {
-  const argv = Yargs(processArgs, cwd, __nccwpck_require__(4907));
-  singletonify(argv);
-  // TODO(bcoe): warn if argv.parse() or argv.argv is used directly.
-  return argv;
 }
 
-function defineGetter(obj, key, getter) {
-  Object.defineProperty(obj, key, {
-    configurable: true,
-    enumerable: true,
-    get: getter,
-  });
-}
-function lookupGetter(obj, key) {
-  const desc = Object.getOwnPropertyDescriptor(obj, key);
-  if (typeof desc !== 'undefined') {
-    return desc.get;
-  }
-}
+main();
 
-/*  Hack an instance of Argv with process.argv into Argv
-    so people can do
-    require('yargs')(['--beeble=1','-z','zizzle']).argv
-    to parse a list of args and
-    require('yargs').argv
-    to get a parsed version of process.argv.
-*/
-function singletonify(inst) {
-  [
-    ...Object.keys(inst),
-    ...Object.getOwnPropertyNames(inst.constructor.prototype),
-  ].forEach(key => {
-    if (key === 'argv') {
-      defineGetter(Argv, key, lookupGetter(inst, key));
-    } else if (typeof inst[key] === 'function') {
-      Argv[key] = inst[key].bind(inst);
-    } else {
-      defineGetter(Argv, '$0', () => inst.$0);
-      defineGetter(Argv, 'parsed', () => inst.parsed);
-    }
-  });
-}
+})();
 
-
-/***/ })
-
-/******/ 	});
-/************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __nccwpck_require__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			id: moduleId,
-/******/ 			loaded: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		var threw = true;
-/******/ 		try {
-/******/ 			__webpack_modules__[moduleId].call(module.exports, module, module.exports, __nccwpck_require__);
-/******/ 			threw = false;
-/******/ 		} finally {
-/******/ 			if(threw) delete __webpack_module_cache__[moduleId];
-/******/ 		}
-/******/ 	
-/******/ 		// Flag the module as loaded
-/******/ 		module.loaded = true;
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/ 	
-/******/ 	// expose the module cache
-/******/ 	__nccwpck_require__.c = __webpack_module_cache__;
-/******/ 	
-/************************************************************************/
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/node module decorator */
-/******/ 	(() => {
-/******/ 		__nccwpck_require__.nmd = (module) => {
-/******/ 			module.paths = [];
-/******/ 			if (!module.children) module.children = [];
-/******/ 			return module;
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/compat */
-/******/ 	
-/******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
-/******/ 	
-/************************************************************************/
-/******/ 	
-/******/ 	// module cache are used so entry inlining is disabled
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	var __webpack_exports__ = __nccwpck_require__(__nccwpck_require__.s = 5584);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
-/******/ })()
-;

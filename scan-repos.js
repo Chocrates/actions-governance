@@ -1,14 +1,15 @@
-const { throttling } = require("@octokit/plugin-throttling");
-const { Octokit } = require("@octokit/rest");
-const shell = require('shelljs')
-const yargs = require('yargs')
-const util = require('util')
+import { throttling } from "@octokit/plugin-throttling";
+import { paginateRest } from "@octokit/plugin-paginate-rest";
+import { Octokit } from "@octokit/core";
+import shell from 'shelljs';
+import yargs from 'yargs';
+import util from 'util';
 
-const MyOctokit = Octokit.plugin(throttling);
+const MyOctokit = Octokit.plugin(throttling, paginateRest);
 
 async function main() {
 
-    const argv = yargs
+    const argv = yargs(process.argv)
         .option("token", {
             alias: "t",
             description: "personal access token with which to authenticate",
@@ -143,7 +144,7 @@ async function main() {
 
                 let code_scanning_alerts
                 try {
-                    code_scanning_alerts = await client.request(`GET /repos/{owner}/{repo}/code-scanning/alerts`, {
+                    code_scanning_alerts = await client.paginate(`GET /repos/{owner}/{repo}/code-scanning/alerts`, {
                         owner: argv.org,
                         repo: repository.name,
                         headers: {
@@ -162,7 +163,7 @@ async function main() {
                 // if ther are no results then all alerts are closed remains false
                 if (code_scanning_alerts) {
                     logger.debug(code_scanning_alerts)
-                    const open_alerts = code_scanning_alerts.data.filter(alert => alert.state === 'open')
+                    const open_alerts = code_scanning_alerts.filter(alert => alert.state === 'open')
 
                     // if there are no alerts, print a message
                     if (open_alerts.length == 0) {
@@ -171,8 +172,8 @@ async function main() {
                     } else {
                         repository['all_alerts_closed'] = false
                         // print code scanning alerts
-                        for (let i = 0; i < code_scanning_alerts.data.length; i++) {
-                            logger.info(code_scanning_alerts.data[i].rule.name);
+                        for (let i = 0; i < code_scanning_alerts.length; i++) {
+                            logger.info(code_scanning_alerts[i].rule.name);
                         }
                     }
                 }
@@ -200,7 +201,7 @@ async function main() {
                 // if ther are no results then all alerts are closed remains false
                 if (dependabot_alerts) {
                     logger.debug(dependabot_alerts)
-                    const open_alerts = dependabot_alerts.data.filter(alert => alert.state === 'open')
+                    const open_alerts = dependabot_alerts.filter(alert => alert.state === 'open')
 
                     // if there are no alerts, print a message
                     if (open_alerts.length == 0) {
@@ -209,8 +210,8 @@ async function main() {
                     } else {
                         repository['all_alerts_closed'] = false
                         // print code scanning alerts
-                        for (let i = 0; i < dependabot_alerts.data.length; i++) {
-                            logger.info(_alerts.data[i].security_advisory.cve_id);
+                        for (let i = 0; i < dependabot_alerts.length; i++) {
+                            logger.info(dependabot_alerts[i].security_advisory.cve_id);
                         }
                     }
                 }
@@ -360,9 +361,4 @@ async function main() {
     }
 }
 
-
-if (require.main == module) {
-    main();
-}
-
-module.exports = main;
+main();
