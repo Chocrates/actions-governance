@@ -2,7 +2,9 @@ name: Scan Actions Repositories
 
 on:
   workflow_dispatch:
-
+  push:
+    branches-ignore:
+      - 'main'
 jobs:
   scan:
     runs-on: ubuntu-latest
