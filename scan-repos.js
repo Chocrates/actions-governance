@@ -35,7 +35,7 @@ async function main() {
             global: true,
             demandOption: false,
             type: "boolean",
-            dfeault: false
+            default: false
         })
         .argv;
 
