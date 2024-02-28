@@ -9,7 +9,7 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: chocrates-test-org/actions-governance@main
+      - uses: chocrates/actions-governance@main
         with:
           token: ${{ secrets.ORG_TOKEN }}
           organization: 'chocrates-test-org'
