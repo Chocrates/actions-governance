@@ -66,4 +66,5 @@ If there are admin's associated to the action they will be marked as reviewers o
 This is done in an attempt to help remediate alerts if they have been fixed upstream.
 
 Regardless of whether or not a PR was able to be opened, an issue is created that will warn the owners of the action that it is non compliant and will be soon disabled
-After 3 issues have been opened it will attempt to make the action inaccessible (if it is internal or private) and open an issue saying it has been disabled.  Currently public actions will remain accessible.
+After 3 issues have been opened it will attempt to make the action inaccessible (if it is internal or private) and open an issue saying it has been disabled.  
+*Note:* Currently public actions will remain accessible.
