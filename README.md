@@ -40,7 +40,6 @@ jobs:
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.PRIVATE_KEY }}
-          github-api-url: "https://github.acme-inc.com/api/v3"
 
       - uses: chocrates-test-org/actions-governance@v1
         with:
