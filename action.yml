@@ -24,4 +24,7 @@ runs:
         if [[ "${{ runner.debug }}" == "1" ]]; then
           VERBOSE='-vvv' 
         fi
-        node dist/index.js --token $GH_TOKEN --org $ORG ${VERBOSE:+"$VERBOSE"}
+        # ncc currently broken https://github.com/vercel/ncc/issues/1163#issuecomment-1969963016
+        #node dist/index.js --token $GH_TOKEN --org $ORG ${VERBOSE:+"$VERBOSE"}
+        npm install
+        node scan-repos.js --token $GH_TOKEN --org $ORG ${VERBOSE:+"$VERBOSE"}
