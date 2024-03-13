@@ -65,7 +65,7 @@ async function main() {
                         `Request quota exhausted for request ${options.method} ${options.url}`,
                     );
 
-                    if (retryCount < 1) {
+                    if (retryCount < 5) {
                         // only retries once
                         octokit.log.info(`Retrying after ${retryAfter} seconds!`);
                         return true;
