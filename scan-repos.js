@@ -1,12 +1,12 @@
 import { throttling } from "@octokit/plugin-throttling";
 import { paginateRest } from "@octokit/plugin-paginate-rest";
-import { paginateGraphql } from "@octokit/plugin-paginate-graphql";
+import { paginateGraphQL } from "@octokit/plugin-paginate-graphql";
 import { Octokit } from "@octokit/core";
 import shell from 'shelljs';
 import yargs from 'yargs';
 import util from 'util';
 
-const MyOctokit = Octokit.plugin(throttling, paginateRest, paginateGraphql);
+const MyOctokit = Octokit.plugin(throttling, paginateRest, paginateGraphQL);
 
 const paginate_graphql = async (logger, client, query, options = {}) => {
     /*
