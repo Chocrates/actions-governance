@@ -1,11 +1,35 @@
 import { throttling } from "@octokit/plugin-throttling";
 import { paginateRest } from "@octokit/plugin-paginate-rest";
+import { paginateGraphql } from "@octokit/plugin-paginate-graphql";
 import { Octokit } from "@octokit/core";
 import shell from 'shelljs';
 import yargs from 'yargs';
 import util from 'util';
 
-const MyOctokit = Octokit.plugin(throttling, paginateRest);
+const MyOctokit = Octokit.plugin(throttling, paginateRest, paginateGraphql);
+
+const paginate_graphql = async (logger, client, query, options = {}) => {
+    /*
+            * const { repository } = await octokit.graphql.paginate(
+      `query paginate($cursor: String) {
+        repository(owner: "octokit", name: "rest.js") {
+          issues(first: 10, after: $cursor) {
+            nodes {
+              title
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      }`,
+                */
+
+    let graphql_call = await client.graphql.paginate(query, options)
+    logger.debug(graphql_call)
+    return graphql_call
+}
 
 async function main() {
 
@@ -159,7 +183,54 @@ async function main() {
                         logger.info(`No scanning results: ${error}`)
                     }
                 }
-                
+
+                try {
+                    // check that all tags were scanned
+                    const analyses = await client.paginate(`GET /repos/{owner}/{repo}/code-scanning/analyses`, {
+                        owner: argv.org,
+                        repo: repository.name,
+                        headers: {
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    })
+                    const tag_query = `
+                        query paginate($cursor: String) {
+                            repository(owner: "${argv.org}", name: "${repository.name}") {
+                                refs(first: 10, after: $cursor) {
+                                    nodes {
+                                        name
+                                        prefix
+                                        target {
+                                            ... on Tag {
+                                                name
+                                                abbreviatedOid
+                                                oid
+                                            }
+                                        }
+                                    }
+                                    pageInfo {
+                                        hasNextPage
+                                        endCursor
+                                    }
+                                }
+                            }
+                        }`
+
+                    const tags = await paginate_graphql(logger, client, tag_query)
+                    logger.log(`${util.inspect(tags, { depth: null })}`)
+
+                    for (const analysis of analyses){
+                        
+                    }
+                } catch (error) {
+                    // ignore 404 errors
+                    if (error.status !== 404) {
+                        throw error
+                    } else {
+                        logger.info(`No analyses found: ${ error }`)
+                    }
+                }
+
                 // if ther are no results then all alerts are closed remains false
                 if (code_scanning_alerts) {
                     logger.debug(code_scanning_alerts)
@@ -179,10 +250,10 @@ async function main() {
                 }
             }
 
-            if(repository.dependabot_scanning_enabled){
+            if (repository.dependabot_scanning_enabled) {
                 let dependabot_alerts
                 try {
-                    dependabot_alerts = await client.paginate(`GET /repos/{owner}/{repo}/dependabot/alerts`, {
+                    dependabot_alerts = await client.paginate(`GET / repos / { owner } / { repo } / dependabot / alerts`, {
                         owner: argv.org,
                         repo: repository.name,
                         headers: {
@@ -194,10 +265,10 @@ async function main() {
                     if (error.status !== 404) {
                         throw error
                     } else {
-                        logger.info(`No dependabot alerts: ${error}`)
+                        logger.info(`No dependabot alerts: ${ error } `)
                     }
                 }
-                
+
                 // if ther are no results then all alerts are closed remains false
                 if (dependabot_alerts) {
                     logger.debug(dependabot_alerts)
@@ -220,11 +291,11 @@ async function main() {
         }
 
         // print results
-        logger.debug(`${JSON.stringify(actions_repositories)}`)
+        logger.debug(`${ JSON.stringify(actions_repositories) } `)
 
         // loop through repositories
         for (const repo of actions_repositories) {
-            logger.debug(`Repo ${repo.name} scanning enabled: ${repo.scanning_enabled} scanning workflow: ${repo.scanning_workflow} dependabot scanning enabled: ${repo.dependabot_scanning_enabled} all alerts closed: ${repo.all_alerts_closed}`)
+            logger.debug(`Repo ${ repo.name } scanning enabled: ${ repo.scanning_enabled } scanning workflow: ${ repo.scanning_workflow } dependabot scanning enabled: ${ repo.dependabot_scanning_enabled } all alerts closed: ${ repo.all_alerts_closed } `)
             // if scanning is enabled, and there are alerts, and there are open alerts, nag
             if (!repo.scanning_enabled || !repo.scanning_workflow || !repo.all_alerts_closed || !repo.dependabot_scanning_enabled) {
                 if (repo.description === '') {
@@ -232,17 +303,17 @@ async function main() {
                 } else {
                     try {
                         const verbosity = logger.VERBOSITY_LEVEL >= 2 == true ? 'GIT_CURL_VERBOSE=1 ' : ''
-                        if (shell.exec(`${verbosity}git clone https://${argv.token}@github.com/${argv.org}/${repo.name}.git`, 
+                        if (shell.exec(`${verbosity}git clone https://${argv.token}@github.com/${argv.org}/${repo.name}.git`,
                             { silent: logger.VERBOSITY_LEVEL < 2 }).code === 0) {
                             shell.exec(`cd ${repo.name} && 
                                 curl https://raw.githubusercontent.com/repo-sync/github-sync/3832fe8e2be32372e1b3970bbae8e7079edeec88/github-sync.sh > github-sync.sh`)
                             shell.exec(`pwd && cd ${repo.name} && GITHUB_TOKEN="${argv.token}" GITHUB_REPOSITORY="${argv.org}/${repo.name}" SYNC_TAGS="true" \
                                 bash github-sync.sh ${repo.description} "${repo.default_branch}:${repo.default_branch}-sync"`)
                             // Get common ancestor
-                            const common_ancestor = shell.exec(`cd ${repo.name} && git merge-base remotes/origin/${repo.default_branch}-sync HEAD`, 
+                            const common_ancestor = shell.exec(`cd ${repo.name} && git merge-base remotes/origin/${repo.default_branch}-sync HEAD`,
                                 { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
                             // Get head of sync branch
-                            const sync_head = shell.exec(`cd ${repo.name} && git show-ref remotes/origin/${repo.default_branch}-sync -s`, 
+                            const sync_head = shell.exec(`cd ${repo.name} && git show-ref remotes/origin/${repo.default_branch}-sync -s`,
                                 { silent: logger.VERBOSITY_LEVEL < 2 }).stdout
                             // Open a PR if there is stuff to merge
                             if (common_ancestor != sync_head) {
