@@ -2,14 +2,15 @@ name: Scan Actions Repositories
 
 on:
   workflow_dispatch:
-  push:
-    branches-ignore:
-      - 'main'
+  pull_request:
+  
 jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: chocrates/actions-governance@main
+      - uses: jenseng/dynamic-uses@v1
         with:
-          token: ${{ secrets.ORG_TOKEN }}
-          organization: 'chocrates-test-org'
+          # now you can use expressions 🥳
+          uses: chocrates/actions-governance@${{ github.sha }}
+          # the `with` needs to be converted to a valid json string
+          with: '{ "token": ${{ secrets.ORG_TOKEN }}, "organization": "chocrates-test-org" }'
