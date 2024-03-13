@@ -196,7 +196,7 @@ async function main() {
                     const tag_query = `
                         query paginate($cursor: String) {
                             repository(owner: "${argv.org}", name: "${repository.name}") {
-                                refs(refPrefix: "tags/", first: 10, after: $cursor) {
+                                refs(refPrefix: "refs/tags/", first: 10, after: $cursor) {
                                     nodes {
                                         name
                                         prefix
